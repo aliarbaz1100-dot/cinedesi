@@ -1,1 +1,51 @@
-const CACHE='cinedesi-shell-v6';const SHELL=['./','./cinedesi-icon.svg','./manifest.webmanifest'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)));self.skipWaiting()});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim()});self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;if(e.request.mode==='navigate'){e.respondWith(fetch(e.request).then(r=>{if(!r.ok)throw new Error('navigation_failed');const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));return r}).catch(()=>caches.match(e.request).then(c=>c||caches.match('./'))));return}e.respondWith(caches.match(e.request).then(cached=>cached||fetch(e.request).then(r=>{if(r.ok)caches.open(CACHE).then(c=>c.put(e.request,r.clone()));return r})))})
+const CACHE = "cinedesi-shell-v7";
+const SHELL = [
+  "./",
+  "./cinedesi-icon.svg",
+  "./cinedesi-icon-192.png",
+  "./manifest.webmanifest",
+];
+self.addEventListener("install", (e) => {
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
+  self.skipWaiting();
+});
+self.addEventListener("activate", (e) => {
+  e.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)),
+        ),
+      ),
+  );
+  self.clients.claim();
+});
+self.addEventListener("fetch", (e) => {
+  if (e.request.method !== "GET") return;
+  if (e.request.mode === "navigate") {
+    e.respondWith(
+      fetch(e.request)
+        .then((r) => {
+          if (!r.ok) throw new Error("navigation_failed");
+          const copy = r.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, copy));
+          return r;
+        })
+        .catch(() =>
+          caches.match(e.request).then((c) => c || caches.match("./")),
+        ),
+    );
+    return;
+  }
+  e.respondWith(
+    caches.match(e.request).then(
+      (cached) =>
+        cached ||
+        fetch(e.request).then((r) => {
+          if (r.ok) caches.open(CACHE).then((c) => c.put(e.request, r.clone()));
+          return r;
+        }),
+    ),
+  );
+});
