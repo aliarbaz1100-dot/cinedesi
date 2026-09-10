@@ -5,21 +5,22 @@ if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || 
   requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => {
     launchSplash.classList.add("splash-exit");
     setTimeout(() => launchSplash.remove(), reduceMotion ? 0 : 420);
-  }, reduceMotion ? 100 : 2800)));
+  }, 2600)));
 } else launchSplash?.remove();
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=6").catch(() => {
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=7").catch(() => {
 }));
 let deferredInstall = null;
 const installBar = document.querySelector("#install-banner"), installButton = document.querySelector("#install-app"), installClose = document.querySelector("#install-close"), installCopy = document.querySelector("#install-copy");
 const isStandalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-const installDismissed = localStorage.getItem("cinedesi-install-dismissed") === "1";
+const installDismissedAt = Number(localStorage.getItem("cinedesi-install-dismissed") || 0);
+const installDismissed = installDismissedAt > Date.now() - 7 * 24 * 60 * 60 * 1000;
 const showInstall = () => {
   if (installBar && !isStandalone && !installDismissed) installBar.hidden = false;
 };
 const hideInstall = (remember = false) => {
   if (installBar) installBar.hidden = true;
-  if (remember) localStorage.setItem("cinedesi-install-dismissed", "1");
+  if (remember) localStorage.setItem("cinedesi-install-dismissed", String(Date.now()));
 };
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
@@ -110,7 +111,7 @@ function init() {
   function updateSchema() {
     const node = document.querySelector("#catalog-schema");
     if (!node) return;
-    node.textContent = JSON.stringify({ "@context": "https://schema.org", "@type": "ItemList", itemListElement: movies.map((m, i) => ({ "@type": "ListItem", position: i + 1, url: `https://www.cinedesi.online/movie.html?slug=${encodeURIComponent(m.slug)}`, name: m.title })) });
+    node.textContent = JSON.stringify({ "@context": "https://schema.org", "@type": "ItemList", numberOfItems: movies.length, itemListElement: movies.slice(0, 100).map((m, i) => ({ "@type": "ListItem", position: i + 1, url: `https://cinedesi.online/movie.html?slug=${encodeURIComponent(m.slug)}`, name: m.title })) });
   }
   async function load() {
     const selectColumns = "id,slug,title,region,genre,release_year,score,trailer_url,trailer_source,trailer_verified,watch_url,watch_verified,full_video_url,full_video_embed_url,full_video_verified,full_video_source,full_video_label,full_video_language,content_type,season_count,episode_count,original_language,availability_note,cast_names,poster_url,poster_source_url,poster_license,poster_attribution,rights_status,rights_checked_at,source_name,source_url,source_license";
