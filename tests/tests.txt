@@ -1,0 +1,61 @@
+# Tests
+
+## Test 1 - Search from mobile navigation [sanity]
+Viewport: mobile
+Covers: visible mobile search mode, keyboard focus, live catalog suggestions, cancel action
+Description: Verifies Search is a real interactive surface rather than a hidden or dummy control.
+
+Steps:
+1. Tap Search in the fixed bottom navigation
+2. Type a movie, actor, genre, or region
+3. Open a suggestion, then return and use Cancel
+
+Expected: A visible search bar receives focus, matching catalog suggestions appear, results open correctly, and Cancel returns to the homepage.
+
+## Test 2 - Open complete categories from See all
+Viewport: mobile
+Covers: Watch on CineDesi, Top 10, Verified, Series, genre and regional See all filtering
+Description: Verifies every collection opens its complete matching catalog.
+
+Steps:
+1. Tap See all for Watch on CineDesi and inspect the result heading and cards
+2. Repeat for Series, a genre, and a region
+3. Repeat for Top 10 and Verified picks
+
+Expected: Each action scrolls to More to explore, shows the selected collection name, resets conflicting filters, and displays only titles matching that collection.
+
+## Test 3 - Guide and launch installed CineDesi safely
+Viewport: mobile
+Covers: deterministic pre-body iPhone app-mode detection, readable CineDesi splash, guided installation, native startup artwork and cached PWA launch
+Description: Verifies a home-screen installation opens CineDesi rather than an AccessDenied response.
+
+Steps:
+1. Open CineDesi in Safari, wait for the install banner, then tap Install and follow the visible Share, Add to Home Screen, and Add instructions
+2. Add CineDesi to the Home Screen, close Safari, and launch the icon
+3. Navigate to a title and reopen the app
+
+Expected: An opaque branded startup image replaces the native black frame on the supported iPhone; the CINE/DESI logo is visible immediately without a blank fade, remains readable briefly, then transitions smoothly to the cached homepage.
+
+## Test 4 - Keep playback rights truthful
+Viewport: desktop
+Covers: authorized full embed, discovery-only title, source attribution, no fake player
+Description: Verifies authorized titles play inside CineDesi while unlicensed titles remain discovery-only.
+
+Steps:
+1. Open a Watch on CineDesi title and inspect its player and source
+2. Return and open a discovery-only title
+3. Inspect the availability actions
+
+Expected: The authorized title uses its official attributed player; the discovery-only title offers only verified trailer or legal-destination actions and no unauthorized player.
+
+## Test 5 - Submit a content licensing proposal
+Viewport: mobile
+Covers: licensing route, authority guardrail, rights metadata, partner inquiry persistence
+Description: Verifies a rights-holder can propose an authorized catalog while incomplete or unconfirmed submissions are blocked.
+
+Steps:
+1. Open Content Licensing and attempt to submit without confirming rights authority
+2. Complete company, licence type, titles, territory, proof URL, notes, authority and consent
+3. Submit the proposal
+
+Expected: The incomplete submission shows a validation message; the completed proposal is stored and a visible rights-review confirmation appears.
