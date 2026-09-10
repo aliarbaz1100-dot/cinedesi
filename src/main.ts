@@ -129,8 +129,11 @@ function init() {
     }
     movies = (data || []).map((m) => {
       const thumb = videoThumb(m);
-      return { ...m, _cover_kind: m.poster_url ? "poster" : thumb ? "youtube" : "original", poster_url: m.poster_url || thumb || posterArt(m) };
+      return { ...m, _trend_score: 0, _cover_kind: m.poster_url ? "poster" : thumb ? "youtube" : "original", poster_url: m.poster_url || thumb || posterArt(m) };
     });
+    const { data: trendingRows } = await db.rpc("get_cinedesi_trending", { p_days: 7, p_limit: 100 });
+    const trendMap = new Map((trendingRows || []).map((row) => [row.movie_slug, Number(row.trend_score) || 0]));
+    movies = movies.map((m) => ({ ...m, _trend_score: trendMap.get(m.slug) || 0 }));
     status.textContent = error ? "Catalog temporarily unavailable" : `${movies.length} published titles \u2022 live Supabase catalog`;
     statPublished.textContent = String(movies.length);
     statTrailers.textContent = String(movies.filter((m) => m.trailer_verified && m.trailer_url).length);
@@ -266,7 +269,7 @@ function init() {
     document.querySelectorAll("[data-new-see],[data-new-all]").forEach((el) => el.onclick = () => showCollection("new"));
   }
   function renderTop() {
-    const list = [...movies].sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.release_year) || 0) - (Number(a.release_year) || 0)).slice(0, 10);
+    const list = [...movies].sort((a, b) => (Number(b._trend_score) || 0) - (Number(a._trend_score) || 0) || (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.release_year) || 0) - (Number(a.release_year) || 0)).slice(0, 10);
     topGrid.innerHTML = list.map((m, i) => card(m).replace("class='card'", `class='card top-card' data-rank='${i + 1}'`)).join("");
     wire(topGrid);
     document.querySelectorAll("[data-top-all]").forEach((el) => el.onclick = () => showCollection("top"));
