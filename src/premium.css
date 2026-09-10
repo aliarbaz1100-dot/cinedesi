@@ -570,3 +570,55 @@ footer{background:#070708;border-top:1px solid rgba(255,255,255,.08)}
   .grid.rail,#verified-grid{grid-auto-columns:30.5vw!important}
   #grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 }
+
+/* Final clean streaming refinement */
+@media(max-width:760px){
+  .catalog-header .logo:after{content:""!important}
+  .catalog-header{border-bottom:1px solid rgba(255,255,255,.035)!important}
+  .browse-strip{border-bottom:1px solid rgba(255,255,255,.035)!important}
+  .streaming-hero{margin-top:10px!important;margin-bottom:16px!important}
+  .hero-actions .secondary{background:#242529!important}
+  .section{border-top:0!important}
+  .section-head h2{font-weight:820!important}
+  .rail-block{margin-top:14px!important}
+  .grid.rail,#verified-grid{
+    scroll-snap-type:x mandatory!important;
+    overscroll-behavior-inline:contain!important;
+    -webkit-overflow-scrolling:touch!important
+  }
+  .grid.rail .card .info,#verified-grid .card .info{min-height:28px!important}
+  .grid.rail .info h3,#verified-grid .info h3{
+    color:#ededf0!important;
+    font-weight:680!important
+  }
+  .see-all-card{
+    background:linear-gradient(180deg,#17181b,#0b0b0d)!important;
+    border-color:rgba(255,255,255,.075)!important
+  }
+  .search-suggestions{
+    left:0!important;right:0!important;top:58px!important;width:100vw!important;max-height:calc(100dvh - 58px)!important;
+    border:0!important;border-radius:0!important;background:#080809!important
+  }
+  .search-result-card{
+    min-height:68px!important;border-radius:8px!important;background:#111216!important
+  }
+  .mobile-bottom-nav{
+    grid-template-columns:repeat(4,1fr)!important;
+  }
+  .mobile-bottom-nav a,.mobile-bottom-nav button{
+    border-radius:14px!important
+  }
+  .mobile-bottom-nav a:active,.mobile-bottom-nav button:active{
+    background:rgba(255,255,255,.06)!important
+  }
+}
+@media(min-width:761px){
+  .section{padding-top:24px!important;padding-bottom:34px!important}
+  .section-head{margin-bottom:10px!important}
+  .grid.rail,#verified-grid{gap:9px!important}
+  .card .info{opacity:.92;transition:opacity .18s ease}
+  .card:hover .info{opacity:1}
+  .browse-strip{scrollbar-width:none}
+  .browse-strip::-webkit-scrollbar{display:none}
+  .movie-copy .source-card{max-width:720px}
+}
