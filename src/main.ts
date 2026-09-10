@@ -114,7 +114,7 @@ function init() {
     node.textContent = JSON.stringify({ "@context": "https://schema.org", "@type": "ItemList", numberOfItems: movies.length, itemListElement: movies.slice(0, 100).map((m, i) => ({ "@type": "ListItem", position: i + 1, url: `https://cinedesi.online/movie?slug=${encodeURIComponent(m.slug)}`, name: m.title })) });
   }
   async function load() {
-    const selectColumns = "id,slug,title,region,genre,release_year,score,trailer_url,trailer_source,trailer_verified,watch_url,watch_verified,full_video_url,full_video_embed_url,full_video_verified,full_video_source,full_video_label,full_video_language,content_type,season_count,episode_count,original_language,availability_note,cast_names,poster_url,poster_source_url,poster_license,poster_attribution,rights_status,rights_checked_at,source_name,source_url,source_license";
+    const selectColumns = "id,slug,title,region,genre,release_year,score,trailer_url,trailer_source,trailer_verified,watch_url,watch_verified,full_video_url,full_video_embed_url,full_video_verified,full_video_source,full_video_label,full_video_language,content_type,season_count,episode_count,original_language,availability_note,cast_names,poster_url,poster_source_url,poster_license,poster_attribution,rights_status,rights_checked_at,source_name,source_url,source_license,created_at,updated_at";
     let data = [];
     let error = null;
     for (let start = 0; ; start += 1e3) {
@@ -259,7 +259,7 @@ function init() {
     const currentYear = new Date().getFullYear();
     const all = [...movies]
       .filter((m) => Number(m.release_year) >= currentYear - 1)
-      .sort((a, b) => (Number(b.release_year) || 0) - (Number(a.release_year) || 0) || (Number(b.score) || 0) - (Number(a.score) || 0));
+      .sort((a, b) => (Number(b.release_year) || 0) - (Number(a.release_year) || 0) || String(b.created_at || "").localeCompare(String(a.created_at || "")) || (Number(b.score) || 0) - (Number(a.score) || 0));
     const list = all.slice(0, 12);
     newGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 12 ? `<a class='see-all-card' href='#discover' data-new-see='true'><span>See all new releases</span><strong>→</strong></a>` : "") : `<div class='empty'>New releases are being prepared.</div>`;
     wire(newGrid);
