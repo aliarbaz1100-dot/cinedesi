@@ -92,7 +92,7 @@ function init() {
   let activeCollectionValue = "";
   let saved = JSON.parse(localStorage.getItem("cinedesi-watchlist") || "[]");
   const q = (s) => document.querySelector(s);
-  const search = q("#search"), suggestions = q("#search-suggestions"), searchClose = q("#search-close"), menuToggle = q("#menu-toggle"), catalogHeader = q(".catalog-header"), quickBrowse = q("#quick-browse"), region = q("#region"), availability = q("#availability"), sort = q("#sort"), grid = q("#grid"), loadMore = q("#load-more"), heroShowcase = q("#hero-showcase"), heroTitle = q("#hero-title"), heroMeta = q("#hero-meta"), heroLead = q("#hero-lead"), heroPlay = q("#hero-play"), heroInfo = q("#hero-info"), heroList = q("#hero-list"), topGrid = q("#top-grid"), verifiedGrid = q("#verified-grid"), watchNowGrid = q("#watch-now-grid"), watchGrid = q("#watch-grid"), pakistanGrid = q("#pakistan-grid"), bollywoodGrid = q("#bollywood-grid"), southGrid = q("#south-grid"), seriesGrid = q("#series-grid"), contentType = q("#content-type"), discoverTitle = q("#discover-title"), genreRails = q("#genre-rails"), genreChips = q("#genre-chips"), status = q("#status"), modal = q("#modal"), count = q("#watch-count"), newsletter = q("#newsletter-form"), newsletterMsg = q("#newsletter-msg"), statPublished = q("#stat-published"), statTrailers = q("#stat-trailers"), statWatch = q("#stat-watch"), statRegions = q("#stat-regions");
+  const search = q("#search"), suggestions = q("#search-suggestions"), searchClose = q("#search-close"), menuToggle = q("#menu-toggle"), catalogHeader = q(".catalog-header"), quickBrowse = q("#quick-browse"), region = q("#region"), availability = q("#availability"), sort = q("#sort"), grid = q("#grid"), loadMore = q("#load-more"), heroShowcase = q("#hero-showcase"), heroTitle = q("#hero-title"), heroMeta = q("#hero-meta"), heroLead = q("#hero-lead"), heroPlay = q("#hero-play"), heroInfo = q("#hero-info"), heroList = q("#hero-list"), topGrid = q("#top-grid"), newGrid = q("#new-grid"), verifiedGrid = q("#verified-grid"), watchNowGrid = q("#watch-now-grid"), watchGrid = q("#watch-grid"), pakistanGrid = q("#pakistan-grid"), bollywoodGrid = q("#bollywood-grid"), southGrid = q("#south-grid"), seriesGrid = q("#series-grid"), contentType = q("#content-type"), discoverTitle = q("#discover-title"), genreRails = q("#genre-rails"), genreChips = q("#genre-chips"), status = q("#status"), modal = q("#modal"), count = q("#watch-count"), newsletter = q("#newsletter-form"), newsletterMsg = q("#newsletter-msg"), statPublished = q("#stat-published"), statTrailers = q("#stat-trailers"), statWatch = q("#stat-watch"), statRegions = q("#stat-regions");
   function persist() {
     localStorage.setItem("cinedesi-watchlist", JSON.stringify(saved));
     renderWatchlist();
@@ -139,6 +139,7 @@ function init() {
     updateSchema();
     render();
     renderTop();
+    renderNew();
     renderWatchNow();
     renderVerified();
     renderSeries();
@@ -195,13 +196,16 @@ function init() {
       label = "All verified picks";
     } else if (kind === "top") {
       label = "Top titles on CineDesi";
+    } else if (kind === "new") {
+      sort.value = "newest";
+      label = "New & trending releases";
     }
     discoverTitle.textContent = label;
     render();
     q("#discover").scrollIntoView({ behavior: "smooth", block: "start" });
   }
   function renderSeries() {
-    const all = movies.filter((m) => m.content_type === "series"), list = all.slice(0, 8);
+    const all = movies.filter((m) => m.content_type === "series").sort((a, b) => (Number(b.release_year) || 0) - (Number(a.release_year) || 0) || (Number(b.score) || 0) - (Number(a.score) || 0)), list = all.slice(0, 8);
     seriesGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover' data-series-see='true'><span>See all series</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>Verified series are being prepared.</div>`;
     wire(seriesGrid);
     document.querySelectorAll("[data-series-see],[data-series-all]").forEach((el) => el.onclick = () => showCollection("series"));
@@ -249,6 +253,17 @@ function init() {
     verifiedGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover'><span>See all verified</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>Verified picks are being prepared.</div>`;
     wire(verifiedGrid);
     document.querySelectorAll("[data-verified-all]").forEach((el) => el.onclick = () => showCollection("verified"));
+  }
+  function renderNew() {
+    if (!newGrid) return;
+    const currentYear = new Date().getFullYear();
+    const all = [...movies]
+      .filter((m) => Number(m.release_year) >= currentYear - 1)
+      .sort((a, b) => (Number(b.release_year) || 0) - (Number(a.release_year) || 0) || (Number(b.score) || 0) - (Number(a.score) || 0));
+    const list = all.slice(0, 12);
+    newGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 12 ? `<a class='see-all-card' href='#discover' data-new-see='true'><span>See all new releases</span><strong>→</strong></a>` : "") : `<div class='empty'>New releases are being prepared.</div>`;
+    wire(newGrid);
+    document.querySelectorAll("[data-new-see],[data-new-all]").forEach((el) => el.onclick = () => showCollection("new"));
   }
   function renderTop() {
     const list = [...movies].sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.release_year) || 0) - (Number(a.release_year) || 0)).slice(0, 10);
@@ -303,7 +318,7 @@ function init() {
   function render() {
     const term = search.value.trim().toLowerCase(), r = region.value, a = availability.value, s = sort.value, t = contentType.value;
     const south = (v) => ["South", "South Indian", "India / South Indian"].includes(String(v));
-    const list = movies.filter((m) => (activeCollection !== "verified" || (m.rights_status === "official_link" || m.rights_status === "cleared")) && (activeCollection !== "genre" || genreMatch(m, activeCollectionValue)) && (t === "all" || m.content_type === t) && (r === "All" || m.region === r || r === "South" && south(m.region)) && (a === "all" || a === "watch" && m.watch_verified && m.watch_url || a === "trailer" && m.trailer_verified && m.trailer_url || a === "cinedesi" && m.full_video_verified && m.full_video_embed_url) && searchText(m).includes(term)).sort((x, y) => activeCollection === "top" ? (Number(y.score) || 0) - (Number(x.score) || 0) || (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : s === "title" ? String(x.title).localeCompare(String(y.title)) : s === "newest" ? (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : 0), shown = list.slice(0, visibleLimit);
+    const list = movies.filter((m) => (activeCollection !== "new" || Number(m.release_year) >= new Date().getFullYear() - 1) && (activeCollection !== "verified" || (m.rights_status === "official_link" || m.rights_status === "cleared")) && (activeCollection !== "genre" || genreMatch(m, activeCollectionValue)) && (t === "all" || m.content_type === t) && (r === "All" || m.region === r || r === "South" && south(m.region)) && (a === "all" || a === "watch" && m.watch_verified && m.watch_url || a === "trailer" && m.trailer_verified && m.trailer_url || a === "cinedesi" && m.full_video_verified && m.full_video_embed_url) && searchText(m).includes(term)).sort((x, y) => activeCollection === "top" ? (Number(y.score) || 0) - (Number(x.score) || 0) || (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : s === "title" ? String(x.title).localeCompare(String(y.title)) : s === "newest" ? (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : 0), shown = list.slice(0, visibleLimit);
     grid.innerHTML = shown.length ? shown.map((m) => card(m)).join("") : `<div class='empty'>No published titles match these filters yet.</div>`;
     status.textContent = list.length ? `Showing ${shown.length} of ${list.length} matching titles` : "No matching published titles";
     loadMore.hidden = shown.length >= list.length;
