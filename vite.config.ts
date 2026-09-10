@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const staticFiles=['manifest.webmanifest','sw.js','robots.txt','ads.txt','sitemap.xml','cinedesi-icon.svg','cinedesi-maskable.svg'];
+const staticFiles=['manifest.webmanifest','sw.js','robots.txt','ads.txt','sitemap.xml','cinedesi-icon.svg','cinedesi-maskable.svg','tamasha-season-5.svg'];
 
 export default defineConfig({
     base: './',
