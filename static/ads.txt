@@ -1,0 +1,3 @@
+# CineDesi currently has no authorized programmatic advertising seller.
+# Add the approved Google AdSense seller record here only after the publisher ID is confirmed.
+

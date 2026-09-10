@@ -24,17 +24,17 @@ Steps:
 
 Expected: Each action scrolls to More to explore, shows the selected collection name, resets conflicting filters, and displays only titles matching that collection.
 
-## Test 3 - Guide and launch installed CineDesi safely
+## Test 3 - Launch installed CineDesi safely
 Viewport: mobile
-Covers: deterministic pre-body iPhone app-mode detection, readable CineDesi splash, guided installation, native startup artwork and cached PWA launch
+Covers: iPhone native startup artwork, iOS standalone detection, readable branded splash, cached app-shell launch, service-worker cache upgrade
 Description: Verifies a home-screen installation opens CineDesi rather than an AccessDenied response.
 
 Steps:
-1. Open CineDesi in Safari, wait for the install banner, then tap Install and follow the visible Share, Add to Home Screen, and Add instructions
-2. Add CineDesi to the Home Screen, close Safari, and launch the icon
+1. Install CineDesi from its public homepage
+2. Close the browser and launch CineDesi from the home-screen icon
 3. Navigate to a title and reopen the app
 
-Expected: An opaque branded startup image replaces the native black frame on the supported iPhone; the CINE/DESI logo is visible immediately without a blank fade, remains readable briefly, then transitions smoothly to the cached homepage.
+Expected: On the supported iPhone launch viewport, branded CineDesi startup artwork replaces the blank native black frame; CINE/DESI with “Powered by Arbaz Ali” then remains readable before a smooth homepage transition. Failed or offline navigation uses the cached shell and never displays AccessDenied.
 
 ## Test 4 - Keep playback rights truthful
 Viewport: desktop
