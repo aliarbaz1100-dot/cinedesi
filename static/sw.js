@@ -1,4 +1,4 @@
-const CACHE = "cinedesi-shell-v7";
+const CACHE = "cinedesi-shell-v8";
 const SHELL = [
   "./",
   "./cinedesi-icon.svg",
@@ -24,18 +24,7 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   if (e.request.mode === "navigate") {
-    e.respondWith(
-      fetch(e.request)
-        .then((r) => {
-          if (!r.ok) throw new Error("navigation_failed");
-          const copy = r.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copy));
-          return r;
-        })
-        .catch(() =>
-          caches.match(e.request).then((c) => c || caches.match("./")),
-        ),
-    );
+    e.respondWith(fetch(e.request).catch(() => caches.match("./")));
     return;
   }
   e.respondWith(
