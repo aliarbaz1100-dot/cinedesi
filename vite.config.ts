@@ -8,6 +8,12 @@ export default defineConfig({
     base: './',
     plugins:[{
         name:'cinedesi-static-assets',
+        transformIndexHtml(html,ctx){
+            const file=ctx?.filename||'';
+            if(file.endsWith('movie.html')) return {html,tags:[{tag:'script',attrs:{type:'module',src:'./src/movie-enhancements.ts'},injectTo:'body'}]};
+            if(file.endsWith('index.html')) return {html,tags:[{tag:'script',attrs:{type:'module',src:'./src/enhancements.ts'},injectTo:'body'}]};
+            return html;
+        },
         closeBundle(){
             const outDir=resolve(process.cwd(),process.env.APPDEPLOY_VITE_OUT_DIR||'dist');
             if(!existsSync(outDir)) mkdirSync(outDir,{recursive:true});
