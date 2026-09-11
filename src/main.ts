@@ -323,21 +323,58 @@ function init() {
     document.querySelectorAll("[data-top-all]").forEach((el) => el.onclick = () => showCollection("top"));
   }
   function renderHero() {
-    const m = movies.find((x) => x.full_video_verified && x.full_video_embed_url) || movies[0];
-    if (!m) return;
-    const url = `/movie?slug=${encodeURIComponent(m.slug)}`;
-    heroTitle.textContent = m.title;
-    heroMeta.textContent = `${m.release_year || "Featured"} \u2022 ${m.genre || m.content_type || "Cinema"}${m.original_language ? ` \u2022 ${m.original_language}` : ""}`;
-    heroLead.textContent = String(m.synopsis || m.editorial || "Open this verified CineDesi title for official trailers and legal viewing information.").slice(0, 190);
-    heroPlay.href = url + (m.full_video_verified ? "#watch" : "");
-    heroPlay.textContent = m.full_video_verified ? "\u25B6 Play" : "\u25B6 Trailer";
-    heroInfo.href = url;
-    heroList.textContent = saved.includes(m.id) ? "\u2713 In My List" : "\uFF0B My List";
-    heroList.onclick = () => {
-      toggle(m.id);
-      heroList.textContent = saved.includes(m.id) ? "\u2713 In My List" : "\uFF0B My List";
+    const preferred = [
+      "drishyam-the-conclusion-2026",
+      "lust-stories-3-2026",
+      "the-gentlemen-series",
+      "stranger-things-tales-from-85",
+      "stranger-things-series",
+      "the-umbrella-academy-series",
+      "lockwood-and-co-series",
+      "dhamaal-4-2026",
+      "dhoom-dhaam-2025",
+      "wednesday-series-2022",
+      "one-piece-live-action-japan-cinedesi"
+    ];
+    const heroPool = preferred.map((slug) => movies.find((x) => x.slug === slug)).filter((m) => m && m.poster_url && (licensedPoster(m) || m._cover_kind === "youtube"));
+    if (!heroPool.length) {
+      heroPool.push(...movies.filter((m) => m.poster_url && (licensedPoster(m) || m._cover_kind === "youtube")).sort((a,b) => (Number(b.release_year)||0)-(Number(a.release_year)||0)).slice(0,8));
+    }
+    if (!heroPool.length) return;
+    let heroIndex = 0;
+    const paintHero = () => {
+      const m = heroPool[heroIndex % heroPool.length];
+      const url = `/movie?slug=${encodeURIComponent(m.slug)}`;
+      heroTitle.textContent = m.title;
+      heroMeta.textContent = `${m.release_year || "Featured"} • ${m.content_type === "series" ? (m.season_count ? `${m.season_count} Season${Number(m.season_count) === 1 ? "" : "s"}` : "Series") : (m.genre || "Movie")}${m.original_language ? ` • ${m.original_language}` : ""}`;
+      heroLead.textContent = String(m.synopsis || m.editorial || "Open this verified CineDesi title for official trailers and legal viewing information.").slice(0, 190);
+      heroPlay.href = url + (m.full_video_verified ? "#watch" : "");
+      heroPlay.textContent = m.full_video_verified ? "▶ Play" : m.trailer_verified ? "▶ Trailer" : "▶ Details";
+      heroInfo.href = url;
+      heroList.textContent = saved.includes(m.id) ? "✓ In My List" : "＋ My List";
+      heroList.onclick = () => {
+        toggle(m.id);
+        heroList.textContent = saved.includes(m.id) ? "✓ In My List" : "＋ My List";
+      };
+      const badge = m.full_video_verified ? "WATCH ON CINEDESI" : m.watch_verified ? "LEGAL WATCH VERIFIED" : "OFFICIAL TRAILER";
+      const eyebrow = q("#hero-eyebrow");
+      if (eyebrow) eyebrow.textContent = `TRENDING NOW • ${badge}`;
+      const shown = Math.min(heroPool.length, 7);
+      heroShowcase.innerHTML = `<a class='hero-feature hero-feature-live' href='${url}' style="background-image:url('${esc(m.poster_url)}')" aria-label='Open ${esc(m.title)}'></a><div class='hero-dots' aria-label='Featured titles'>${heroPool.slice(0,shown).map((_,i)=>`<button type='button' class='${i === heroIndex % shown ? "active" : ""}' data-hero-dot='${i}' aria-label='Featured title ${i+1}'></button>`).join("")}</div>`;
+      heroShowcase.querySelectorAll("[data-hero-dot]").forEach((el) => el.onclick = (e) => {
+        e.preventDefault();
+        heroIndex = Number(el.dataset.heroDot || 0);
+        paintHero();
+      });
     };
-    heroShowcase.innerHTML = `<a class='hero-feature' href='${url}' style="background-image:url('${esc(m.poster_url)}')" aria-label='Open ${esc(m.title)}'></a>`;
+    paintHero();
+    if (heroPool.length > 1) {
+      window.clearInterval(window.__cinedesiHeroTimer);
+      window.__cinedesiHeroTimer = window.setInterval(() => {
+        heroIndex = (heroIndex + 1) % Math.min(heroPool.length, 7);
+        paintHero();
+      }, 7000);
+    }
   }
   function searchText(m) {
     return `${m.title || ""} ${m.genre || ""} ${m.region || ""} ${m.content_type || ""} ${m.original_language || ""} ${m.cast_names || ""} ${m.release_year || ""} ${m.synopsis || ""} ${m.editorial || ""} ${m.source_name || ""} ${m.attribution_text || ""}`.toLowerCase();
