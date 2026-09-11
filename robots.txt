@@ -1,7 +1,11 @@
-User-agent: GSCWizard-Bot
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
 Allow: /
 
 User-agent: *
 Allow: /
 Disallow: /admin.html
+
 Sitemap: https://cinedesi.online/sitemap.xml
