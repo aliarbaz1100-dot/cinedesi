@@ -338,9 +338,9 @@ function init() {
       "wednesday-series-2022",
       "one-piece-live-action-japan-cinedesi"
     ];
-    const heroPool = preferred.map((slug) => movies.find((x) => x.slug === slug)).filter((m) => m && m.poster_url && (licensedPoster(m) || m._cover_kind === "youtube"));
+    const heroPool = preferred.map((slug) => movies.find((x) => x.slug === slug)).filter((m) => m && !m.full_video_verified && m.poster_url && (licensedPoster(m) || m._cover_kind === "youtube"));
     if (!heroPool.length) {
-      heroPool.push(...movies.filter((m) => m.poster_url && (licensedPoster(m) || m._cover_kind === "youtube")).sort((a,b) => (Number(b.release_year)||0)-(Number(a.release_year)||0)).slice(0,8));
+      heroPool.push(...movies.filter((m) => !m.full_video_verified && Number(m.release_year) >= new Date().getFullYear() - 1 && m.poster_url && (licensedPoster(m) || m._cover_kind === "youtube")).sort((a,b) => (Number(b.release_year)||0)-(Number(a.release_year)||0)).slice(0,8));
     }
     if (!heroPool.length) return;
     let heroIndex = 0;
