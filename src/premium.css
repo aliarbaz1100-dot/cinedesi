@@ -68,11 +68,10 @@ header .search-shell input:focus{
 .hero-showcase .hero-poster:not(:first-child){display:none!important}
 .streaming-hero:before{
   content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
-  background:linear-gradient(90deg,#050505 0%,rgba(5,5,5,.92) 30%,rgba(5,5,5,.48) 58%,transparent 79%),
-             linear-gradient(0deg,#050505 0%,transparent 44%)
+  background:linear-gradient(0deg,rgba(5,5,5,.55) 0%,rgba(5,5,5,.18) 24%,transparent 48%)!important
 }
 .streaming-hero:after{
-  content:"";position:absolute;left:0;right:0;bottom:-1px;height:130px;z-index:2;
+  content:"";position:absolute;left:0;right:0;bottom:-1px;height:52px;z-index:2;
   background:linear-gradient(0deg,#050505,transparent);pointer-events:none
 }
 .hero-content{position:relative;z-index:3;width:min(660px,58vw)}
@@ -224,10 +223,9 @@ footer{background:#070708;border-top:1px solid rgba(255,255,255,.08)}
     background-position:center 20%!important;filter:saturate(.92) contrast(1.05) brightness(.92)!important
   }
   .streaming-hero:before{
-    background:linear-gradient(0deg,#050505 2%,rgba(5,5,5,.94) 24%,rgba(5,5,5,.24) 62%,rgba(5,5,5,.10) 100%),
-               linear-gradient(90deg,rgba(5,5,5,.42),transparent 70%)!important
+    background:linear-gradient(0deg,rgba(5,5,5,.52) 0%,rgba(5,5,5,.14) 22%,transparent 46%)!important
   }
-  .streaming-hero:after{height:80px}
+  .streaming-hero:after{height:34px}
   .hero-content{width:100%!important}
   .hero-content small{font-size:9px!important}
   .hero-content small:before{width:20px;height:2px;margin-right:7px}
@@ -360,7 +358,7 @@ footer{background:#070708;border-top:1px solid rgba(255,255,255,.08)}
   }
   .streaming-hero:before{
     z-index:1!important;
-    background:linear-gradient(0deg,#0a0a0b 0%,rgba(10,10,11,.92) 22%,rgba(10,10,11,.18) 56%,transparent 74%)!important
+    background:linear-gradient(0deg,rgba(10,10,11,.48) 0%,rgba(10,10,11,.12) 20%,transparent 44%)!important
   }
   .streaming-hero:after{display:none!important}
   .hero-content{
@@ -633,4 +631,10 @@ footer{background:#070708;border-top:1px solid rgba(255,255,255,.08)}
   .hero-dots{left:50%;bottom:11px;transform:translateX(-50%);gap:5px}
   .hero-dots button{width:14px;height:2px}
   .hero-dots button.active{width:22px}
+}
+
+/* Keep hero artwork bright and clear */
+.streaming-hero .hero-feature-live,
+.streaming-hero .hero-feature{
+  filter:saturate(1) contrast(1.02) brightness(1)!important;
 }
