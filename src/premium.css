@@ -634,3 +634,25 @@ footer{background:#070708;border-top:1px solid rgba(255,255,255,.08)}
   .hero-dots button{width:14px;height:2px}
   .hero-dots button.active{width:22px}
 }
+
+/* Ensure catalog artwork fills portrait cards cleanly */
+.card .poster{
+  position:relative!important;
+  overflow:hidden!important;
+  padding:0!important;
+}
+.card .poster>img{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  max-height:none!important;
+  object-fit:cover!important;
+  object-position:center!important;
+  display:block!important;
+  z-index:0!important;
+}
+.card .poster:after{z-index:1!important;pointer-events:none!important}
+.card .poster .poster-region,
+.card .poster .poster-ribbon{z-index:3!important}
