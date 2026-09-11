@@ -1,0 +1,10 @@
+/* CineDesi premium UI polish — additive visual overrides */
+.card .info h3{min-height:2.5em;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:ellipsis}
+.card .badges .badge:nth-child(n+3){display:none}
+.grid.rail,.rail{scroll-behavior:smooth;overscroll-behavior-inline:contain}
+.card .poster>img{background:#111;transition:filter .2s ease,transform .2s ease}
+.card:hover .poster>img{transform:scale(1.015)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #fff!important;outline-offset:3px!important}
+@media(hover:none),(pointer:coarse){.card:hover{transform:none!important}.card:hover .poster>img{transform:none}}
+@media(max-width:760px){.card .info h3{font-size:12px;line-height:1.3;min-height:2.6em}.card .info{padding-top:7px!important}.badges{margin-top:5px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
