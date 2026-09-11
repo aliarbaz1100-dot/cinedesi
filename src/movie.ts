@@ -1,6 +1,5 @@
 import "./styles.css";
 import { tamashaSeason5Episodes } from "./tamashaSeason5";
-import { aspirantsSeason1Episodes } from "./aspirantsSeason1";
 const URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co", KEY = "sb_publishable_ZEAZWO-Q-_rvMsy6krr_nw_JDRmP_kI";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const xml = (s) => String(s ?? "").replace(/[&<>\"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -52,7 +51,7 @@ async function load() {
   m._cover_kind = m.poster_url ? "poster" : thumb ? "youtube" : "original";
   if (!m.poster_url) m.poster_url = thumb || posterArt(m);
   track("movie_view");
-  const [{ data: providers }, { data: related }] = await Promise.all([db.from("watch_sources").select("provider_name,destination_url,access_type,country_code,language,dub_language,subtitle_language,verified_at").eq("movie_id", m.id).eq("verification_status", "verified").order("provider_name").limit(8), db.from("movies").select("slug,title,region,genre,release_year").eq("status", "published").eq("region", m.region).neq("id", m.id).limit(6)]);
+  const [{ data: providers }, { data: related }, { data: dbEpisodes }] = await Promise.all([db.from("watch_sources").select("provider_name,destination_url,access_type,country_code,language,dub_language,subtitle_language,verified_at").eq("movie_id", m.id).eq("verification_status", "verified").order("provider_name").limit(8), db.from("movies").select("slug,title,region,genre,release_year").eq("status", "published").eq("region", m.region).neq("id", m.id).limit(6), db.from("series_episodes").select("season_number,episode_number,title,video_id,source_name").eq("movie_id", m.id).eq("verified", true).order("season_number").order("episode_number")]);
   document.title = m.seo_title || `${m.title} | CineDesi`;
   const desc = document.querySelector("meta[name=description]");
   if (desc) desc.content = m.seo_description || m.synopsis || "CineDesi movie details";
@@ -106,7 +105,7 @@ async function load() {
   const watch = m.watch_verified && m.watch_url ? `<a id='watch-link' class='btn secondary' target='_blank' rel='noopener' href='${esc(m.watch_url)}'>Where to watch legally</a>` : ``;
   const checked = m.rights_checked_at ? new Date(m.rights_checked_at).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" }) : "Not recorded";
   const seasonNumber = String(m.title || "").match(/season\s*(\d+)/i)?.[1] || (Number(m.season_count) === 1 ? "1" : "");
-  const episodeItems = m.slug === "tamasha-season-5" ? tamashaSeason5Episodes : m.slug === "tvf-aspirants-season-1" ? aspirantsSeason1Episodes : [];
+  const episodeItems = (dbEpisodes || []).length ? (dbEpisodes || []).map((e) => ({ id: e.video_id, title: `S${e.season_number}E${e.episode_number} · ${e.title}`, season_number: e.season_number, episode_number: e.episode_number })) : m.slug === "tamasha-season-5" ? tamashaSeason5Episodes : [];
   const episodeLabel = (title, position) => {
     const launch = title.match(/LAUNCH EPISODE.*PART\s*(\d+)/i);
     if (launch) return `Launch Episode · Part ${launch[1]}`;
