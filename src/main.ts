@@ -324,6 +324,8 @@ function init() {
   }
   function renderHero() {
     const preferred = [
+      "crew-girl-2026",
+      "why-did-i-get-married-again-2026",
       "drishyam-the-conclusion-2026",
       "lust-stories-3-2026",
       "the-gentlemen-series",
