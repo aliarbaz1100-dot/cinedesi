@@ -622,3 +622,15 @@ footer{background:#070708;border-top:1px solid rgba(255,255,255,.08)}
   .browse-strip::-webkit-scrollbar{display:none}
   .movie-copy .source-card{max-width:720px}
 }
+
+/* Rotating trending hero */
+.hero-showcase{position:absolute;inset:0;overflow:hidden}
+.hero-feature-live{position:absolute;inset:0;background-size:cover;background-position:center 20%;transition:opacity .5s ease,transform 7s ease;transform:scale(1.015)}
+.hero-dots{position:absolute;z-index:4;left:4.5%;bottom:22px;display:flex;gap:6px;align-items:center}
+.hero-dots button{width:20px;height:3px;padding:0;border:0;border-radius:3px;background:rgba(255,255,255,.32);cursor:pointer}
+.hero-dots button.active{background:#fff;width:30px}
+@media(max-width:760px){
+  .hero-dots{left:50%;bottom:11px;transform:translateX(-50%);gap:5px}
+  .hero-dots button{width:14px;height:2px}
+  .hero-dots button.active{width:22px}
+}
