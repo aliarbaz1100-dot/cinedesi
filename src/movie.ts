@@ -154,8 +154,21 @@ async function load() {
   });
   try {
     const recent = JSON.parse(localStorage.getItem("cinedesi_recent") || "[]").filter((x) => x.slug !== m.slug);
-    recent.unshift({ slug: m.slug, title: m.title, region: m.region });
+    recent.unshift({ slug: m.slug, title: m.title, region: m.region, genre: m.genre, viewed_at: Date.now() });
     localStorage.setItem("cinedesi_recent", JSON.stringify(recent.slice(0, 12)));
+
+    const markContinue = () => {
+      if (!(m.full_video_verified && m.full_video_embed_url)) return;
+      const list = JSON.parse(localStorage.getItem("cinedesi_continue") || "[]").filter((x) => x.slug !== m.slug);
+      list.unshift({ slug: m.slug, title: m.title, region: m.region, genre: m.genre, updated_at: Date.now() });
+      localStorage.setItem("cinedesi_continue", JSON.stringify(list.slice(0, 12)));
+    };
+
+    if (location.hash === "#watch") markContinue();
+    document.querySelector("#official-player")?.addEventListener("load", () => {
+      if (location.hash === "#watch") markContinue();
+    });
+    document.querySelectorAll("[data-episode]").forEach((el) => el.addEventListener("click", markContinue));
   } catch {
   }
 }
