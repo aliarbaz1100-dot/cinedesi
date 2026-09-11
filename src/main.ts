@@ -324,6 +324,7 @@ function init() {
   }
   function renderHero() {
     const preferred = [
+      "pride-and-prejudice-2026-series",
       "crew-girl-2026",
       "why-did-i-get-married-again-2026",
       "drishyam-the-conclusion-2026",
