@@ -325,25 +325,34 @@ function init() {
   }
   function renderHero() {
     const preferred = [
-      "pride-and-prejudice-2026-series",
-      "crew-girl-2026",
-      "why-did-i-get-married-again-2026",
-      "drishyam-the-conclusion-2026",
-      "lust-stories-3-2026",
-      "the-gentlemen-series",
       "stranger-things-tales-from-85",
-      "stranger-things-series",
+      "monster-the-lizzie-borden-story-2026",
+      "avatar-the-last-airbender-season-2-2026",
+      "enola-holmes-3-2026",
+      "mardaani-3-2026",
+      "bhooth-bangla-2026",
+      "i-will-find-you-2026",
+      "mirzapur-the-movie-2026",
+      "awarapan-2-2026-official",
+      "outer-banks-season-5-2026",
+      "the-gentlemen-series",
+      "dhamaal-4-2026",
+      "wednesday-series-2022",
       "the-umbrella-academy-series",
       "lockwood-and-co-series",
-      "dhamaal-4-2026",
-      "dhoom-dhaam-2025",
-      "wednesday-series-2022",
       "one-piece-live-action-japan-cinedesi"
     ];
-    const heroPool = preferred.map((slug) => movies.find((x) => x.slug === slug)).filter((m) => m && !m.full_video_verified && m.poster_url && (licensedPoster(m) || m._cover_kind === "youtube"));
-    if (!heroPool.length) {
-      heroPool.push(...movies.filter((m) => !m.full_video_verified && Number(m.release_year) >= new Date().getFullYear() - 1 && m.poster_url && (licensedPoster(m) || m._cover_kind === "youtube")).sort((a,b) => (Number(b.release_year)||0)-(Number(a.release_year)||0)).slice(0,8));
-    }
+    const eligibleHero = (m) => Boolean(m && m.poster_url && (licensedPoster(m) || m._cover_kind === "youtube"));
+    const curated = preferred.map((slug) => movies.find((x) => x.slug === slug)).filter(eligibleHero);
+    const liveTrending = [...movies]
+      .filter((m) => eligibleHero(m) && Number(m.release_year || 0) >= new Date().getFullYear() - 1)
+      .sort((a, b) => (Number(b._trend_score) || 0) - (Number(a._trend_score) || 0) || (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.release_year) || 0) - (Number(a.release_year) || 0));
+    const seenHero = new Set();
+    const heroPool = [...curated, ...liveTrending].filter((m) => {
+      if (!m || seenHero.has(m.id)) return false;
+      seenHero.add(m.id);
+      return true;
+    }).slice(0, 14);
     if (!heroPool.length) return;
     let heroIndex = 0;
     const paintHero = () => {
@@ -361,9 +370,13 @@ function init() {
         heroList.textContent = saved.includes(m.id) ? "✓ In My List" : "＋ My List";
       };
       const badge = m.full_video_verified ? "WATCH ON CINEDESI" : m.watch_verified ? "LEGAL WATCH VERIFIED" : "OFFICIAL TRAILER";
+      const note = String(m.availability_note || "");
+      const isUpcoming = /\b(?:premieres|coming|scheduled|arrives)\b/i.test(note) && !/\bpremiered\b/i.test(note);
+      const isLiveTrending = Number(m._trend_score || 0) > 0;
+      const heroState = isUpcoming ? "UPCOMING" : isLiveTrending ? "TRENDING NOW" : Number(m.release_year || 0) >= new Date().getFullYear() ? "NEW RELEASE" : "FEATURED";
       const eyebrow = q("#hero-eyebrow");
-      if (eyebrow) eyebrow.textContent = `TRENDING NOW • ${badge}`;
-      const shown = Math.min(heroPool.length, 7);
+      if (eyebrow) eyebrow.textContent = `${heroState} • ${badge}`;
+      const shown = Math.min(heroPool.length, 9);
       heroShowcase.innerHTML = `<a class='hero-feature hero-feature-live' href='${url}' style="background-image:url('${esc(m.poster_url)}')" aria-label='Open ${esc(m.title)}'></a><div class='hero-dots' aria-label='Featured titles'>${heroPool.slice(0,shown).map((_,i)=>`<button type='button' class='${i === heroIndex % shown ? "active" : ""}' data-hero-dot='${i}' aria-label='Featured title ${i+1}'></button>`).join("")}</div>`;
       heroShowcase.querySelectorAll("[data-hero-dot]").forEach((el) => el.onclick = (e) => {
         e.preventDefault();
@@ -375,7 +388,7 @@ function init() {
     if (heroPool.length > 1) {
       window.clearInterval(window.__cinedesiHeroTimer);
       window.__cinedesiHeroTimer = window.setInterval(() => {
-        heroIndex = (heroIndex + 1) % Math.min(heroPool.length, 7);
+        heroIndex = (heroIndex + 1) % Math.min(heroPool.length, 9);
         paintHero();
       }, 7000);
     }
