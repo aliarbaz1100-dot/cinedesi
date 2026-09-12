@@ -483,17 +483,19 @@ function init() {
       });
     };
     paintHero();
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const startHeroTimer = () => {
       window.clearInterval(window.__cinedesiHeroTimer);
-      if (heroPool.length <= 1 || reduceMotion || document.hidden) return;
+      if (heroPool.length <= 1 || document.hidden) return;
       window.__cinedesiHeroTimer = window.setInterval(() => {
         heroIndex = (heroIndex + 1) % Math.min(heroPool.length, 9);
         paintHero();
       }, 7000);
     };
     startHeroTimer();
-    document.addEventListener("visibilitychange", startHeroTimer, { passive: true });
+    if (!window.__cinedesiHeroVisibilityBound) {
+      window.__cinedesiHeroVisibilityBound = true;
+      document.addEventListener("visibilitychange", startHeroTimer, { passive: true });
+    }
   }
   function searchText(m) {
     return `${m.title || ""} ${m.genre || ""} ${m.region || ""} ${m.content_type || ""} ${m.original_language || ""} ${m.cast_names || ""} ${m.release_year || ""} ${m.synopsis || ""} ${m.editorial || ""} ${m.source_name || ""} ${m.attribution_text || ""}`.toLowerCase();
