@@ -418,6 +418,7 @@ function init() {
       "kaisi-teri-khudgharzi-full-movie",
       "mayi-ri-full-movie",
       "fraud-full-movie",
+      "taqdeer-series-2022",
       "sar-e-rah-series-2023",
       "jhooti-series-2020",
       "habs-series-2022",
