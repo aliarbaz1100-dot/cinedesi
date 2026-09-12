@@ -513,7 +513,10 @@ function init() {
     modal.innerHTML = `<div class='box'><div class='modal-top'><div><small>${esc(m.region)}</small><h2>${esc(m.title)}</h2></div><button class='close' id='close-modal'>\xD7</button></div><div class='modal-meta'><span>${esc(m.genre || "Film")}</span><span>${esc(m.release_year || "")}</span>${m.score ? `<span>CineDesi score ${esc(m.score)}</span>` : ""}</div><div class='badges'>${m.editorial ? "<span class='badge'>CineDesi editorial</span>" : ""}<span class='badge'>Rights checked</span>${m.trailer_verified ? "<span class='badge'>Official trailer</span>" : ""}${m.watch_verified ? "<span class='badge'>Legal watch</span>" : ""}</div><p class='modal-summary'>${esc(m.editorial || m.synopsis || "CineDesi editorial coming soon.")}</p><div class='actions'>${trailer}${watch}${m.full_video_verified && m.full_video_embed_url ? `<a class='btn' href='/movie?slug=${encodeURIComponent(m.slug)}#watch'>Watch on CineDesi</a>` : ""}<a class='btn secondary' href='/movie?slug=${encodeURIComponent(m.slug)}'>Open full movie page</a><button class='ghost' id='modal-save'>${saved.includes(id) ? "Remove from watchlist" : "Save to watchlist"}</button></div><div class='source-card'><strong>Source transparency</strong><br>Metadata: ${esc(m.source_name || "Verified source")}${m.source_license ? ` \u2022 ${esc(m.source_license)}` : ""}${m.trailer_source ? `<br>Trailer source: ${esc(m.trailer_source)}` : ""}<br>Poster: ${licensedPoster(m) ? esc(m.poster_license) : m._cover_kind === "youtube" ? `Official video thumbnail supplied by ${esc(m.full_video_source || m.trailer_source || "YouTube")}; linked to the verified upload.` : "CineDesi dark original fallback; no third-party poster reused."}</div></div>`;
     modal.classList.add("on");
     modal.setAttribute("aria-hidden", "false");
-    q("#close-modal").addEventListener("click", closeModal);
+    document.body.classList.add("modal-open");
+    const closeButton = q("#close-modal");
+    closeButton.addEventListener("click", closeModal);
+    closeButton.focus({ preventScroll: true });
     q("#modal-save").addEventListener("click", () => {
       toggle(id);
       openMovie(id);
@@ -522,7 +525,14 @@ function init() {
   function closeModal() {
     modal.classList.remove("on");
     modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
   }
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.classList.contains("on")) closeModal();
+  });
   search.oninput = () => {
     activeCollection = "all";
     activeCollectionValue = "";
