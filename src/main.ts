@@ -403,6 +403,10 @@ function init() {
   }
   function renderHero() {
     const preferred = [
+      "black-mirror-season-7-2025",
+      "severance-season-2-2025",
+      "foundation-season-3-2025",
+      "cobra-kai-season-6-2025",
       "fallout-season-2-2025",
       "the-boys-season-5-2026",
       "the-family-man-season-3-2025",
