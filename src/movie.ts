@@ -170,7 +170,12 @@ async function load() {
   const checked = m.rights_checked_at ? new Date(m.rights_checked_at).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" }) : "Not recorded";
   const seasonNumber = String(m.title || "").match(/season\s*(\d+)/i)?.[1] || (Number(m.season_count) === 1 ? "1" : "");
   const ytPlaylistId = String(m.full_video_embed_url || "").match(/youtube(?:-nocookie)?\.com\/embed\/videoseries\?[^#]*\blist=([^&]+)/i)?.[1] || "";
-  const dmPlaylistId = String(m.full_video_embed_url || "").match(/dailymotion\.com\/embed\/playlist\/([^?&#/]+)/i)?.[1] || "";
+  const dmEmbed = String(m.full_video_embed_url || "");
+  const dmPlaylistId =
+    dmEmbed.match(/dailymotion\.com\/embed\/playlist\/([^?&#/]+)/i)?.[1] ||
+    dmEmbed.match(/[?&]playlist=([^&#]+)/i)?.[1] ||
+    String(m.full_video_url || "").match(/dailymotion\.com\/playlist\/([^?&#/]+)/i)?.[1] ||
+    "";
   const playlistEpisodeCount = Math.max(0, Math.min(Number(m.episode_count || 0), 200));
   const playlistItems = !(dbEpisodes || []).length && playlistEpisodeCount && (ytPlaylistId || dmPlaylistId)
     ? Array.from({ length: playlistEpisodeCount }, (_, i) => ({
