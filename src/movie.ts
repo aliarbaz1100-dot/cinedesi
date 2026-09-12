@@ -48,7 +48,7 @@ async function load() {
     const { error: error2 } = await db.from("monetization_clicks").insert({ movie_id: m?.id || null, provider_name: provider, destination_url: url, click_type: "watch" });
     if (error2) console.warn("CineDesi destination tracking failed", error2.message);
   };
-  const { data: m, error } = await db.from("movies").select("id,slug,title,region,genre,release_year,score,synopsis,editorial,trailer_url,trailer_source,trailer_verified,watch_url,watch_verified,full_video_url,full_video_embed_url,full_video_verified,full_video_source,full_video_label,full_video_language,full_video_checked_at,poster_url,poster_source_url,poster_license,poster_attribution,rights_status,rights_checked_at,source_name,source_url,source_license,attribution_text,seo_title,seo_description,content_type,season_count,episode_count,availability_note,cast_names").eq("slug", slug).eq("status", "published").maybeSingle();
+  const { data: m, error } = await db.from("movies").select("id,slug,title,region,genre,release_year,score,synopsis,editorial,trailer_url,trailer_source,trailer_verified,watch_url,watch_verified,full_video_url,full_video_embed_url,full_video_verified,full_video_source,full_video_label,full_video_language,full_video_checked_at,poster_url,poster_source_url,poster_license,poster_attribution,rights_status,rights_checked_at,source_name,source_url,source_license,attribution_text,seo_title,seo_description,content_type,season_count,episode_count,original_language,availability_note,cast_names").eq("slug", slug).eq("status", "published").maybeSingle();
   if (error || !m) {
     root.innerHTML = `<div class='empty'>This movie is not published or could not be found. <a href='./'>Return to CineDesi</a></div>`;
     return;
@@ -121,24 +121,23 @@ async function load() {
     document.head.appendChild(ogu);
   }
   ogu.content = pageUrl;
-  const ensureMeta = (selector, attr, value) => {
+  const ensureMeta = (selector, attrName, attrValue, value) => {
     let node = document.querySelector(selector);
     if (!node) {
       node = document.createElement("meta");
-      const [name, key] = attr.split(":");
-      node.setAttribute(name, key);
+      node.setAttribute(attrName, attrValue);
       document.head.appendChild(node);
     }
     node.content = value;
   };
-  ensureMeta('meta[property="og:type"]', "property:og:type", m.content_type === "series" ? "video.tv_show" : "video.movie");
+  ensureMeta('meta[property="og:type"]', "property", "og:type", m.content_type === "series" ? "video.tv_show" : "video.movie");
   if (m.poster_url) {
-    ensureMeta('meta[property="og:image"]', "property:og:image", m.poster_url);
-    ensureMeta('meta[name="twitter:image"]', "name:twitter:image", m.poster_url);
+    ensureMeta('meta[property="og:image"]', "property", "og:image", m.poster_url);
+    ensureMeta('meta[name="twitter:image"]', "name", "twitter:image", m.poster_url);
   }
-  ensureMeta('meta[name="twitter:card"]', "name:twitter:card", "summary_large_image");
-  ensureMeta('meta[name="twitter:title"]', "name:twitter:title", m.seo_title || m.title);
-  ensureMeta('meta[name="twitter:description"]', "name:twitter:description", m.seo_description || m.synopsis || "");
+  ensureMeta('meta[name="twitter:card"]', "name", "twitter:card", "summary_large_image");
+  ensureMeta('meta[name="twitter:title"]', "name", "twitter:title", m.seo_title || m.title);
+  ensureMeta('meta[name="twitter:description"]', "name", "twitter:description", m.seo_description || m.synopsis || "");
   const schema = document.createElement("script");
   schema.type = "application/ld+json";
   schema.id = "movie-schema";
