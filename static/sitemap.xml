@@ -577,7 +577,7 @@
   <url><loc>https://cinedesi.online/movie?slug=minnal-murali-2021-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=miracle-in-cell-no-7-turkey-2019-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=miranda-house-2019-hindi-official-full-movie</loc><lastmod>2026-09-08</lastmod></url>
-  <url><loc>https://cinedesi.online/movie?slug=mirzapur-series-2018</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://cinedesi.online/movie?slug=mirzapur-series-2018</loc><lastmod>2026-09-12</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=miss-shetty-mr-polishetty-2023-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=mission-cross-2-2026</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=mission-impossible-dead-reckoning-part-one-2023-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
@@ -874,7 +874,7 @@
   <url><loc>https://cinedesi.online/movie?slug=the-flintstones-1994</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=the-french-dispatch-2021-cinedesi</loc><lastmod>2026-09-07</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=the-garfield-show</loc><lastmod>2026-09-09</lastmod></url>
-  <url><loc>https://cinedesi.online/movie?slug=the-gentlemen-season-2-2026</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://cinedesi.online/movie?slug=the-gentlemen-season-2-2026</loc><lastmod>2026-09-12</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=the-ghost-who-walks-2019</loc><lastmod>2026-09-09</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=the-gift-turkey-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=the-glory-korea-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
@@ -914,7 +914,7 @@
   <url><loc>https://cinedesi.online/movie?slug=the-mountain-ii-2016-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=the-northman-2022-cinedesi</loc><lastmod>2026-09-07</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=the-parades-2024-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
-  <url><loc>https://cinedesi.online/movie?slug=the-perfect-lie-2026</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://cinedesi.online/movie?slug=the-perfect-lie-2026</loc><lastmod>2026-09-12</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=the-pig-the-snake-and-the-pigeon-2023-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=the-pit-cukur-2017-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=the-power-of-the-dog-2021-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
@@ -940,7 +940,7 @@
   <url><loc>https://cinedesi.online/movie?slug=the-wandering-earth-2-2023-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=the-wandering-earth-2019-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=the-whale-2022-cinedesi</loc><lastmod>2026-09-07</lastmod></url>
-  <url><loc>https://cinedesi.online/movie?slug=the-whisper-man-2026</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://cinedesi.online/movie?slug=the-whisper-man-2026</loc><lastmod>2026-09-12</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=the-widower-til-death-do-us-part-2026</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=the-wild-pear-tree-2018-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=the-wind-rises-2013-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
@@ -1057,4 +1057,22 @@
   <url><loc>https://cinedesi.online/movie?slug=zombivli-2022-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=zor-1998-official-full-movie</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=zoya-nay-haan-kardi</loc><lastmod>2026-09-08</lastmod></url>
+  <url>
+    <loc>https://cinedesi.online/movie?slug=outer-banks-season-5-2026</loc>
+    <lastmod>2026-09-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://cinedesi.online/movie?slug=death-of-the-pastors-wife-2026</loc>
+    <lastmod>2026-09-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://cinedesi.online/movie?slug=mirzapur-the-movie-2026</loc>
+    <lastmod>2026-09-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
 </urlset>
