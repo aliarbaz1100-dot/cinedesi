@@ -291,7 +291,13 @@ function init() {
       "rathnam-2024-hindi-dubbed-official-full-movie",
       "the-signature-2024",
       "kisko-tha-pata-2024-official-full-movie",
-      "chalti-rahe-zindagi-2024-official-full-movie"
+      "chalti-rahe-zindagi-2024-official-full-movie",
+      "dangerous-waters-2023",
+      "safehouse-2023",
+      "i-did-it-my-way-2023",
+      "war-of-the-worlds-the-attack-2023",
+      "ramabanam-2023-hindi-dubbed-official-full-movie",
+      "bagha-jatin-2023-hindi-dubbed-official-full-movie"
     ];
     const all = movies.filter((m) => m.full_video_verified && m.full_video_embed_url && isHomeDisplayTitle(m));
     const preferred = watchPriority.map((slug) => all.find((m) => m.slug === slug)).filter(Boolean);
