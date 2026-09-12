@@ -458,11 +458,11 @@
   <url><loc>https://cinedesi.online/movie?slug=just-married-2007-hindi-official-full-movie</loc><lastmod>2026-09-09</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=kaatera-2023-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=kaathal-the-core-2023-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
-  <url><loc>https://cinedesi.online/movie?slug=kabhi-main-kabhi-tum-full-movie</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://cinedesi.online/movie?slug=kabhi-main-kabhi-tum-full-movie</loc><lastmod>2026-09-12</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=kabir-singh-2019-official-full-movie</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=kadvi-hawa-2017-official-full-movie</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=kahin-chand-na-sharma-jaye</loc><lastmod>2026-09-08</lastmod></url>
-  <url><loc>https://cinedesi.online/movie?slug=kaisi-teri-khudgharzi-full-movie</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://cinedesi.online/movie?slug=kaisi-teri-khudgharzi-full-movie</loc><lastmod>2026-09-12</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=kalki-2898-ad-q112430183</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=kamli-2022-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=kannur-squad-2023-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
@@ -567,7 +567,7 @@
   <url><loc>https://cinedesi.online/movie?slug=memories-of-murder-2003-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=mera-krodh-2010-hindi-dubbed</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=meray-paas-tum-ho-movie</loc><lastmod>2026-09-08</lastmod></url>
-  <url><loc>https://cinedesi.online/movie?slug=mere-humsafar-full-movie</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://cinedesi.online/movie?slug=mere-humsafar-full-movie</loc><lastmod>2026-09-12</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=meri-jung-1985-official-full-movie</loc><lastmod>2026-09-09</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=mid-century-2022</loc><lastmod>2026-09-09</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=midnight-at-the-pera-palace-turkey-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
@@ -659,7 +659,7 @@
   <url><loc>https://cinedesi.online/movie?slug=parking-2023-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=partner-2007</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=party-down-seasons-1-3-2026</loc><lastmod>2026-09-08</lastmod></url>
-  <url><loc>https://cinedesi.online/movie?slug=parwarish-full-movie</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://cinedesi.online/movie?slug=parwarish-full-movie</loc><lastmod>2026-09-12</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=pasanga-2-2015-hindi-dubbed</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=past-lives-2023-cinedesi</loc><lastmod>2026-09-07</lastmod></url>
   <url><loc>https://cinedesi.online/movie?slug=pathaan-2023-cinedesi</loc><lastmod>2026-09-08</lastmod></url>
@@ -1197,6 +1197,12 @@
   </url>
   <url>
     <loc>https://cinedesi.online/movie?slug=jeene-nahi-doonga-daruvu-hindi-dubbed-2012</loc>
+    <lastmod>2026-09-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://cinedesi.online/movie?slug=jaan-nisar-series-2024</loc>
     <lastmod>2026-09-12</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
