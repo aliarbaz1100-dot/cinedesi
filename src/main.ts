@@ -410,6 +410,10 @@ function init() {
   }
   function renderHero() {
     const preferred = [
+      "jaat-2025",
+      "paatal-lok-season-2-2025",
+      "kesari-chapter-2-2025",
+      "criminal-justice-a-family-matter-2025",
       "black-mirror-season-7-2025",
       "severance-season-2-2025",
       "foundation-season-3-2025",
