@@ -58,3 +58,13 @@
 }
 
 body.modal-open{overflow:hidden}
+
+
+.episode-card.episode-unavailable,
+.episode-card:disabled{
+  opacity:.48;
+  cursor:not-allowed;
+  filter:saturate(.45);
+}
+.episode-card.episode-unavailable .episode-play,
+.episode-card:disabled .episode-play{display:none}
