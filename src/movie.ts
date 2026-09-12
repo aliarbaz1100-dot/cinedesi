@@ -105,7 +105,21 @@ async function load() {
   const watch = m.watch_verified && m.watch_url ? `<a id='watch-link' class='btn secondary' target='_blank' rel='noopener' href='${esc(m.watch_url)}'>Where to watch legally</a>` : ``;
   const checked = m.rights_checked_at ? new Date(m.rights_checked_at).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" }) : "Not recorded";
   const seasonNumber = String(m.title || "").match(/season\s*(\d+)/i)?.[1] || (Number(m.season_count) === 1 ? "1" : "");
-  const episodeItems = (dbEpisodes || []).length ? (dbEpisodes || []).map((e) => ({ id: e.video_id, title: `S${e.season_number}E${e.episode_number} · ${e.title}`, season_number: e.season_number, episode_number: e.episode_number })) : m.slug === "tamasha-season-5" ? tamashaSeason5Episodes : [];
+  const ytPlaylistId = String(m.full_video_embed_url || "").match(/youtube(?:-nocookie)?\.com\/embed\/videoseries\?[^#]*\blist=([^&]+)/i)?.[1] || "";
+  const dmPlaylistId = String(m.full_video_embed_url || "").match(/dailymotion\.com\/embed\/playlist\/([^?&#/]+)/i)?.[1] || "";
+  const playlistEpisodeCount = Math.max(0, Math.min(Number(m.episode_count || 0), 200));
+  const playlistItems = !(dbEpisodes || []).length && playlistEpisodeCount && (ytPlaylistId || dmPlaylistId)
+    ? Array.from({ length: playlistEpisodeCount }, (_, i) => ({
+        id: "",
+        title: `Episode ${i + 1}`,
+        season_number: Number(seasonNumber || 1),
+        episode_number: i + 1,
+        playlist_index: i,
+        playlist_id: ytPlaylistId || dmPlaylistId,
+        playlist_kind: ytPlaylistId ? "youtube" : "dailymotion"
+      }))
+    : [];
+  const episodeItems = (dbEpisodes || []).length ? (dbEpisodes || []).map((e) => ({ id: e.video_id, title: `S${e.season_number}E${e.episode_number} · ${e.title}`, season_number: e.season_number, episode_number: e.episode_number })) : m.slug === "tamasha-season-5" ? tamashaSeason5Episodes : playlistItems;
   const episodeLabel = (title, position) => {
     const launch = title.match(/LAUNCH EPISODE.*PART\s*(\d+)/i);
     if (launch) return `Launch Episode · Part ${launch[1]}`;
@@ -117,8 +131,15 @@ async function load() {
     const date = title.match(/\b\d{1,2}\s+(?:AUG|SEP)\s+2026\b/i)?.[0] || "Season 5";
     return `${/elimination/i.test(title) ? "Elimination Special" : "Official full episode"} · ${date}`;
   };
-  const episodeList = episodeItems.length ? `<div class='episode-browser'><div class='episode-browser-head'><div><small>${seasonNumber ? `SEASON ${esc(seasonNumber)}` : "EPISODES"}</small><h3>${episodeItems.length} official videos</h3></div><span class='muted'>${m.slug === "tamasha-season-5" ? "Launch + Episodes 2–33" : `${episodeItems.length} episodes`}</span></div><div class='episode-grid'>${episodeItems.map((episode, i) => `<button type='button' class='episode-card${i === 0 ? " active" : ""}' data-episode='${i}' data-video-id='${esc(episode.id)}'><span class='episode-thumb'><img src='https://i.ytimg.com/vi/${esc(episode.id)}/mqdefault.jpg' alt='' loading='lazy' decoding='async'><b>${i + 1}</b></span><span class='episode-copy'><strong>${esc(episodeLabel(episode.title, i))}</strong><small>${esc(episodeMeta(episode.title))}</small></span><span class='episode-play'>▶</span></button>`).join("")}</div>${m.availability_note ? `<p class='muted episode-note'>${esc(m.availability_note)}</p>` : ""}</div>` : "";
-  const initialPlayerUrl = episodeItems.length ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(episodeItems[0].id)}?rel=0` : m.full_video_embed_url;
+  const playlistGenerated = episodeItems.length && !episodeItems[0]?.id && Boolean(episodeItems[0]?.playlist_id);
+  const episodeList = episodeItems.length ? `<div class='episode-browser'><div class='episode-browser-head'><div><small>${seasonNumber ? `SEASON ${esc(seasonNumber)}` : "EPISODES"}</small><h3>${episodeItems.length} official episodes</h3></div><span class='muted'>${m.slug === "tamasha-season-5" ? "Launch + Episodes 2–33" : `${episodeItems.length} episodes`}</span></div><div class='episode-grid'>${episodeItems.map((episode, i) => {
+    const isPlaylistEpisode = Boolean(episode.playlist_id);
+    const thumb = episode.id ? `https://i.ytimg.com/vi/${esc(episode.id)}/mqdefault.jpg` : esc(m.poster_url || posterArt(m));
+    const disabled = episode.playlist_kind === "dailymotion" ? " data-dm-playlist='1'" : "";
+    return `<button type='button' class='episode-card${i === 0 ? " active" : ""}' data-episode='${i}' data-video-id='${esc(episode.id || "")}' data-playlist-index='${Number(episode.playlist_index ?? -1)}' data-playlist-id='${esc(episode.playlist_id || "")}' data-playlist-kind='${esc(episode.playlist_kind || "")}'${disabled}><span class='episode-thumb'><img src='${thumb}' alt='' loading='lazy' decoding='async'><b>${i + 1}</b></span><span class='episode-copy'><strong>${esc(episodeLabel(episode.title, i))}</strong><small>${isPlaylistEpisode ? (episode.playlist_kind === "dailymotion" ? "Official playlist episode · use player queue" : "Official playlist episode") : esc(episodeMeta(episode.title))}</small></span><span class='episode-play'>▶</span></button>`;
+  }).join("")}</div>${playlistGenerated && dmPlaylistId ? `<p class='muted episode-note'>Episodes are listed below. This ARY Digital/Dailymotion source exposes episode selection through the player’s playlist/queue control.</p>` : (m.availability_note ? `<p class='muted episode-note'>${esc(m.availability_note)}</p>` : "")}</div>` : "";
+  const individualEpisode = episodeItems.length && episodeItems[0]?.id;
+  const initialPlayerUrl = individualEpisode ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(episodeItems[0].id)}?rel=0` : m.full_video_embed_url;
   const fullVideo = m.full_video_verified && m.full_video_embed_url ? `<section id='watch' class='legal-player-section'><div class='legal-player-head'><div><small>WATCH ON CINEDESI</small><h2>${esc(m.full_video_label || "Official full video")}</h2><p>${esc(m.full_video_language || "Official source")}</p></div><span class='badge'>Rights-holder source verified</span></div><div class='legal-player'><iframe id='official-player' src='${esc(initialPlayerUrl)}' title='${esc(m.title)} official video' loading='lazy' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' allowfullscreen></iframe></div>${episodeList}<div class='source-card'><strong>Playback source</strong><br>${esc(m.full_video_source || "Official rights-holder source")} \u2022 Playback, ads and regional availability remain controlled by the source platform/rights-holder.${m.full_video_url ? ` <a target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Open official source</a>` : ""}</div></section>` : "";
   const providerSection = providers?.length ? `<section class='engage-section'><div class='engage-head'><div><small>VERIFIED DESTINATIONS</small><h2>Where to watch</h2></div><span class='badge'>Only verified links shown</span></div><div class='provider-grid'>${providers.map((p) => `<a class='provider-card' data-track-watch='1' data-provider='${esc(p.provider_name)}' data-destination='${esc(p.destination_url)}' target='_blank' rel='noopener' href='${esc(p.destination_url)}'><strong>${esc(p.provider_name)}</strong><span>${esc(String(p.access_type || "official_platform").replaceAll("_", " "))}${p.country_code ? ` \u2022 ${esc(p.country_code)}` : ""}</span>${p.dub_language ? `<small>Dub: ${esc(p.dub_language)}</small>` : ""}${p.subtitle_language ? `<small>Subs: ${esc(p.subtitle_language)}</small>` : ""}</a>`).join("")}</div></section>` : `<section class='engage-section compact-engage'><small>WHERE TO WATCH</small><h2>Verification in progress</h2><p class='muted'>CineDesi will show a platform here only after the exact destination and availability evidence pass review.</p></section>`;
   const relatedSection = related?.length ? `<section class='engage-section'><div class='engage-head'><div><small>KEEP DISCOVERING</small><h2>More from ${esc(m.region)}</h2></div><a class='muted' href='./#discover'>Browse all \u2192</a></div><div class='related-grid'>${related.map((r) => `<a class='related-card' href='/movie?slug=${encodeURIComponent(r.slug)}'><span>${esc(r.region)}</span><strong>${esc(r.title)}</strong><small>${esc(r.genre || "Title")}${r.release_year ? ` \u2022 ${esc(r.release_year)}` : ""}</small></a>`).join("")}</div></section>` : "";
@@ -128,13 +149,22 @@ async function load() {
   document.querySelector("#watch-link")?.addEventListener("click", () => track("watch_click"));
   document.querySelectorAll("[data-episode]").forEach((el) => el.addEventListener("click", () => {
     const videoId = String(el.dataset.videoId || "");
+    const playlistId = String(el.dataset.playlistId || "");
+    const playlistKind = String(el.dataset.playlistKind || "");
+    const playlistIndex = Number(el.dataset.playlistIndex || "0");
     const player = document.querySelector("#official-player");
     if (player && videoId) {
       player.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0`;
-      document.querySelectorAll("[data-episode]").forEach((item) => item.classList.toggle("active", item === el));
+    } else if (player && playlistKind === "youtube" && playlistId) {
+      player.src = `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(playlistId)}&index=${Math.max(0, playlistIndex)}&autoplay=1&rel=0`;
+    } else if (player && playlistKind === "dailymotion" && playlistId) {
       document.querySelector("#watch")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      track("episode_play");
+    } else {
+      return;
     }
+    document.querySelectorAll("[data-episode]").forEach((item) => item.classList.toggle("active", item === el));
+    document.querySelector("#watch")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    track("episode_play");
   }));
   document.querySelectorAll("[data-track-watch]").forEach((el) => el.addEventListener("click", () => {
     track("watch_click");
