@@ -297,7 +297,14 @@ function init() {
       "i-did-it-my-way-2023",
       "war-of-the-worlds-the-attack-2023",
       "ramabanam-2023-hindi-dubbed-official-full-movie",
-      "bagha-jatin-2023-hindi-dubbed-official-full-movie"
+      "bagha-jatin-2023-hindi-dubbed-official-full-movie",
+      "f3-fun-and-frustration-hindi-dubbed-2022",
+      "trigger-2022-hindi-dubbed",
+      "tadka-2022",
+      "something-in-the-dirt-2022-hindi-dubbed-official-full-movie",
+      "mid-century-2022",
+      "jurassic-island-2022",
+      "play-dead-2022"
     ];
     const all = movies.filter((m) => m.full_video_verified && m.full_video_embed_url && isHomeDisplayTitle(m));
     const preferred = watchPriority.map((slug) => all.find((m) => m.slug === slug)).filter(Boolean);
