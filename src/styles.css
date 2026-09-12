@@ -5,3 +5,28 @@
 .poster{position:relative;overflow:hidden}.poster>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}.poster>*:not(img){position:relative;z-index:1}.section{content-visibility:auto;contain-intrinsic-size:700px}.card{contain:layout paint}
 .episode-browser{padding:0;background:transparent;border:0}.episode-browser-head{padding:1rem 0;border-bottom:1px solid #292b31}.episode-browser-head h3{font-size:1.5rem}.episode-grid{display:grid;grid-template-columns:1fr;gap:0;max-height:660px;padding:0;scrollbar-color:#555 transparent}.episode-card{display:grid;grid-template-columns:minmax(132px,190px) 1fr 44px;gap:1rem;padding:1rem .75rem;border:0;border-bottom:1px solid #292b31;border-radius:0;background:transparent}.episode-card:hover,.episode-card.active{background:#202124;border-color:#393b42}.episode-thumb{position:relative;display:block;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#222}.episode-thumb img{width:100%;height:100%;object-fit:cover;display:block}.episode-thumb b{position:absolute;left:.45rem;bottom:.35rem;display:grid;place-items:center;min-width:1.8rem;height:1.8rem;padding:0 .35rem;border-radius:5px;background:#08090bdd;color:#fff}.episode-copy{display:flex!important;flex-direction:column;justify-content:center;gap:.4rem}.episode-copy strong{font-size:1rem}.episode-copy small{font-size:.83rem}.episode-play{display:grid;place-items:center;width:38px;height:38px;align-self:center;border:1px solid #ffffff55;border-radius:50%;color:#fff}.episode-card.active .episode-play{background:#fff;color:#111;border-color:#fff}@media(max-width:600px){.episode-card{grid-template-columns:112px 1fr 34px;gap:.7rem;padding:.8rem .25rem}.episode-play{width:32px;height:32px}.episode-copy strong{font-size:.9rem}.episode-copy small{font-size:.72rem}.episode-browser-head{align-items:flex-start}.episode-grid{max-height:580px}}
 .poster{position:relative;overflow:hidden}.poster>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}.poster:after{content:"";position:absolute;inset:55% 0 0;background:linear-gradient(180deg,transparent,#000c);pointer-events:none}.poster-region,.poster-ribbon{position:absolute;z-index:2}.section{content-visibility:auto;contain-intrinsic-size:1px 760px}
+
+/* CineDesi smart recommendations */
+.up-next-section{position:relative;max-width:1200px;min-height:320px;margin:34px auto 0;overflow:hidden;border:1px solid #2a2e35;border-radius:22px;background:#0b0d10;box-shadow:0 24px 70px #0006}
+.up-next-art{position:absolute;inset:0;background-size:cover;background-position:center}
+.up-next-copy{position:relative;z-index:2;width:min(620px,72%);padding:46px 42px}
+.up-next-copy small{font-weight:900;letter-spacing:.12em}
+.up-next-copy h2{margin:8px 0 12px;font-size:clamp(32px,5vw,58px);line-height:.95;letter-spacing:-.045em}
+.up-next-copy p{margin:0 0 22px;color:#c4c7ce;font-size:.95rem}
+.recommendation-section{overflow:hidden}
+.recommendation-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.recommendation-card{display:block;overflow:hidden;border:1px solid #292e36;border-radius:14px;background:#15181e;transition:transform .22s ease,border-color .22s ease}
+.recommendation-card:hover{transform:translateY(-4px);border-color:#555d69}
+.recommendation-art{display:block;aspect-ratio:16/9;background:#111 center/cover no-repeat}
+.recommendation-copy{display:flex;min-height:112px;flex-direction:column;gap:5px;padding:13px}
+.recommendation-copy small{font-size:.66rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#ef4653}
+.recommendation-copy strong{font-size:1rem;line-height:1.2}
+.recommendation-copy em{margin-top:auto;color:#9298a2;font-size:.75rem;font-style:normal}
+@media(max-width:760px){
+  .up-next-section{min-height:280px;border-radius:16px}
+  .up-next-art{background-position:center}
+  .up-next-copy{width:100%;padding:120px 18px 22px;background:linear-gradient(0deg,#08090bf9 10%,#08090bd4 50%,transparent 100%)}
+  .up-next-copy h2{font-size:2rem}
+  .recommendation-grid{display:grid;grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:68vw;gap:9px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+  .recommendation-card{scroll-snap-align:start}
+}
