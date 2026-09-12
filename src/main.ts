@@ -279,7 +279,20 @@ function init() {
     genreRails.querySelectorAll("[data-genre-see]").forEach((el) => el.onclick = () => showCollection("genre", String(el.dataset.genreSee || "")));
   }
   function renderWatchNow() {
-    const all = movies.filter((m) => m.full_video_verified && m.full_video_embed_url && isHomeDisplayTitle(m)), pakistani = rankRail(all.filter((m) => m.region === "Pakistan")), others = rankRail(all.filter((m) => m.region !== "Pakistan")), list = [...pakistani, ...others].slice(0, 12);
+    const watchPriority = [
+      "u-turn-2-2026-hindi-dubbed",
+      "ranga-ranga-2025-hindi-dubbed",
+      "identity-2025-hindi-dubbed-official-full-movie",
+      "asthram-2025-hindi-dubbed-official-full-movie",
+      "retta-thala-2025-hindi-dubbed-official-full-movie",
+      "maargan-2025-hindi-dubbed-official-full-movie",
+      "ten-hours-2025-hindi-dubbed-official-full-movie"
+    ];
+    const all = movies.filter((m) => m.full_video_verified && m.full_video_embed_url && isHomeDisplayTitle(m));
+    const preferred = watchPriority.map((slug) => all.find((m) => m.slug === slug)).filter(Boolean);
+    const seen = new Set(preferred.map((m) => m.id));
+    const rest = rankRail(all.filter((m) => !seen.has(m.id)));
+    const list = [...preferred, ...rest].slice(0, 12);
     watchNowGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 12 ? `<a class='see-all-card' href='#discover' data-watch-see='true'><span>See all ${all.length}</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>Official full titles are being verified.</div>`;
     wire(watchNowGrid);
     document.querySelectorAll("[data-watch-see],[data-watch-all]").forEach((el) => el.onclick = () => showCollection("watch"));
