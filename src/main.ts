@@ -352,6 +352,9 @@ function init() {
   }
   function renderHero() {
     const preferred = [
+      "the-whisper-man-2026",
+      "best-of-the-best-2026",
+      "a-different-world-2026",
       "stranger-things-tales-from-85",
       "monster-the-lizzie-borden-story-2026",
       "avatar-the-last-airbender-season-2-2026",
