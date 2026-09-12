@@ -489,7 +489,7 @@ function init() {
       window.__cinedesiHeroTimer = window.setInterval(() => {
         heroIndex = (heroIndex + 1) % Math.min(heroPool.length, 9);
         paintHero();
-      }, 7000);
+      }, 5000);
     };
     startHeroTimer();
     if (!window.__cinedesiHeroVisibilityBound) {
