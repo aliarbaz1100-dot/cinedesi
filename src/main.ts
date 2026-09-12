@@ -403,6 +403,9 @@ function init() {
   }
   function renderHero() {
     const preferred = [
+      "the-boys-season-5-2026",
+      "the-family-man-season-3-2025",
+      "panchayat-season-4-2025",
       "dhurandhar-the-revenge-2026",
       "dhurandhar-2025",
       "jolly-llb-3-2025",
