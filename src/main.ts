@@ -410,6 +410,11 @@ function init() {
   }
   function renderHero() {
     const preferred = [
+      "dhurandhar-2025",
+      "son-of-sardaar-2-2025",
+      "dhurandhar-the-revenge-2026",
+      "jolly-llb-3-2025",
+      "de-de-pyaar-de-2-2025",
       "jaat-2025",
       "paatal-lok-season-2-2025",
       "kesari-chapter-2-2025",
@@ -422,11 +427,6 @@ function init() {
       "the-boys-season-5-2026",
       "the-family-man-season-3-2025",
       "panchayat-season-4-2025",
-      "dhurandhar-the-revenge-2026",
-      "dhurandhar-2025",
-      "jolly-llb-3-2025",
-      "de-de-pyaar-de-2-2025",
-      "son-of-sardaar-2-2025",
       "the-night-agent-season-3-2026",
       "bridgerton-season-4-2026",
       "one-piece-live-action-japan-cinedesi",
