@@ -121,12 +121,48 @@ async function load() {
     document.head.appendChild(ogu);
   }
   ogu.content = pageUrl;
+  const ensureMeta = (selector, attr, value) => {
+    let node = document.querySelector(selector);
+    if (!node) {
+      node = document.createElement("meta");
+      const [name, key] = attr.split(":");
+      node.setAttribute(name, key);
+      document.head.appendChild(node);
+    }
+    node.content = value;
+  };
+  ensureMeta('meta[property="og:type"]', "property:og:type", m.content_type === "series" ? "video.tv_show" : "video.movie");
+  if (m.poster_url) {
+    ensureMeta('meta[property="og:image"]', "property:og:image", m.poster_url);
+    ensureMeta('meta[name="twitter:image"]', "name:twitter:image", m.poster_url);
+  }
+  ensureMeta('meta[name="twitter:card"]', "name:twitter:card", "summary_large_image");
+  ensureMeta('meta[name="twitter:title"]', "name:twitter:title", m.seo_title || m.title);
+  ensureMeta('meta[name="twitter:description"]', "name:twitter:description", m.seo_description || m.synopsis || "");
   const schema = document.createElement("script");
   schema.type = "application/ld+json";
   schema.id = "movie-schema";
-  const movieSchema = { "@context": "https://schema.org", "@type": "Movie", "name": m.title, "url": pageUrl, "description": m.seo_description || m.synopsis || m.editorial || void 0, "dateCreated": m.release_year ? String(m.release_year) : void 0, "genre": m.genre || void 0, "sameAs": m.source_url || void 0 };
+  const castPeople = String(m.cast_names || "").split(",").map((x) => x.trim()).filter(Boolean).slice(0, 12).map((name) => ({ "@type": "Person", name }));
+  const movieSchema = {
+    "@context": "https://schema.org",
+    "@type": m.content_type === "series" ? "TVSeries" : "Movie",
+    "name": m.title,
+    "url": pageUrl,
+    "description": m.seo_description || m.synopsis || m.editorial || void 0,
+    "dateCreated": m.release_year ? String(m.release_year) : void 0,
+    "genre": m.genre || void 0,
+    "sameAs": m.source_url || void 0,
+    "inLanguage": m.original_language || m.full_video_language || void 0,
+    "actor": castPeople.length ? castPeople : void 0
+  };
+  if (m.content_type === "series") {
+    if (Number(m.season_count) > 0) movieSchema.numberOfSeasons = Number(m.season_count);
+    if (Number(m.episode_count) > 0) movieSchema.numberOfEpisodes = Number(m.episode_count);
+  }
   if (m.trailer_verified && m.trailer_url) movieSchema.trailer = { "@type": "VideoObject", "name": `${m.title} official trailer`, "url": m.trailer_url };
-  if (licensedPoster(m)) movieSchema.image = m.poster_url;
+  if (m.poster_url && (licensedPoster(m) || m._cover_kind === "youtube")) movieSchema.image = m.poster_url;
+  const actionTarget = m.full_video_verified && m.full_video_embed_url ? `${pageUrl}#watch` : m.watch_verified && m.watch_url ? m.watch_url : "";
+  if (actionTarget) movieSchema.potentialAction = { "@type": "WatchAction", "target": actionTarget };
   schema.textContent = JSON.stringify(movieSchema);
   document.querySelector("#movie-schema")?.remove();
   document.head.appendChild(schema);
@@ -181,9 +217,19 @@ async function load() {
   const recommendationReason = (r) => r?._actor_matches ? "Same cast" : r?._genre_matches ? "Similar genre" : r?.content_type === m.content_type ? "Same format" : "Recommended";
   const upNextSection = upNext ? `<section class='up-next-section'><div class='up-next-art' style="background-image:linear-gradient(90deg,#08090bee 0%,#08090b99 48%,#08090b22 100%),url('${esc(upNext._thumb)}')"></div><div class='up-next-copy'><small>UP NEXT FOR YOU</small><h2>${esc(upNext.title)}</h2><p>${esc(recommendationReason(upNext))} · ${esc(upNext.genre || "Title")}${upNext.release_year ? ` · ${esc(upNext.release_year)}` : ""}</p><div class='actions'><a class='btn' data-rec-click='up_next' href='/movie?slug=${encodeURIComponent(upNext.slug)}'>▶ Open next</a>${upNext.full_video_verified && upNext.full_video_embed_url ? `<a class='btn secondary' data-rec-click='up_next_watch' href='/movie?slug=${encodeURIComponent(upNext.slug)}#watch'>Watch here</a>` : ""}</div></div></section>` : "";
   const relatedSection = moreLikeThis.length ? `<section class='engage-section recommendation-section'><div class='engage-head'><div><small>PERSONALIZED DISCOVERY</small><h2>More Like This</h2></div><a class='muted' href='./#discover'>Browse all →</a></div><div class='recommendation-grid'>${moreLikeThis.map((r) => `<a class='recommendation-card' data-rec-click='more_like_this' href='/movie?slug=${encodeURIComponent(r.slug)}'><span class='recommendation-art' style="background-image:url('${esc(r._thumb)}')"></span><span class='recommendation-copy'><small>${esc(recommendationReason(r))}</small><strong>${esc(r.title)}</strong><em>${esc(r.content_type === "series" ? "Series" : r.genre || "Movie")}${r.release_year ? ` · ${esc(r.release_year)}` : ""}</em></span></a>`).join("")}</div></section>` : "";
+  const detailFacts = [
+    m.content_type === "series" && Number(m.season_count) > 0 ? `${Number(m.season_count)} Season${Number(m.season_count) === 1 ? "" : "s"}` : "",
+    m.content_type === "series" && Number(m.episode_count) > 0 ? `${Number(m.episode_count)} Episodes` : "",
+    m.original_language ? String(m.original_language) : "",
+    m.full_video_language && m.full_video_language !== m.original_language ? String(m.full_video_language) : ""
+  ].filter(Boolean);
+  const titleFacts = detailFacts.length ? `<div class='title-facts'>${detailFacts.map((x) => `<span>${esc(x)}</span>`).join("")}</div>` : "";
+  const castList = String(m.cast_names || "").split(",").map((x) => x.trim()).filter(Boolean).slice(0, 7);
+  const castSection = castList.length ? `<div class='cast-strip'><small>CAST</small><div>${castList.map((name) => `<span>${esc(name)}</span>`).join("")}</div></div>` : "";
+  const availabilityCallout = m.availability_note ? `<div class='availability-callout'><strong>Availability</strong><span>${esc(m.availability_note)}</span></div>` : "";
   const posterLine = licensedPoster(m) ? `${esc(m.poster_license)}${m.poster_attribution ? ` \u2022 ${esc(m.poster_attribution)}` : ""}${m.poster_source_url ? ` \u2022 <a target='_blank' rel='noopener' href='${esc(m.poster_source_url)}'>poster source</a>` : ""}` : m._cover_kind === "youtube" ? `Official video thumbnail supplied by ${esc(m.full_video_source || m.trailer_source || "YouTube")}; linked to the verified upload.` : "CineDesi dark original fallback; no third-party poster reused.";
   const preserveFullPoster = ["cid-official-series", "crime-patrol-city-crimes-2026"].includes(String(m.slug || ""));
-  root.innerHTML = `<section class='movie-hero'><div class='movie-art' ${m.poster_url ? `style="background-image:linear-gradient(#0003,#0008),url('${esc(m.poster_url)}'),url('${esc(posterArt(m))}');background-size:${preserveFullPoster ? "contain" : "cover"};background-repeat:no-repeat;background-position:center;background-color:#050506"` : ""}><span>${licensedPoster(m) ? "Licensed image" : m._cover_kind === "youtube" ? "Official video thumbnail" : "CineDesi dark cover"}</span></div><div class='movie-copy'><small>${esc(m.region)}</small><h1>${esc(m.title)}</h1><div class='modal-meta'><span>${esc(m.genre || "Film")}</span><span>${esc(m.release_year || "")}</span>${m.score ? `<span>CineDesi score ${esc(m.score)}</span>` : ""}</div><div class='badges'><span class='badge'>${m.rights_status === "cleared" ? "Rights cleared" : "Official links checked"}</span>${m.trailer_verified ? "<span class='badge'>Official trailer verified</span>" : ""}${m.watch_verified ? "<span class='badge'>Legal watch verified</span>" : ""}${m.full_video_verified && m.full_video_embed_url ? "<span class='badge'>Official full video on CineDesi</span>" : ""}${licensedPoster(m) ? "<span class='badge'>Licensed image</span>" : "<span class='badge'>CineDesi original cover</span>"}</div><p class='lead'>${esc(m.editorial || m.synopsis || "Editorial coming soon.")}</p><div class='actions'>${trailer}${watch}<button id='share' class='ghost'>Share page</button></div><div class='source-card'><strong>Verification & source transparency</strong><br>Metadata: ${esc(m.source_name || "Verified source")}${m.source_license ? ` \u2022 ${esc(m.source_license)}` : ""}${m.source_url ? ` \u2022 <a target='_blank' rel='noopener' href='${esc(m.source_url)}'>source page</a>` : ""}${m.attribution_text ? `<br>Attribution: ${esc(m.attribution_text)}` : ""}${m.trailer_source ? `<br>Trailer source: ${esc(m.trailer_source)}` : ""}<br>Poster: ${posterLine}<br>Rights checked: ${esc(checked)}</div></div></section>${fullVideo}${providerSection}${upNextSection}${relatedSection}`;
+  root.innerHTML = `<section class='movie-hero'><div class='movie-art' ${m.poster_url ? `style="background-image:linear-gradient(#0003,#0008),url('${esc(m.poster_url)}'),url('${esc(posterArt(m))}');background-size:${preserveFullPoster ? "contain" : "cover"};background-repeat:no-repeat;background-position:center;background-color:#050506"` : ""}><span>${licensedPoster(m) ? "Licensed image" : m._cover_kind === "youtube" ? "Official video thumbnail" : "CineDesi dark cover"}</span></div><div class='movie-copy'><small>${esc(m.region)}</small><h1>${esc(m.title)}</h1><div class='modal-meta'><span>${esc(m.genre || "Film")}</span><span>${esc(m.release_year || "")}</span>${m.score ? `<span>CineDesi score ${esc(m.score)}</span>` : ""}</div>${titleFacts}<div class='badges'><span class='badge'>${m.rights_status === "cleared" ? "Rights cleared" : "Official links checked"}</span>${m.trailer_verified ? "<span class='badge'>Official trailer verified</span>" : ""}${m.watch_verified ? "<span class='badge'>Legal watch verified</span>" : ""}${m.full_video_verified && m.full_video_embed_url ? "<span class='badge'>Official full video on CineDesi</span>" : ""}${licensedPoster(m) ? "<span class='badge'>Licensed image</span>" : "<span class='badge'>CineDesi original cover</span>"}</div><p class='lead'>${esc(m.editorial || m.synopsis || "Editorial coming soon.")}</p>${castSection}${availabilityCallout}<div class='actions'>${trailer}${watch}<button id='share' class='ghost'>Share page</button></div><div class='source-card'><strong>Verification & source transparency</strong><br>Metadata: ${esc(m.source_name || "Verified source")}${m.source_license ? ` \u2022 ${esc(m.source_license)}` : ""}${m.source_url ? ` \u2022 <a target='_blank' rel='noopener' href='${esc(m.source_url)}'>source page</a>` : ""}${m.attribution_text ? `<br>Attribution: ${esc(m.attribution_text)}` : ""}${m.trailer_source ? `<br>Trailer source: ${esc(m.trailer_source)}` : ""}<br>Poster: ${posterLine}<br>Rights checked: ${esc(checked)}</div></div></section>${fullVideo}${providerSection}${upNextSection}${relatedSection}`;
   let youtubePlaylistPlayer = null;
   let pendingYoutubePlaylistIndex = null;
 
