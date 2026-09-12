@@ -286,18 +286,45 @@ async function load() {
     recent.unshift({ slug: m.slug, title: m.title, region: m.region, genre: m.genre, viewed_at: Date.now() });
     localStorage.setItem("cinedesi_recent", JSON.stringify(recent.slice(0, 12)));
 
-    const markContinue = () => {
+    const savedContinue = JSON.parse(localStorage.getItem("cinedesi_continue") || "[]");
+    const savedResume = savedContinue.find((x) => x.slug === m.slug);
+
+    const markContinue = (episodeEl = null) => {
       if (!(m.full_video_verified && m.full_video_embed_url)) return;
+      const activeEpisode = episodeEl?.dataset ? episodeEl : document.querySelector("[data-episode].active");
+      const rawIndex = activeEpisode?.dataset?.episode;
+      const rawNumber = activeEpisode?.querySelector?.(".episode-copy strong")?.textContent?.match(/Episode\s+(\d+)/i)?.[1];
+      const episodeIndex = rawIndex === undefined ? null : Number(rawIndex);
+      const episodeNumber = rawNumber ? Number(rawNumber) : episodeIndex !== null && Number.isFinite(episodeIndex) ? episodeIndex + 1 : null;
       const list = JSON.parse(localStorage.getItem("cinedesi_continue") || "[]").filter((x) => x.slug !== m.slug);
-      list.unshift({ slug: m.slug, title: m.title, region: m.region, genre: m.genre, updated_at: Date.now() });
+      list.unshift({
+        slug: m.slug,
+        title: m.title,
+        region: m.region,
+        genre: m.genre,
+        episode_index: Number.isFinite(episodeIndex) ? episodeIndex : null,
+        episode_number: Number.isFinite(episodeNumber) ? episodeNumber : null,
+        updated_at: Date.now()
+      });
       localStorage.setItem("cinedesi_continue", JSON.stringify(list.slice(0, 12)));
     };
 
-    if (location.hash === "#watch") markContinue();
+    if (location.hash === "#watch") {
+      const resumeIndex = Number(savedResume?.episode_index);
+      if (Number.isInteger(resumeIndex) && resumeIndex >= 0) {
+        setTimeout(() => {
+          const resumeCard = document.querySelector(`[data-episode='${resumeIndex}']`);
+          if (resumeCard) resumeCard.click();
+          else markContinue();
+        }, 250);
+      } else {
+        markContinue();
+      }
+    }
     document.querySelector("#official-player")?.addEventListener("load", () => {
-      if (location.hash === "#watch") markContinue();
+      if (location.hash === "#watch" && !savedResume?.episode_index) markContinue();
     });
-    document.querySelectorAll("[data-episode]").forEach((el) => el.addEventListener("click", markContinue));
+    document.querySelectorAll("[data-episode]").forEach((el) => el.addEventListener("click", () => markContinue(el)));
   } catch {
   }
 }
