@@ -371,16 +371,26 @@ async function load() {
         });
 
         const cards = [...document.querySelectorAll("[data-playlist-kind='dailymotion']")];
+        const useExactNumbering = byEpisode.size >= Math.min(3, Math.max(1, cards.length));
         cards.forEach((el, i) => {
           const desiredEpisode = i + 1;
-          const video = byEpisode.get(desiredEpisode) || orderedFallback[i];
-          if (!video?.id) return;
+          const video = byEpisode.get(desiredEpisode) || (!useExactNumbering ? orderedFallback[i] : null);
+          const strong = el.querySelector(".episode-copy strong");
+          if (strong) strong.textContent = `Episode ${desiredEpisode}`;
+          if (!video?.id) {
+            el.dataset.videoId = "";
+            el.disabled = true;
+            el.classList.add("episode-unavailable");
+            const small = el.querySelector(".episode-copy small");
+            if (small) small.textContent = "Not available in the verified official playlist";
+            return;
+          }
+          el.disabled = false;
+          el.classList.remove("episode-unavailable");
           el.dataset.videoId = String(video.id);
           el.dataset.episodeNumber = String(desiredEpisode);
           const img = el.querySelector("img");
           if (img && video.thumbnail_480_url) img.src = String(video.thumbnail_480_url);
-          const strong = el.querySelector(".episode-copy strong");
-          if (strong) strong.textContent = `Episode ${desiredEpisode}`;
           const small = el.querySelector(".episode-copy small");
           if (small) small.textContent = "Official ARY Digital full episode";
         });
