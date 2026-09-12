@@ -242,15 +242,32 @@ async function load() {
     document.querySelector("#watch")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const reverseYoutubePlaylistOrder =
+    playlistGenerated &&
+    Boolean(ytPlaylistId) &&
+    /ARY\s+Digital/i.test(String(m.full_video_source || m.source_name || ""));
+
   const hydrateYoutubePlaylistCards = (videoIds) => {
-    if (!Array.isArray(videoIds) || !videoIds.length) return;
+    if (!Array.isArray(videoIds) || !videoIds.length) return [];
+    const indexed = videoIds
+      .map((videoId, sourceIndex) => ({ videoId: String(videoId || ""), sourceIndex }))
+      .filter((item) => item.videoId);
+    const ordered = reverseYoutubePlaylistOrder ? [...indexed].reverse() : indexed;
     document.querySelectorAll("[data-playlist-kind='youtube']").forEach((el, i) => {
-      const videoId = String(videoIds[i] || "");
+      const item = ordered[i];
+      const videoId = String(item?.videoId || "");
       if (!videoId) return;
       el.dataset.videoId = videoId;
+      el.dataset.playlistIndex = String(Number(item.sourceIndex));
+      el.dataset.episodeNumber = String(i + 1);
       const img = el.querySelector("img");
       if (img) img.src = `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/mqdefault.jpg`;
+      const strong = el.querySelector(".episode-copy strong");
+      if (strong) strong.textContent = `Episode ${i + 1}`;
+      const small = el.querySelector(".episode-copy small");
+      if (small) small.textContent = "Official full episode";
     });
+    return ordered;
   };
 
   const initYoutubePlaylistApi = () => {
@@ -262,10 +279,23 @@ async function load() {
         events: {
           onReady: (event) => {
             const ids = event.target.getPlaylist?.() || [];
-            hydrateYoutubePlaylistCards(ids);
+            const ordered = hydrateYoutubePlaylistCards(ids);
             if (pendingYoutubePlaylistIndex !== null) {
               event.target.playVideoAt?.(pendingYoutubePlaylistIndex);
               pendingYoutubePlaylistIndex = null;
+            } else if (ordered.length) {
+              const firstSourceIndex = Number(ordered[0].sourceIndex);
+              const firstCard = document.querySelector("[data-playlist-kind='youtube'][data-episode='0']");
+              if (firstCard) document.querySelectorAll("[data-episode]").forEach((item) => item.classList.toggle("active", item === firstCard));
+              if (Number.isInteger(firstSourceIndex) && firstSourceIndex >= 0 && firstSourceIndex !== 0) {
+                try {
+                  event.target.cuePlaylist?.({
+                    listType: "playlist",
+                    list: ytPlaylistId,
+                    index: firstSourceIndex
+                  });
+                } catch {}
+              }
             }
           },
           onStateChange: (event) => {
