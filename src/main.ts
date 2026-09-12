@@ -352,6 +352,8 @@ function init() {
   }
   function renderHero() {
     const preferred = [
+      "the-love-hypothesis-2026",
+      "drawn-together-2026",
       "the-whisper-man-2026",
       "best-of-the-best-2026",
       "a-different-world-2026",
