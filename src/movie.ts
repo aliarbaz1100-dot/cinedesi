@@ -296,21 +296,78 @@ async function load() {
   }
 
   if (playlistGenerated && dmPlaylistId) {
+    const parseDailymotionEpisodeNumber = (title, total) => {
+      const value = String(title || "").trim();
+      const numbered =
+        value.match(/\b(?:episode|ep)\s*[-_.:]?\s*(\d{1,3})\b/i) ||
+        value.match(/\bS\d+\s*E(\d{1,3})\b/i);
+      if (numbered) return Number(numbered[1]);
+      if (/\b(?:2nd|second)\s+last\s+(?:episode|ep)\b/i.test(value)) return Math.max(1, total - 1);
+      if (/\b(?:last|final)\s+(?:episode|ep)\b/i.test(value) || /\b(?:episode|ep)\s+(?:finale|final)\b/i.test(value)) return total;
+      return null;
+    };
+
     fetch(`https://api.dailymotion.com/playlist/${encodeURIComponent(dmPlaylistId)}/videos?fields=id,title,thumbnail_480_url&limit=100`)
       .then((res) => res.ok ? res.json() : Promise.reject(new Error("Dailymotion playlist fetch failed")))
       .then((payload) => {
-        const videos = Array.isArray(payload?.list) ? payload.list : [];
-        document.querySelectorAll("[data-playlist-kind='dailymotion']").forEach((el, i) => {
-          const video = videos[i];
+        const rawVideos = Array.isArray(payload?.list) ? payload.list.filter((video) => video?.id) : [];
+        const total = Math.max(playlistEpisodeCount, rawVideos.length);
+        const numbered = rawVideos.map((video, sourceIndex) => ({
+          ...video,
+          _sourceIndex: sourceIndex,
+          _episodeNumber: parseDailymotionEpisodeNumber(video.title, total)
+        }));
+
+        const byEpisode = new Map();
+        numbered.forEach((video) => {
+          const n = Number(video._episodeNumber);
+          if (Number.isInteger(n) && n > 0 && n <= total && !byEpisode.has(n)) byEpisode.set(n, video);
+        });
+
+        const orderedFallback = [...numbered].sort((a, b) => {
+          const an = Number(a._episodeNumber);
+          const bn = Number(b._episodeNumber);
+          const aValid = Number.isInteger(an) && an > 0;
+          const bValid = Number.isInteger(bn) && bn > 0;
+          if (aValid && bValid) return an - bn;
+          if (aValid) return -1;
+          if (bValid) return 1;
+          return a._sourceIndex - b._sourceIndex;
+        });
+
+        const cards = [...document.querySelectorAll("[data-playlist-kind='dailymotion']")];
+        cards.forEach((el, i) => {
+          const desiredEpisode = i + 1;
+          const video = byEpisode.get(desiredEpisode) || orderedFallback[i];
           if (!video?.id) return;
           el.dataset.videoId = String(video.id);
+          el.dataset.episodeNumber = String(desiredEpisode);
           const img = el.querySelector("img");
           if (img && video.thumbnail_480_url) img.src = String(video.thumbnail_480_url);
           const strong = el.querySelector(".episode-copy strong");
-          if (strong) strong.textContent = `Episode ${i + 1}`;
+          if (strong) strong.textContent = `Episode ${desiredEpisode}`;
           const small = el.querySelector(".episode-copy small");
           if (small) small.textContent = "Official ARY Digital full episode";
         });
+
+        const firstCard = cards[0];
+        const player = document.querySelector("#official-player");
+        const savedContinue = (() => {
+          try {
+            return JSON.parse(localStorage.getItem("cinedesi_continue") || "[]").find((x) => x.slug === m.slug);
+          } catch {
+            return null;
+          }
+        })();
+        const resumeIndex = Number(savedContinue?.episode_index);
+        const resumeCard = Number.isInteger(resumeIndex) && resumeIndex >= 0 ? cards[resumeIndex] : null;
+
+        if (resumeCard?.dataset.videoId) {
+          resumeCard.click();
+        } else if (firstCard?.dataset.videoId && player) {
+          player.src = `https://geo.dailymotion.com/player.html?video=${encodeURIComponent(firstCard.dataset.videoId)}&playlist=${encodeURIComponent(dmPlaylistId)}`;
+          document.querySelectorAll("[data-episode]").forEach((item) => item.classList.toggle("active", item === firstCard));
+        }
       })
       .catch(() => {});
   }
@@ -392,7 +449,9 @@ async function load() {
 
     if (location.hash === "#watch") {
       const resumeIndex = Number(savedResume?.episode_index);
-      if (Number.isInteger(resumeIndex) && resumeIndex >= 0) {
+      if (dmPlaylistId) {
+        if (!Number.isInteger(resumeIndex) || resumeIndex < 0) markContinue();
+      } else if (Number.isInteger(resumeIndex) && resumeIndex >= 0) {
         setTimeout(() => {
           const resumeCard = document.querySelector(`[data-episode='${resumeIndex}']`);
           if (resumeCard) resumeCard.click();
