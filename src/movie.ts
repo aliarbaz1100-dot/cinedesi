@@ -177,13 +177,16 @@ async function load() {
     String(m.full_video_url || "").match(/dailymotion\.com\/playlist\/([^?&#/]+)/i)?.[1] ||
     "";
   const playlistEpisodeCount = Math.max(0, Math.min(Number(m.episode_count || 0), 200));
+  const reverseYoutubeSourceOrder =
+    Boolean(ytPlaylistId) &&
+    /ARY\s+Digital/i.test(String(m.full_video_source || m.source_name || ""));
   const playlistItems = !(dbEpisodes || []).length && playlistEpisodeCount && (ytPlaylistId || dmPlaylistId)
     ? Array.from({ length: playlistEpisodeCount }, (_, i) => ({
         id: "",
         title: `Episode ${i + 1}`,
         season_number: Number(seasonNumber || 1),
         episode_number: i + 1,
-        playlist_index: i,
+        playlist_index: ytPlaylistId && reverseYoutubeSourceOrder ? Math.max(0, playlistEpisodeCount - 1 - i) : i,
         playlist_id: ytPlaylistId || dmPlaylistId,
         playlist_kind: ytPlaylistId ? "youtube" : "dailymotion"
       }))
@@ -209,7 +212,7 @@ async function load() {
   }).join("")}</div>${playlistGenerated && dmPlaylistId ? `<p class='muted episode-note'>Episodes are listed below. This ARY Digital/Dailymotion source exposes episode selection through the player’s playlist/queue control.</p>` : (m.availability_note ? `<p class='muted episode-note'>${esc(m.availability_note)}</p>` : "")}</div>` : "";
   const individualEpisode = episodeItems.length && episodeItems[0]?.id;
   const playlistPlayerUrl = playlistGenerated && ytPlaylistId
-    ? `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(ytPlaylistId)}&enablejsapi=1&origin=${encodeURIComponent(location.origin)}&rel=0`
+    ? `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(ytPlaylistId)}&enablejsapi=1&origin=${encodeURIComponent(location.origin)}&index=${reverseYoutubeSourceOrder ? Math.max(0, playlistEpisodeCount - 1) : 0}&rel=0`
     : playlistGenerated && dmPlaylistId
       ? `https://geo.dailymotion.com/player.html?playlist=${encodeURIComponent(dmPlaylistId)}`
       : m.full_video_embed_url;
@@ -242,10 +245,7 @@ async function load() {
     document.querySelector("#watch")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const reverseYoutubePlaylistOrder =
-    playlistGenerated &&
-    Boolean(ytPlaylistId) &&
-    /ARY\s+Digital/i.test(String(m.full_video_source || m.source_name || ""));
+  const reverseYoutubePlaylistOrder = playlistGenerated && reverseYoutubeSourceOrder;
 
   const hydrateYoutubePlaylistCards = (videoIds) => {
     if (!Array.isArray(videoIds) || !videoIds.length) return [];
