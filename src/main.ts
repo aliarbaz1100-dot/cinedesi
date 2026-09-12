@@ -155,11 +155,21 @@ function init() {
   }
   function card(m) {
     const preserveFullThumb = ["cid-official-series", "crime-patrol-city-crimes-2026"].includes(String(m.slug || ""));
-    const image = m.poster_url ? `<img src='${esc(m.poster_url)}' alt='${esc(m.title)} cover' loading='lazy' decoding='async'${preserveFullThumb ? " style='object-fit:contain;background:#050506'" : ""}>` : "";
+    const fallbackCover = posterArt(m);
+    const image = m.poster_url ? `<img src='${esc(m.poster_url)}' data-poster-fallback='${esc(fallbackCover)}' alt='${esc(m.title)} cover' loading='lazy' decoding='async'${preserveFullThumb ? " style='object-fit:contain;background:#050506'" : ""}>` : "";
     const availabilityBadge = m.full_video_verified && m.full_video_embed_url ? "<span class='badge watch-now'>Watch here</span>" : m.watch_verified && m.watch_url ? "<span class='badge'>Legal watch</span>" : m.trailer_verified ? "<span class='badge'>Official trailer</span>" : "<span class='badge'>Editorial</span>";
     return `<article class='card' data-id='${m.id}'><a class='poster-link' href='/movie?slug=${encodeURIComponent(m.slug)}' aria-label='Open ${esc(m.title)}'><div class='poster'>${image}<span class='poster-region'>${esc(m.region)}</span>${m.full_video_verified && m.full_video_embed_url ? "<span class='poster-ribbon'>\u25B6 Watch here</span>" : Number(m.release_year) >= 2025 ? "<span class='poster-ribbon new'>New</span>" : ""}</div></a><div class='info'><div class='card-title-row'><h3>${esc(m.title)}</h3>${m.score ? `<strong class='match-score'>${esc(m.score)}%</strong>` : ""}</div><p class='muted'>${esc(m.content_type === "series" ? "Series" : m.genre || "Film")} \u2022 ${esc(m.release_year || "")}${m.original_language ? ` \u2022 ${esc(m.original_language)}` : ""}</p><div class='badges'>${availabilityBadge}${m.rights_status === "official_link" || m.rights_status === "cleared" ? "<span class='badge verified-badge'>\u2713 Source checked</span>" : ""}</div><div class='card-actions streaming-actions'><a class='btn play-mini' href='/movie?slug=${encodeURIComponent(m.slug)}'>\u25B6 Details</a><button class='circle-action' data-save='${m.id}' aria-label='${saved.includes(m.id) ? "Remove from My List" : "Add to My List"}'>${saved.includes(m.id) ? "\u2713" : "\uFF0B"}</button><button class='circle-action info-action' data-open='${m.id}' aria-label='More information'>i</button></div></div></article>`;
   }
   function wire(root) {
+    root.querySelectorAll("img[data-poster-fallback]").forEach((img) => {
+      img.addEventListener("error", () => {
+        const fallback = String(img.dataset.posterFallback || "");
+        if (!fallback || img.dataset.fallbackApplied === "1") return;
+        img.dataset.fallbackApplied = "1";
+        img.src = fallback;
+        img.classList.add("poster-fallback");
+      }, { once: true });
+    });
     root.querySelectorAll("[data-open]").forEach((el) => el.onclick = (e) => {
       e.stopPropagation();
       openMovie(Number(el.dataset.open));
@@ -277,7 +287,10 @@ function init() {
 
     if (continueGrid && continueSection) {
       continueSection.hidden = continueMovies.length === 0;
-      continueGrid.innerHTML = continueMovies.map((m) => card(m)).join("");
+      continueGrid.innerHTML = continueMovies.map((m) => {
+        const url = `/movie?slug=${encodeURIComponent(m.slug)}`;
+        return card(m).replaceAll(url, url + "#watch");
+      }).join("");
       wire(continueGrid);
     }
 
@@ -311,7 +324,12 @@ function init() {
     const currentYear = new Date().getFullYear();
     const all = [...movies]
       .filter((m) => Number(m.release_year) >= currentYear - 1)
-      .sort((a, b) => (Number(b.release_year) || 0) - (Number(a.release_year) || 0) || String(b.created_at || "").localeCompare(String(a.created_at || "")) || (Number(b.score) || 0) - (Number(a.score) || 0));
+      .sort((a, b) =>
+        (Number(b._trend_score) || 0) - (Number(a._trend_score) || 0) ||
+        (Number(b.release_year) || 0) - (Number(a.release_year) || 0) ||
+        String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || "")) ||
+        (Number(b.score) || 0) - (Number(a.score) || 0)
+      );
     const list = all.slice(0, 12);
     newGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 12 ? `<a class='see-all-card' href='#discover' data-new-see='true'><span>See all new releases</span><strong>→</strong></a>` : "") : `<div class='empty'>New releases are being prepared.</div>`;
     wire(newGrid);
@@ -378,6 +396,12 @@ function init() {
       if (eyebrow) eyebrow.textContent = `${heroState} • ${badge}`;
       const shown = Math.min(heroPool.length, 9);
       heroShowcase.innerHTML = `<a class='hero-feature hero-feature-live' href='${url}' style="background-image:url('${esc(m.poster_url)}')" aria-label='Open ${esc(m.title)}'></a><div class='hero-dots' aria-label='Featured titles'>${heroPool.slice(0,shown).map((_,i)=>`<button type='button' class='${i === heroIndex % shown ? "active" : ""}' data-hero-dot='${i}' aria-label='Featured title ${i+1}'></button>`).join("")}</div>`;
+      const heroFeature = heroShowcase.querySelector(".hero-feature");
+      if (heroFeature && m.poster_url) {
+        const probe = new Image();
+        probe.onerror = () => { heroFeature.style.backgroundImage = `url("${posterArt(m)}")`; };
+        probe.src = m.poster_url;
+      }
       heroShowcase.querySelectorAll("[data-hero-dot]").forEach((el) => el.onclick = (e) => {
         e.preventDefault();
         heroIndex = Number(el.dataset.heroDot || 0);
