@@ -56,3 +56,5 @@
   .availability-callout{margin-top:14px;padding:10px 11px}
   .availability-callout span{font-size:.7rem}
 }
+
+body.modal-open{overflow:hidden}
