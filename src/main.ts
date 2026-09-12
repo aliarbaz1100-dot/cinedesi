@@ -287,9 +287,18 @@ function init() {
 
     if (continueGrid && continueSection) {
       continueSection.hidden = continueMovies.length === 0;
+      const continueBySlug = new Map(continueItems.map((x) => [x.slug, x]));
       continueGrid.innerHTML = continueMovies.map((m) => {
         const url = `/movie?slug=${encodeURIComponent(m.slug)}`;
-        return card(m).replaceAll(url, url + "#watch");
+        const resume = continueBySlug.get(m.slug);
+        const episodeNumber = Number(resume?.episode_number);
+        let html = card(m).replaceAll(url, url + "#watch");
+        if (Number.isInteger(episodeNumber) && episodeNumber > 0) {
+          html = html.replace("▶ Details", `▶ Resume E${episodeNumber}`);
+        } else {
+          html = html.replace("▶ Details", "▶ Resume");
+        }
+        return html;
       }).join("");
       wire(continueGrid);
     }
