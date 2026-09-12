@@ -403,6 +403,7 @@ function init() {
   }
   function renderHero() {
     const preferred = [
+      "fallout-season-2-2025",
       "the-boys-season-5-2026",
       "the-family-man-season-3-2025",
       "panchayat-season-4-2025",
