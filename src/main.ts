@@ -417,6 +417,8 @@ function init() {
       "i-will-find-you-2026",
       "kaisi-teri-khudgharzi-full-movie",
       "mayi-ri-full-movie",
+      "doctor-bahu-series-2026",
+      "mahnoor-series-2026",
       "fraud-full-movie",
       "taqdeer-series-2022",
       "sar-e-rah-series-2023",
