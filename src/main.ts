@@ -403,6 +403,19 @@ function init() {
   }
   function renderHero() {
     const preferred = [
+      "dhurandhar-the-revenge-2026",
+      "dhurandhar-2025",
+      "jolly-llb-3-2025",
+      "de-de-pyaar-de-2-2025",
+      "son-of-sardaar-2-2025",
+      "the-night-agent-season-3-2026",
+      "bridgerton-season-4-2026",
+      "one-piece-live-action-japan-cinedesi",
+      "the-umbrella-academy-series",
+      "lockwood-and-co-series",
+      "mirzapur-series-2018",
+      "mirzapur-the-movie-2026",
+      "dhamaal-4-2026",
       "the-love-hypothesis-2026",
       "drawn-together-2026",
       "the-whisper-man-2026",
