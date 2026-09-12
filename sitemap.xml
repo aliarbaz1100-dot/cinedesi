@@ -2,11 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://cinedesi.online/</loc><lastmod>2026-09-12</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>
   <url><loc>https://cinedesi.online/guides.html</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://cinedesi.online/about.html</loc><lastmod>2026-09-12</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://cinedesi.online/editorial.html</loc><lastmod>2026-09-12</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://cinedesi.online/rights.html</loc><lastmod>2026-09-12</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://cinedesi.online/licensing.html</loc><lastmod>2026-09-12</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://cinedesi.online/partner.html</loc><lastmod>2026-09-12</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://cinedesi.online/about.html</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://cinedesi.online/editorial.html</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://cinedesi.online/rights.html</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://cinedesi.online/licensing.html</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://cinedesi.online/partner.html</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://cinedesi.online/catalog.html</loc><lastmod>2026-09-12</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>
   <url><loc>https://cinedesi.online/movie?slug=1670-season-3-2026</loc><lastmod>2026-09-08</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://cinedesi.online/movie?slug=72-hours-2026-netflix</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
@@ -35,6 +35,7 @@
   <url><loc>https://cinedesi.online/movie?slug=death-of-the-pastors-wife-2026</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://cinedesi.online/movie?slug=dhamaal-4-2026</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://cinedesi.online/movie?slug=doc-season-2-2026</loc><lastmod>2026-09-08</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://cinedesi.online/movie?slug=doctor-bahu-series-2026</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://cinedesi.online/movie?slug=dont-say-good-luck-2026</loc><lastmod>2026-09-08</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://cinedesi.online/movie?slug=drawn-together-2026</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://cinedesi.online/movie?slug=drishyam-the-conclusion-2026</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
@@ -70,6 +71,7 @@
   <url><loc>https://cinedesi.online/movie?slug=lust-stories-3-2026</loc><lastmod>2026-09-11</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://cinedesi.online/movie?slug=made-in-korea-season-2-2026</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://cinedesi.online/movie?slug=magudam-2026</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://cinedesi.online/movie?slug=mahnoor-series-2026</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://cinedesi.online/movie?slug=main-vaapas-aaunga-2026</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://cinedesi.online/movie?slug=mardaani-3-2026</loc><lastmod>2026-09-12</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://cinedesi.online/movie?slug=minerva-academy-2026</loc><lastmod>2026-09-08</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
