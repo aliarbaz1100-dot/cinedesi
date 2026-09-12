@@ -92,7 +92,7 @@ function init() {
   let activeCollectionValue = "";
   let saved = JSON.parse(localStorage.getItem("cinedesi-watchlist") || "[]");
   const q = (s) => document.querySelector(s);
-  const search = q("#search"), suggestions = q("#search-suggestions"), searchClose = q("#search-close"), menuToggle = q("#menu-toggle"), catalogHeader = q(".catalog-header"), quickBrowse = q("#quick-browse"), region = q("#region"), availability = q("#availability"), sort = q("#sort"), grid = q("#grid"), loadMore = q("#load-more"), heroShowcase = q("#hero-showcase"), heroTitle = q("#hero-title"), heroMeta = q("#hero-meta"), heroLead = q("#hero-lead"), heroPlay = q("#hero-play"), heroInfo = q("#hero-info"), heroList = q("#hero-list"), topGrid = q("#top-grid"), newGrid = q("#new-grid"), comingGrid = q("#coming-grid"), continueGrid = q("#continue-grid"), recentGrid = q("#recent-grid"), becauseGrid = q("#because-grid"), verifiedGrid = q("#verified-grid"), watchNowGrid = q("#watch-now-grid"), watchGrid = q("#watch-grid"), pakistanGrid = q("#pakistan-grid"), bollywoodGrid = q("#bollywood-grid"), southGrid = q("#south-grid"), seriesGrid = q("#series-grid"), contentType = q("#content-type"), discoverTitle = q("#discover-title"), genreRails = q("#genre-rails"), genreChips = q("#genre-chips"), status = q("#status"), modal = q("#modal"), count = q("#watch-count"), newsletter = q("#newsletter-form"), newsletterMsg = q("#newsletter-msg"), statPublished = q("#stat-published"), statTrailers = q("#stat-trailers"), statWatch = q("#stat-watch"), statRegions = q("#stat-regions");
+  const search = q("#search"), suggestions = q("#search-suggestions"), searchClose = q("#search-close"), menuToggle = q("#menu-toggle"), catalogHeader = q(".catalog-header"), quickBrowse = q("#quick-browse"), region = q("#region"), availability = q("#availability"), sort = q("#sort"), grid = q("#grid"), loadMore = q("#load-more"), heroShowcase = q("#hero-showcase"), heroTitle = q("#hero-title"), heroMeta = q("#hero-meta"), heroLead = q("#hero-lead"), heroPlay = q("#hero-play"), heroInfo = q("#hero-info"), heroList = q("#hero-list"), topGrid = q("#top-grid"), newGrid = q("#new-grid"), comingGrid = q("#coming-grid"), continueGrid = q("#continue-grid"), recentGrid = q("#recent-grid"), becauseGrid = q("#because-grid"), verifiedGrid = q("#verified-grid"), watchNowGrid = q("#watch-now-grid"), bingeGrid = q("#binge-grid"), watchGrid = q("#watch-grid"), pakistanGrid = q("#pakistan-grid"), bollywoodGrid = q("#bollywood-grid"), southGrid = q("#south-grid"), seriesGrid = q("#series-grid"), contentType = q("#content-type"), discoverTitle = q("#discover-title"), genreRails = q("#genre-rails"), genreChips = q("#genre-chips"), status = q("#status"), modal = q("#modal"), count = q("#watch-count"), newsletter = q("#newsletter-form"), newsletterMsg = q("#newsletter-msg"), statPublished = q("#stat-published"), statTrailers = q("#stat-trailers"), statWatch = q("#stat-watch"), statRegions = q("#stat-regions");
   function persist() {
     localStorage.setItem("cinedesi-watchlist", JSON.stringify(saved));
     renderWatchlist();
@@ -146,6 +146,7 @@ function init() {
     renderNew();
     renderComingSoon();
     renderWatchNow();
+    renderBingeSeries();
     renderVerified();
     renderSeries();
     renderGenres();
@@ -211,6 +212,10 @@ function init() {
     } else if (kind === "series") {
       contentType.value = "series";
       label = "All series & seasons";
+    } else if (kind === "binge") {
+      contentType.value = "series";
+      availability.value = "cinedesi";
+      label = "Complete series on CineDesi";
     } else if (kind === "genre") {
       label = `All ${value}`;
     } else if (kind === "region") {
@@ -273,6 +278,24 @@ function init() {
     wire(watchNowGrid);
     document.querySelectorAll("[data-watch-see],[data-watch-all]").forEach((el) => el.onclick = () => showCollection("watch"));
   }
+  function renderBingeSeries() {
+    const section = q("#binge-series");
+    if (!bingeGrid || !section) return;
+    const all = rankRail(movies.filter((m) =>
+      m.content_type === "series" &&
+      m.full_video_verified &&
+      m.full_video_embed_url &&
+      Number(m.episode_count || 0) >= 5
+    ));
+    section.hidden = all.length === 0;
+    const list = all.slice(0, 12);
+    bingeGrid.innerHTML = list.length
+      ? list.map((m) => card(m)).join("") + (all.length > 12 ? `<a class='see-all-card' href='#discover' data-binge-see='true'><span>See all complete series</span><strong>→</strong></a>` : "")
+      : "";
+    wire(bingeGrid);
+    document.querySelectorAll("[data-binge-see],[data-binge-all]").forEach((el) => el.onclick = () => showCollection("binge"));
+  }
+
   function renderVerified() {
     const all = rankRail(movies.filter((m) => (m.rights_status === "official_link" || m.rights_status === "cleared") && m.source_name && m.source_url && m.source_license));
     const list = all.slice(0, 8);
@@ -392,6 +415,8 @@ function init() {
       "mardaani-3-2026",
       "bhooth-bangla-2026",
       "i-will-find-you-2026",
+      "kaisi-teri-khudgharzi-full-movie",
+      "mayi-ri-full-movie",
       "mirzapur-the-movie-2026",
       "awarapan-2-2026-official",
       "outer-banks-season-5-2026",
@@ -493,7 +518,7 @@ function init() {
   function render() {
     const term = search.value.trim().toLowerCase(), r = region.value, a = availability.value, s = sort.value, t = contentType.value;
     const south = (v) => ["South", "South Indian", "India / South Indian"].includes(String(v));
-    const list = movies.filter((m) => (activeCollection !== "new" || Number(m.release_year) >= new Date().getFullYear() - 1) && (activeCollection !== "upcoming" || isUpcomingTitle(m)) && (activeCollection !== "verified" || (m.rights_status === "official_link" || m.rights_status === "cleared")) && (activeCollection !== "genre" || genreMatch(m, activeCollectionValue)) && (t === "all" || m.content_type === t) && (r === "All" || m.region === r || r === "South" && south(m.region)) && (a === "all" || a === "watch" && m.watch_verified && m.watch_url || a === "trailer" && m.trailer_verified && m.trailer_url || a === "cinedesi" && m.full_video_verified && m.full_video_embed_url) && searchText(m).includes(term)).sort((x, y) => activeCollection === "top" ? (Number(y._trend_score) || 0) - (Number(x._trend_score) || 0) || (Number(y.score) || 0) - (Number(x.score) || 0) : activeCollection === "upcoming" ? (Number(y.score) || 0) - (Number(x.score) || 0) || String(y.updated_at || "").localeCompare(String(x.updated_at || "")) : s === "title" ? String(x.title).localeCompare(String(y.title)) : s === "newest" ? (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : 0), shown = list.slice(0, visibleLimit);
+    const list = movies.filter((m) => (activeCollection !== "new" || Number(m.release_year) >= new Date().getFullYear() - 1) && (activeCollection !== "upcoming" || isUpcomingTitle(m)) && (activeCollection !== "binge" || (m.content_type === "series" && m.full_video_verified && m.full_video_embed_url && Number(m.episode_count || 0) >= 5)) && (activeCollection !== "verified" || (m.rights_status === "official_link" || m.rights_status === "cleared")) && (activeCollection !== "genre" || genreMatch(m, activeCollectionValue)) && (t === "all" || m.content_type === t) && (r === "All" || m.region === r || r === "South" && south(m.region)) && (a === "all" || a === "watch" && m.watch_verified && m.watch_url || a === "trailer" && m.trailer_verified && m.trailer_url || a === "cinedesi" && m.full_video_verified && m.full_video_embed_url) && searchText(m).includes(term)).sort((x, y) => activeCollection === "top" ? (Number(y._trend_score) || 0) - (Number(x._trend_score) || 0) || (Number(y.score) || 0) - (Number(x.score) || 0) : activeCollection === "upcoming" ? (Number(y.score) || 0) - (Number(x.score) || 0) || String(y.updated_at || "").localeCompare(String(x.updated_at || "")) : s === "title" ? String(x.title).localeCompare(String(y.title)) : s === "newest" ? (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : 0), shown = list.slice(0, visibleLimit);
     grid.innerHTML = shown.length ? shown.map((m) => card(m)).join("") : `<div class='empty'>No published titles match these filters yet.</div>`;
     status.textContent = list.length ? `Showing ${shown.length} of ${list.length} matching titles` : "No matching published titles";
     loadMore.hidden = shown.length >= list.length;
@@ -571,6 +596,10 @@ function init() {
     region.value = "All";
     if (key === "upcoming") {
       showCollection("upcoming");
+      return;
+    }
+    if (key === "binge") {
+      showCollection("binge");
       return;
     }
     availability.value = key === "watch" ? "cinedesi" : "all";
