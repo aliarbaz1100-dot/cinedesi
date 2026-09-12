@@ -92,7 +92,7 @@ function init() {
   let activeCollectionValue = "";
   let saved = JSON.parse(localStorage.getItem("cinedesi-watchlist") || "[]");
   const q = (s) => document.querySelector(s);
-  const search = q("#search"), suggestions = q("#search-suggestions"), searchClose = q("#search-close"), menuToggle = q("#menu-toggle"), catalogHeader = q(".catalog-header"), quickBrowse = q("#quick-browse"), region = q("#region"), availability = q("#availability"), sort = q("#sort"), grid = q("#grid"), loadMore = q("#load-more"), heroShowcase = q("#hero-showcase"), heroTitle = q("#hero-title"), heroMeta = q("#hero-meta"), heroLead = q("#hero-lead"), heroPlay = q("#hero-play"), heroInfo = q("#hero-info"), heroList = q("#hero-list"), topGrid = q("#top-grid"), newGrid = q("#new-grid"), continueGrid = q("#continue-grid"), recentGrid = q("#recent-grid"), becauseGrid = q("#because-grid"), verifiedGrid = q("#verified-grid"), watchNowGrid = q("#watch-now-grid"), watchGrid = q("#watch-grid"), pakistanGrid = q("#pakistan-grid"), bollywoodGrid = q("#bollywood-grid"), southGrid = q("#south-grid"), seriesGrid = q("#series-grid"), contentType = q("#content-type"), discoverTitle = q("#discover-title"), genreRails = q("#genre-rails"), genreChips = q("#genre-chips"), status = q("#status"), modal = q("#modal"), count = q("#watch-count"), newsletter = q("#newsletter-form"), newsletterMsg = q("#newsletter-msg"), statPublished = q("#stat-published"), statTrailers = q("#stat-trailers"), statWatch = q("#stat-watch"), statRegions = q("#stat-regions");
+  const search = q("#search"), suggestions = q("#search-suggestions"), searchClose = q("#search-close"), menuToggle = q("#menu-toggle"), catalogHeader = q(".catalog-header"), quickBrowse = q("#quick-browse"), region = q("#region"), availability = q("#availability"), sort = q("#sort"), grid = q("#grid"), loadMore = q("#load-more"), heroShowcase = q("#hero-showcase"), heroTitle = q("#hero-title"), heroMeta = q("#hero-meta"), heroLead = q("#hero-lead"), heroPlay = q("#hero-play"), heroInfo = q("#hero-info"), heroList = q("#hero-list"), topGrid = q("#top-grid"), newGrid = q("#new-grid"), comingGrid = q("#coming-grid"), continueGrid = q("#continue-grid"), recentGrid = q("#recent-grid"), becauseGrid = q("#because-grid"), verifiedGrid = q("#verified-grid"), watchNowGrid = q("#watch-now-grid"), watchGrid = q("#watch-grid"), pakistanGrid = q("#pakistan-grid"), bollywoodGrid = q("#bollywood-grid"), southGrid = q("#south-grid"), seriesGrid = q("#series-grid"), contentType = q("#content-type"), discoverTitle = q("#discover-title"), genreRails = q("#genre-rails"), genreChips = q("#genre-chips"), status = q("#status"), modal = q("#modal"), count = q("#watch-count"), newsletter = q("#newsletter-form"), newsletterMsg = q("#newsletter-msg"), statPublished = q("#stat-published"), statTrailers = q("#stat-trailers"), statWatch = q("#stat-watch"), statRegions = q("#stat-regions");
   function persist() {
     localStorage.setItem("cinedesi-watchlist", JSON.stringify(saved));
     renderWatchlist();
@@ -144,6 +144,7 @@ function init() {
     renderPersonalized();
     renderTop();
     renderNew();
+    renderComingSoon();
     renderWatchNow();
     renderVerified();
     renderSeries();
@@ -214,6 +215,8 @@ function init() {
     } else if (kind === "new") {
       sort.value = "newest";
       label = "New & trending releases";
+    } else if (kind === "upcoming") {
+      label = "Coming Soon";
     }
     discoverTitle.textContent = label;
     render();
@@ -344,6 +347,23 @@ function init() {
     wire(newGrid);
     document.querySelectorAll("[data-new-see],[data-new-all]").forEach((el) => el.onclick = () => showCollection("new"));
   }
+  const isUpcomingTitle = (m) => {
+    const note = String(m.availability_note || "");
+    return /\b(?:premieres|coming|scheduled|arrives)\b/i.test(note) && !/\b(?:premiered|streaming now|available now)\b/i.test(note);
+  };
+  function renderComingSoon() {
+    const section = q("#coming-soon");
+    if (!comingGrid || !section) return;
+    const all = [...movies]
+      .filter(isUpcomingTitle)
+      .sort((a,b) => (Number(b.score)||0) - (Number(a.score)||0) || String(b.updated_at || "").localeCompare(String(a.updated_at || "")));
+    section.hidden = all.length === 0;
+    const list = all.slice(0,12);
+    comingGrid.innerHTML = list.map((m) => card(m).replace("<span class='poster-ribbon new'>New</span>", "<span class='poster-ribbon new'>Upcoming</span>")).join("") + (all.length > 12 ? `<a class='see-all-card' href='#discover' data-upcoming-see='true'><span>See all upcoming</span><strong>→</strong></a>` : "");
+    wire(comingGrid);
+    document.querySelectorAll("[data-upcoming-see],[data-upcoming-all]").forEach((el) => el.onclick = () => showCollection("upcoming"));
+  }
+
   function renderTop() {
     const list = [...movies].sort((a, b) => (Number(b._trend_score) || 0) - (Number(a._trend_score) || 0) || (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.release_year) || 0) - (Number(a.release_year) || 0)).slice(0, 10);
     topGrid.innerHTML = list.map((m, i) => card(m).replace("class='card'", `class='card top-card' data-rank='${i + 1}'`)).join("");
@@ -461,7 +481,7 @@ function init() {
   function render() {
     const term = search.value.trim().toLowerCase(), r = region.value, a = availability.value, s = sort.value, t = contentType.value;
     const south = (v) => ["South", "South Indian", "India / South Indian"].includes(String(v));
-    const list = movies.filter((m) => (activeCollection !== "new" || Number(m.release_year) >= new Date().getFullYear() - 1) && (activeCollection !== "verified" || (m.rights_status === "official_link" || m.rights_status === "cleared")) && (activeCollection !== "genre" || genreMatch(m, activeCollectionValue)) && (t === "all" || m.content_type === t) && (r === "All" || m.region === r || r === "South" && south(m.region)) && (a === "all" || a === "watch" && m.watch_verified && m.watch_url || a === "trailer" && m.trailer_verified && m.trailer_url || a === "cinedesi" && m.full_video_verified && m.full_video_embed_url) && searchText(m).includes(term)).sort((x, y) => activeCollection === "top" ? (Number(y.score) || 0) - (Number(x.score) || 0) || (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : s === "title" ? String(x.title).localeCompare(String(y.title)) : s === "newest" ? (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : 0), shown = list.slice(0, visibleLimit);
+    const list = movies.filter((m) => (activeCollection !== "new" || Number(m.release_year) >= new Date().getFullYear() - 1) && (activeCollection !== "upcoming" || isUpcomingTitle(m)) && (activeCollection !== "verified" || (m.rights_status === "official_link" || m.rights_status === "cleared")) && (activeCollection !== "genre" || genreMatch(m, activeCollectionValue)) && (t === "all" || m.content_type === t) && (r === "All" || m.region === r || r === "South" && south(m.region)) && (a === "all" || a === "watch" && m.watch_verified && m.watch_url || a === "trailer" && m.trailer_verified && m.trailer_url || a === "cinedesi" && m.full_video_verified && m.full_video_embed_url) && searchText(m).includes(term)).sort((x, y) => activeCollection === "top" ? (Number(y.score) || 0) - (Number(x.score) || 0) || (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : s === "title" ? String(x.title).localeCompare(String(y.title)) : s === "newest" ? (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : 0), shown = list.slice(0, visibleLimit);
     grid.innerHTML = shown.length ? shown.map((m) => card(m)).join("") : `<div class='empty'>No published titles match these filters yet.</div>`;
     status.textContent = list.length ? `Showing ${shown.length} of ${list.length} matching titles` : "No matching published titles";
     loadMore.hidden = shown.length >= list.length;
@@ -526,6 +546,10 @@ function init() {
     activeCollectionValue = "";
     search.value = "";
     region.value = "All";
+    if (key === "upcoming") {
+      showCollection("upcoming");
+      return;
+    }
     availability.value = key === "watch" ? "cinedesi" : "all";
     sort.value = key === "new" ? "newest" : "verified";
     visibleLimit = 30;
