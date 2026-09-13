@@ -287,6 +287,7 @@ function init() {
       "beiimaan-love-2016-official-full-movie",
       "aksar-2006-official-full-movie",
       "ankahee-2006-official-full-movie",
+      "jism-2-2012-official-full-movie",
       "dishoom-2016-official-full-movie",
       "ghost-2019-official-full-movie",
       "1920-evil-returns-2012-official-full-movie",
