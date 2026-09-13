@@ -280,6 +280,9 @@ function init() {
   }
   function renderWatchNow() {
     const watchPriority = [
+      "hadh-kar-di-aapne-2000-official-full-movie",
+      "judwaa-1997-official-full-movie",
+      "akhiyon-se-goli-maare-2002-official-full-movie",
       "garam-masala-2005-official-full-movie",
       "malamaal-weekly-2006-official-full-movie",
       "mere-baap-pehle-aap-2008-official-full-movie",
