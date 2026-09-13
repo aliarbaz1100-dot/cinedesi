@@ -280,6 +280,9 @@ function init() {
   }
   function renderWatchNow() {
     const watchPriority = [
+      "aankhen-1993-official-full-movie",
+      "shola-aur-shabnam-1992-official-full-movie",
+      "jodi-no-1-2001-official-full-movie",
       "hadh-kar-di-aapne-2000-official-full-movie",
       "judwaa-1997-official-full-movie",
       "akhiyon-se-goli-maare-2002-official-full-movie",
