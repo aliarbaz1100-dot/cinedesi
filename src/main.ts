@@ -280,6 +280,11 @@ function init() {
   }
   function renderWatchNow() {
     const watchPriority = [
+      "hera-pheri-2000-official-full-movie",
+      "humko-deewana-kar-gaye-2006-official-full-movie",
+      "36-china-town-2006-official-full-movie",
+      "entertainment-2014-official-full-movie",
+      "dil-1990-official-full-movie",
       "bhool-bhulaiyaa-2007-official-full-movie",
       "khiladi-786-2012-official-full-movie",
       "deewane-huye-paagal-2005-official-full-movie",
