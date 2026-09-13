@@ -280,6 +280,10 @@ function init() {
   }
   function renderWatchNow() {
     const watchPriority = [
+      "hum-aapke-dil-mein-rehte-hain-1999-official-full-movie",
+      "joru-ka-ghulam-2000-official-full-movie",
+      "aap-mujhe-achche-lagne-lage-2002-official-full-movie",
+      "dhaai-akshar-prem-ke-2000-official-full-movie",
       "aankhen-1993-official-full-movie",
       "shola-aur-shabnam-1992-official-full-movie",
       "jodi-no-1-2001-official-full-movie",
