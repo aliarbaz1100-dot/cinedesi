@@ -280,6 +280,9 @@ function init() {
   }
   function renderWatchNow() {
     const watchPriority = [
+      "dabangg-2010-official-full-movie",
+      "darling-2007-official-full-movie",
+      "kajraare-2010-official-full-movie",
       "dishoom-2016-official-full-movie",
       "ghost-2019-official-full-movie",
       "1920-evil-returns-2012-official-full-movie",
