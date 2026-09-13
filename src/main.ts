@@ -280,6 +280,12 @@ function init() {
   }
   function renderWatchNow() {
     const watchPriority = [
+      "son-of-sardaar-2012-official-full-movie",
+      "golmaal-again-2017-cinedesi",
+      "golmaal-3-2010",
+      "baadshaho-2017-official-full-movie",
+      "ajab-prem-ki-ghazab-kahani-2009-official-full-movie",
+      "ek-thi-daayan-2013-official-full-movie",
       "u-turn-2-2026-hindi-dubbed",
       "ranga-ranga-2025-hindi-dubbed",
       "identity-2025-hindi-dubbed-official-full-movie",
