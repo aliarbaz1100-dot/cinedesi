@@ -280,6 +280,10 @@ function init() {
   }
   function renderWatchNow() {
     const watchPriority = [
+      "raabta-2017-official-full-movie",
+      "hate-story-3-2015-official-full-movie",
+      "wajah-tum-ho-2016-official-full-movie",
+      "junooniyat-2016-official-full-movie",
       "hum-aapke-dil-mein-rehte-hain-1999-official-full-movie",
       "joru-ka-ghulam-2000-official-full-movie",
       "aap-mujhe-achche-lagne-lage-2002-official-full-movie",
