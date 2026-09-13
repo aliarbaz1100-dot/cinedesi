@@ -281,6 +281,15 @@ function init() {
   function renderWatchNow() {
     const watchPriority = [
       "son-of-sardaar-2012-official-full-movie",
+      "bhagam-bhag-2006",
+      "dhamaal-2007-official-full-movie",
+      "double-dhamaal-2011-official-full-movie",
+      "fida-2004-official-full-movie",
+      "dil-kya-kare-1999-official-full-movie",
+      "kunwara-2000-official-full-movie",
+      "dulaara-1994-official-full-movie",
+      "mann-1999",
+      "tango-charlie-2005",
       "golmaal-again-2017-cinedesi",
       "golmaal-3-2010",
       "baadshaho-2017-official-full-movie",
@@ -322,7 +331,7 @@ function init() {
       "jurassic-island-2022",
       "play-dead-2022"
     ];
-    const all = movies.filter((m) => m.full_video_verified && m.full_video_embed_url && isHomeDisplayTitle(m));
+    const all = movies.filter((m) => m.full_video_verified && m.full_video_embed_url);
     const preferred = watchPriority.map((slug) => all.find((m) => m.slug === slug)).filter(Boolean);
     const seen = new Set(preferred.map((m) => m.id));
     const rest = rankRail(all.filter((m) => !seen.has(m.id)));
