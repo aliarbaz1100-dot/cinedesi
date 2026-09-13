@@ -280,6 +280,9 @@ function init() {
   }
   function renderWatchNow() {
     const watchPriority = [
+      "ek-paheli-leela-2015-official-full-movie",
+      "yaariyan-2014-official-full-movie",
+      "ragini-mms-2-2014-official-full-movie",
       "raabta-2017-official-full-movie",
       "hate-story-3-2015-official-full-movie",
       "wajah-tum-ho-2016-official-full-movie",
