@@ -280,6 +280,11 @@ function init() {
   }
   function renderWatchNow() {
     const watchPriority = [
+      "masti-2004-official-full-movie",
+      "mujhse-shaadi-karogi-2004-official-full-movie",
+      "dhadkan-2000-official-full-movie",
+      "humraaz-2002-official-full-movie",
+      "ajnabee-2001-official-full-movie",
       "hera-pheri-2000-official-full-movie",
       "humko-deewana-kar-gaye-2006-official-full-movie",
       "36-china-town-2006-official-full-movie",
