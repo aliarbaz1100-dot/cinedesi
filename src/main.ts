@@ -280,6 +280,10 @@ function init() {
   }
   function renderWatchNow() {
     const watchPriority = [
+      "ek-villain-2014-official-full-movie",
+      "a-flying-jatt-2016-official-full-movie",
+      "great-grand-masti-2016-official-full-movie",
+      "love-games-2016-official-full-movie",
       "ek-paheli-leela-2015-official-full-movie",
       "yaariyan-2014-official-full-movie",
       "ragini-mms-2-2014-official-full-movie",
