@@ -280,6 +280,11 @@ function init() {
   }
   function renderWatchNow() {
     const watchPriority = [
+      "garam-masala-2005-official-full-movie",
+      "malamaal-weekly-2006-official-full-movie",
+      "mere-baap-pehle-aap-2008-official-full-movie",
+      "dosti-friends-forever-2005-official-full-movie",
+      "mere-jeevan-saathi-2006-official-full-movie",
       "kyaa-kool-hai-hum-2005-official-full-movie",
       "chori-chori-chupke-chupke-2001-official-full-movie",
       "shootout-at-lokhandwala-2007-official-full-movie",
