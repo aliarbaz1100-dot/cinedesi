@@ -280,6 +280,10 @@ function init() {
   }
   function renderWatchNow() {
     const watchPriority = [
+      "dishoom-2016-official-full-movie",
+      "ghost-2019-official-full-movie",
+      "1920-evil-returns-2012-official-full-movie",
+      "dangerous-ishhq-2012-official-full-movie",
       "ek-villain-2014-official-full-movie",
       "a-flying-jatt-2016-official-full-movie",
       "great-grand-masti-2016-official-full-movie",
