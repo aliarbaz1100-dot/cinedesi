@@ -280,6 +280,11 @@ function init() {
   }
   function renderWatchNow() {
     const watchPriority = [
+      "kyaa-kool-hai-hum-2005-official-full-movie",
+      "chori-chori-chupke-chupke-2001-official-full-movie",
+      "shootout-at-lokhandwala-2007-official-full-movie",
+      "lootera-2013-official-full-movie",
+      "badal-2000-official-full-movie",
       "masti-2004-official-full-movie",
       "mujhse-shaadi-karogi-2004-official-full-movie",
       "dhadkan-2000-official-full-movie",
