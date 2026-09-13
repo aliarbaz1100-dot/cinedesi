@@ -280,6 +280,10 @@ function init() {
   }
   function renderWatchNow() {
     const watchPriority = [
+      "bhool-bhulaiyaa-2007-official-full-movie",
+      "khiladi-786-2012-official-full-movie",
+      "deewane-huye-paagal-2005-official-full-movie",
+      "waqt-the-race-against-time-2005-official-full-movie",
       "son-of-sardaar-2012-official-full-movie",
       "bhagam-bhag-2006",
       "dhamaal-2007-official-full-movie",
