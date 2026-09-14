@@ -183,7 +183,7 @@ async function load() {
   schema.textContent = JSON.stringify(movieSchema);
   document.querySelector("#movie-schema")?.remove();
   document.head.appendChild(schema);
-  const trailer = m.trailer_verified && m.trailer_url ? `<a id='trailer-link' class='btn' target='_blank' rel='noopener' href='${esc(m.trailer_url)}'>Watch official trailer</a>` : ``;
+  const trailer = m.trailer_verified && m.trailer_url ? `<a id='trailer-link' class='movie-hero-trailer' target='_blank' rel='noopener' href='${esc(m.trailer_url)}'>Watch Trailer</a>` : ``;
   const watch = m.watch_verified && m.watch_url ? `<a id='watch-link' class='btn secondary legal-watch-btn' target='_blank' rel='noopener' href='${esc(m.watch_url)}'>Where to watch legally</a>` : ``;
   const checked = m.rights_checked_at ? new Date(m.rights_checked_at).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" }) : "Not recorded";
   const seasonNumber = String(m.title || "").match(/season\s*(\d+)/i)?.[1] || (Number(m.season_count) === 1 ? "1" : "");
