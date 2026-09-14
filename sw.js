@@ -1,4 +1,4 @@
-const CACHE='cinedesi-shell-v10';
+const CACHE='cinedesi-shell-v11';
 const SHELL=['./index.html','./src/styles.css','./src/main.ts','./cinedesi-icon.svg','./cinedesi-launch-1170x2532.png'];
 
 self.addEventListener('install',e=>{
