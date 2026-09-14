@@ -34,29 +34,33 @@ jobs:
       - name: Verify Cloudflare credentials
         shell: bash
         run: |
-          python - <<'PY' > /tmp/cf-clean.env
-          import os
+          python - <<'PY'
+          import json, os, urllib.request, urllib.error
           token=os.environ["CLOUDFLARE_API_TOKEN_RAW"].strip().strip('"').strip("'")
           if token.lower().startswith("bearer "):
               token=token[7:].strip()
           account=os.environ["CLOUDFLARE_ACCOUNT_ID_RAW"].strip().strip('"').strip("'")
-          print(f"CLOUDFLARE_API_TOKEN={token}")
-          print(f"CLOUDFLARE_ACCOUNT_ID={account}")
-          PY
-          set -a
-          . /tmp/cf-clean.env
-          set +a
-          echo "Token verify HTTP: $(curl -sS -o /tmp/cf-token.json -w '%{http_code}' -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify)"
-          echo "Account lookup HTTP: $(curl -sS -o /tmp/cf-account.json -w '%{http_code}' -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID")"
-          echo "Workers services HTTP: $(curl -sS -o /tmp/cf-workers.json -w '%{http_code}' -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/services")"
-          python - <<'PY'
-          import json
-          for p in ["/tmp/cf-token.json","/tmp/cf-account.json","/tmp/cf-workers.json"]:
+          endpoints=[
+              ("Token verify","https://api.cloudflare.com/client/v4/user/tokens/verify"),
+              ("Account lookup",f"https://api.cloudflare.com/client/v4/accounts/{account}"),
+              ("Workers services",f"https://api.cloudflare.com/client/v4/accounts/{account}/workers/services"),
+          ]
+          failed=False
+          for name,url in endpoints:
+              req=urllib.request.Request(url,headers={"Authorization":f"Bearer {token}","User-Agent":"CineDesi-GitHub-Actions"})
               try:
-                  d=json.load(open(p))
-                  print(p, "success=", d.get("success"), "errors=", d.get("errors"))
-              except Exception:
-                  print(p, "non-json response")
+                  with urllib.request.urlopen(req,timeout=30) as r:
+                      body=json.loads(r.read().decode("utf-8","replace"))
+                      print(f"{name} HTTP: {r.status} success={body.get('success')} errors={body.get('errors')}")
+                      if not body.get("success",False): failed=True
+              except urllib.error.HTTPError as e:
+                  data=e.read().decode("utf-8","replace")
+                  try: body=json.loads(data)
+                  except Exception: body={}
+                  print(f"{name} HTTP: {e.code} success={body.get('success')} errors={body.get('errors')}")
+                  failed=True
+          if failed:
+              raise SystemExit(1)
           PY
         env:
           CLOUDFLARE_API_TOKEN_RAW: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -65,19 +69,17 @@ jobs:
       - name: Deploy existing cinedesi Worker
         shell: bash
         run: |
-          python - <<'PY' > /tmp/cf-clean.env
-          import os
+          python - <<'PY'
+          import os, subprocess, sys
           token=os.environ["CLOUDFLARE_API_TOKEN_RAW"].strip().strip('"').strip("'")
           if token.lower().startswith("bearer "):
               token=token[7:].strip()
           account=os.environ["CLOUDFLARE_ACCOUNT_ID_RAW"].strip().strip('"').strip("'")
-          print(f"CLOUDFLARE_API_TOKEN={token}")
-          print(f"CLOUDFLARE_ACCOUNT_ID={account}")
+          env=os.environ.copy()
+          env["CLOUDFLARE_API_TOKEN"]=token
+          env["CLOUDFLARE_ACCOUNT_ID"]=account
+          raise SystemExit(subprocess.call(["npx","--yes","wrangler@4","deploy","--config","wrangler.jsonc"],env=env))
           PY
-          set -a
-          . /tmp/cf-clean.env
-          set +a
-          npx wrangler@4 deploy --config wrangler.jsonc
         env:
           CLOUDFLARE_API_TOKEN_RAW: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID_RAW: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
