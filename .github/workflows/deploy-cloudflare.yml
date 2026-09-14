@@ -36,9 +36,17 @@ jobs:
         run: |
           python - <<'PY'
           import json, os, urllib.request, urllib.error
-          token=os.environ["CLOUDFLARE_API_TOKEN_RAW"].strip().strip('"').strip("'")
-          if token.lower().startswith("bearer "):
-              token=token[7:].strip()
+          import re
+          raw=os.environ["CLOUDFLARE_API_TOKEN_RAW"].strip()
+          m=re.search(r'Bearer\s+([A-Za-z0-9._-]+)', raw, re.I)
+          if m:
+              token=m.group(1)
+          else:
+              lines=[x.strip().strip('"').strip("'") for x in raw.splitlines() if x.strip()]
+              token=lines[0] if lines else ""
+              if token.lower().startswith("bearer "):
+                  token=token[7:].strip()
+              token=re.split(r'\s+-H\s+|\s+curl\s+', token, maxsplit=1)[0].strip()
           account=os.environ["CLOUDFLARE_ACCOUNT_ID_RAW"].strip().strip('"').strip("'")
           endpoints=[
               ("Token verify","https://api.cloudflare.com/client/v4/user/tokens/verify"),
@@ -71,9 +79,17 @@ jobs:
         run: |
           python - <<'PY'
           import os, subprocess, sys
-          token=os.environ["CLOUDFLARE_API_TOKEN_RAW"].strip().strip('"').strip("'")
-          if token.lower().startswith("bearer "):
-              token=token[7:].strip()
+          import re
+          raw=os.environ["CLOUDFLARE_API_TOKEN_RAW"].strip()
+          m=re.search(r'Bearer\s+([A-Za-z0-9._-]+)', raw, re.I)
+          if m:
+              token=m.group(1)
+          else:
+              lines=[x.strip().strip('"').strip("'") for x in raw.splitlines() if x.strip()]
+              token=lines[0] if lines else ""
+              if token.lower().startswith("bearer "):
+                  token=token[7:].strip()
+              token=re.split(r'\s+-H\s+|\s+curl\s+', token, maxsplit=1)[0].strip()
           account=os.environ["CLOUDFLARE_ACCOUNT_ID_RAW"].strip().strip('"').strip("'")
           env=os.environ.copy()
           env["CLOUDFLARE_API_TOKEN"]=token
