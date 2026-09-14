@@ -70,7 +70,7 @@ const videoThumb = (m) => {
   if (m.trailer_verified) urls.push(m.trailer_url);
   for (const value of urls.filter(Boolean)) {
     const match = String(value).match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/))([\w-]{11})/i);
-    if (match) return `https://i.ytimg.com/vi/${match[1]}/hqdefault.jpg`;
+    if (match) return `https://i.ytimg.com/vi/${match[1]}/maxresdefault.jpg`;
   }
   return "";
 };
@@ -167,12 +167,19 @@ function init() {
   function wire(root) {
     root.querySelectorAll("img[data-poster-fallback]").forEach((img) => {
       img.addEventListener("error", () => {
+        const current = String(img.currentSrc || img.src || "");
+        const maxres = current.match(/i\\.ytimg\\.com\\/vi\\/([\\w-]{11})\\/maxresdefault\\.jpg/i);
+        if (maxres && img.dataset.youtubeFallbackApplied !== "1") {
+          img.dataset.youtubeFallbackApplied = "1";
+          img.src = `https://i.ytimg.com/vi/${maxres[1]}/hqdefault.jpg`;
+          return;
+        }
         const fallback = String(img.dataset.posterFallback || "");
         if (!fallback || img.dataset.fallbackApplied === "1") return;
         img.dataset.fallbackApplied = "1";
         img.src = fallback;
         img.classList.add("poster-fallback");
-      }, { once: true });
+      });
     });
     root.querySelectorAll("[data-open]").forEach((el) => el.onclick = (e) => {
       e.stopPropagation();
