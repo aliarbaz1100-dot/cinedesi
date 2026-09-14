@@ -57,3 +57,25 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     transform:translateY(-2px)!important;
   }
 }
+
+
+/* Desktop image fidelity fix — keep posters crisp without altering layout */
+@media (min-width: 900px){
+  .card .poster,
+  .card:hover .poster{
+    filter:none!important;
+  }
+
+  .card .poster>img,
+  .card:hover .poster>img{
+    transform:none!important;
+    filter:none!important;
+    image-rendering:auto!important;
+    backface-visibility:visible!important;
+  }
+
+  .hero-showcase .hero-feature,
+  .hero-showcase .hero-poster:first-child{
+    image-rendering:auto!important;
+  }
+}
