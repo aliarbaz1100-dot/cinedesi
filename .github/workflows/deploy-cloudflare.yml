@@ -47,7 +47,9 @@ jobs:
               if token.lower().startswith("bearer "):
                   token=token[7:].strip()
               token=re.split(r'\s+-H\s+|\s+curl\s+', token, maxsplit=1)[0].strip()
-          account=os.environ["CLOUDFLARE_ACCOUNT_ID_RAW"].strip().strip('"').strip("'")
+          account_raw=os.environ["CLOUDFLARE_ACCOUNT_ID_RAW"].strip()
+          am=re.search(r'\b([a-fA-F0-9]{32})\b', account_raw)
+          account=am.group(1) if am else account_raw.strip().strip('"').strip("'")
           endpoints=[
               ("Token verify","https://api.cloudflare.com/client/v4/user/tokens/verify"),
               ("Account lookup",f"https://api.cloudflare.com/client/v4/accounts/{account}"),
@@ -90,7 +92,9 @@ jobs:
               if token.lower().startswith("bearer "):
                   token=token[7:].strip()
               token=re.split(r'\s+-H\s+|\s+curl\s+', token, maxsplit=1)[0].strip()
-          account=os.environ["CLOUDFLARE_ACCOUNT_ID_RAW"].strip().strip('"').strip("'")
+          account_raw=os.environ["CLOUDFLARE_ACCOUNT_ID_RAW"].strip()
+          am=re.search(r'\b([a-fA-F0-9]{32})\b', account_raw)
+          account=am.group(1) if am else account_raw.strip().strip('"').strip("'")
           env=os.environ.copy()
           env["CLOUDFLARE_API_TOKEN"]=token
           env["CLOUDFLARE_ACCOUNT_ID"]=account
