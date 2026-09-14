@@ -53,7 +53,7 @@ body:has(.movie-page) .movie-tools{display:none}
   body:has(.movie-page) .movie-hero{display:block!important;max-width:none!important;margin:0!important}
   body:has(.movie-page) .movie-art{
     position:relative!important;width:calc(100% + 40px)!important;margin-left:-20px!important;
-    height:min(58vh,560px)!important;min-height:430px!important;aspect-ratio:auto!important;
+    height:auto!important;min-height:0!important;aspect-ratio:1.68/1!important;
     border:0!important;border-radius:0!important;background-size:cover!important;background-position:center center!important;
     box-shadow:none!important;overflow:hidden!important
   }
@@ -83,7 +83,7 @@ body:has(.movie-page) .movie-tools{display:none}
     display:block!important;margin:0 0 7px!important;color:#ff2848!important;font-size:15px!important;font-weight:850!important
   }
   body:has(.movie-page) .movie-copy h1{
-    margin:0 0 12px!important;color:#fff!important;font-size:clamp(40px,10.9vw,56px)!important;line-height:.94!important;
+    margin:0 0 12px!important;color:#fff!important;font-size:clamp(34px,9.4vw,44px)!important;line-height:.94!important;
     letter-spacing:-2.4px!important;font-weight:950!important;text-wrap:balance!important;text-shadow:0 4px 18px rgba(0,0,0,.34)!important
   }
   body:has(.movie-page) .movie-copy .modal-meta{
@@ -110,16 +110,16 @@ body:has(.movie-page) .movie-tools{display:none}
   }
 
   body:has(.movie-page) .availability-callout{
-    display:grid!important;grid-template-columns:62px minmax(0,1fr)!important;gap:14px!important;align-items:center!important;
-    margin:17px 0 0!important;padding:14px 16px!important;min-height:94px!important;
+    display:grid!important;grid-template-columns:50px minmax(0,1fr)!important;gap:14px!important;align-items:center!important;
+    margin:17px 0 0!important;padding:14px 16px!important;min-height:74px!important;
     border:1px solid rgba(255,39,69,.7)!important;border-radius:15px!important;
     background:linear-gradient(105deg,rgba(180,8,29,.31),rgba(56,5,13,.36) 52%,rgba(21,5,9,.72))!important;
     box-shadow:inset 0 0 42px rgba(255,0,32,.07),0 10px 30px rgba(0,0,0,.18)!important
   }
   body:has(.movie-page) .availability-icon{
-    display:grid!important;place-items:center!important;width:58px!important;height:58px!important;
+    display:grid!important;place-items:center!important;width:46px!important;height:46px!important;
     border:3px solid #ff2c4b!important;border-radius:50%!important;background:rgba(255,12,43,.05)!important;color:#ff2c4b!important;
-    font-size:29px!important;font-weight:900!important;box-shadow:0 0 24px rgba(255,23,55,.18)!important
+    font-size:22px!important;font-weight:900!important;box-shadow:0 0 24px rgba(255,23,55,.18)!important
   }
   body:has(.movie-page) .availability-copy{display:grid!important;gap:3px!important}
   body:has(.movie-page) .availability-copy small{color:#ff5168!important;font-size:9px!important;font-weight:900!important;letter-spacing:.20em!important}
@@ -131,7 +131,7 @@ body:has(.movie-page) .movie-tools{display:none}
   }
   body:has(.movie-page) .movie-copy .actions:not(:has(.legal-watch-btn)){grid-template-columns:1fr!important}
   body:has(.movie-page) .movie-copy .actions .btn,body:has(.movie-page) .movie-copy .actions .ghost{
-    min-height:58px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+    min-height:48px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
     border-radius:13px!important;padding:0 15px!important;font-size:13px!important;font-weight:850!important;letter-spacing:-.1px!important
   }
   body:has(.movie-page) .movie-copy .actions .legal-watch-btn{
@@ -146,7 +146,7 @@ body:has(.movie-page) .movie-tools{display:none}
   body:has(.movie-page) .movie-copy .actions #share:before{content:"⇧"!important;margin-right:10px!important;font-size:22px!important}
 
   body:has(.movie-page) .movie-copy .source-card{
-    position:relative!important;margin-top:15px!important;padding:18px 17px 18px 68px!important;min-height:128px!important;
+    position:relative!important;margin-top:15px!important;padding:18px 17px 18px 68px!important;min-height:112px!important;
     border:1px solid rgba(255,255,255,.25)!important;border-radius:15px!important;
     background:linear-gradient(135deg,#111317,#08090b 76%)!important;color:#b8bac1!important;font-size:11px!important;line-height:1.55!important;
     box-shadow:0 12px 34px rgba(0,0,0,.18)!important
@@ -174,7 +174,7 @@ body:has(.movie-page) .movie-tools{display:none}
     border:18px solid rgba(119,0,18,.18)!important;border-radius:54% 46% 48% 52%!important;transform:rotate(-18deg)!important;pointer-events:none!important
   }
   body:has(.movie-page) .watch-card-top{
-    position:relative!important;z-index:2!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(190px,.96fr)!important;
+    position:relative!important;z-index:2!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(170px,.92fr)!important;
     gap:16px!important;align-items:center!important;padding:22px 20px!important
   }
   body:has(.movie-page) .watch-card-copy small{
@@ -191,7 +191,7 @@ body:has(.movie-page) .movie-tools{display:none}
   }
   body:has(.movie-page) .watch-card-cta{
     position:relative!important;z-index:3!important;display:grid!important;grid-template-columns:32px 1fr 18px!important;align-items:center!important;gap:9px!important;
-    min-height:66px!important;padding:0 16px!important;border:1px solid #ff4961!important;border-radius:14px!important;
+    min-height:54px!important;padding:0 16px!important;border:1px solid #ff4961!important;border-radius:14px!important;
     background:linear-gradient(100deg,#ff183b,#ca0c2a)!important;color:#fff!important;
     box-shadow:0 10px 28px rgba(220,7,38,.26)!important;font:inherit!important;cursor:pointer!important
   }
@@ -220,16 +220,16 @@ body:has(.movie-page) .movie-tools{display:none}
   body:has(.movie-page) .movie-tools{gap:7px!important}
   body:has(.movie-page) .movie-tools a,body:has(.movie-page) .movie-tools span{width:35px!important;height:35px!important}
   body:has(.movie-page) .movie-page{padding-left:16px!important;padding-right:16px!important}
-  body:has(.movie-page) .movie-art{width:calc(100% + 32px)!important;margin-left:-16px!important;min-height:390px!important;height:54vh!important}
+  body:has(.movie-page) .movie-art{width:calc(100% + 32px)!important;margin-left:-16px!important;height:auto!important;min-height:0!important;aspect-ratio:1.68/1!important}
   body:has(.movie-page) .movie-hero-trailer{left:16px!important;bottom:38px!important;min-height:52px!important;font-size:13px!important}
   body:has(.movie-page) .movie-copy h1{font-size:clamp(37px,11vw,48px)!important}
-  body:has(.movie-page) .availability-callout{grid-template-columns:56px minmax(0,1fr)!important}
-  body:has(.movie-page) .availability-icon{width:52px!important;height:52px!important}
+  body:has(.movie-page) .availability-callout{grid-template-columns:48px minmax(0,1fr)!important}
+  body:has(.movie-page) .availability-icon{width:44px!important;height:44px!important}
   body:has(.movie-page) .movie-copy .actions{grid-template-columns:1.15fr .95fr!important}
   body:has(.movie-page) .movie-copy .actions .btn,body:has(.movie-page) .movie-copy .actions .ghost{font-size:11.5px!important;padding:0 11px!important}
-  body:has(.movie-page) .watch-card-top{grid-template-columns:1fr!important;padding:20px 17px!important}
-  body:has(.movie-page) .watch-card-cta{width:100%!important}
-  body:has(.movie-page) .watch-card-copy h2{font-size:27px!important}
+  body:has(.movie-page) .watch-card-top{grid-template-columns:minmax(0,1fr) minmax(150px,.92fr)!important;gap:12px!important;padding:18px 16px!important}
+  body:has(.movie-page) .watch-card-cta{width:100%!important;min-height:52px!important;padding:0 12px!important}
+  body:has(.movie-page) .watch-card-copy h2{font-size:22px!important}
 }
 
 @media(max-width:390px){
