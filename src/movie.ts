@@ -25,12 +25,22 @@ const videoThumb = (m) => {
 const normalizeExternalEmbed = (value) => {
   const url = String(value || "");
   const dmVideo = url.match(/(?:dailymotion\.com\/video\/|dailymotion\.com\/embed\/video\/|geo\.dailymotion\.com\/player(?:\/[^/.]+)?\.html\?[^#]*\bvideo=)([A-Za-z0-9]+)/i)?.[1];
-  if (dmVideo) return `https://www.dailymotion.com/embed/video/${encodeURIComponent(dmVideo)}`;
+  if (dmVideo) return `https://geo.dailymotion.com/player.html?video=${encodeURIComponent(dmVideo)}`;
   const dmPlaylist = url.match(/(?:dailymotion\.com\/playlist\/|dailymotion\.com\/embed\/playlist\/|geo\.dailymotion\.com\/player(?:\/[^/.]+)?\.html\?[^#]*\bplaylist=)([A-Za-z0-9]+)/i)?.[1];
-  if (dmPlaylist) return `https://www.dailymotion.com/embed/playlist/${encodeURIComponent(dmPlaylist)}`;
+  if (dmPlaylist) return `https://geo.dailymotion.com/player.html?playlist=${encodeURIComponent(dmPlaylist)}`;
   return url;
 };
 const licensedPoster = (m) => Boolean(m.poster_source_url && m.poster_license && !/cinedesi original|generated cover/i.test(String(m.poster_license)));
+const ensureDailymotionReferrerPolicy = () => {
+  let meta = document.querySelector('meta[name="referrer"]');
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.name = "referrer";
+    document.head.appendChild(meta);
+  }
+  meta.content = "strict-origin-when-cross-origin";
+};
+ensureDailymotionReferrerPolicy();
 const sdk = document.createElement("script");
 sdk.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/dist/umd/supabase.min.js";
 sdk.onload = () => load();
@@ -222,7 +232,7 @@ async function load() {
   const playlistPlayerUrl = playlistGenerated && ytPlaylistId
     ? `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(ytPlaylistId)}&enablejsapi=1&origin=${encodeURIComponent(location.origin)}&index=${reverseYoutubeSourceOrder ? Math.max(0, playlistEpisodeCount - 1) : 0}&rel=0`
     : playlistGenerated && dmPlaylistId
-      ? `https://www.dailymotion.com/embed/playlist/${encodeURIComponent(dmPlaylistId)}`
+      ? `https://geo.dailymotion.com/player.html?playlist=${encodeURIComponent(dmPlaylistId)}`
       : normalizeExternalEmbed(m.full_video_embed_url);
   const initialPlayerUrl = individualEpisode ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(episodeItems[0].id)}?rel=0` : playlistPlayerUrl;
   const fullVideo = m.full_video_verified && m.full_video_embed_url ? `<section id='watch' class='legal-player-section'><div class='legal-player-head'><div><small>WATCH ON CINEDESI</small><h2>${esc(m.full_video_label || "Official full video")}</h2><p>${esc(m.full_video_language || "Official source")}</p></div><span class='badge'>Rights-holder source verified</span></div><div class='legal-player'><iframe id='official-player' src='${esc(initialPlayerUrl)}' title='${esc(m.title)} official video' loading='lazy' referrerpolicy='strict-origin-when-cross-origin' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' allowfullscreen></iframe></div>${episodeList}<div class='source-card'><strong>Playback source</strong><br>${esc(m.full_video_source || "Official rights-holder source")} \u2022 Playback, ads and regional availability remain controlled by the source platform/rights-holder.${m.full_video_url ? ` <a target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Open official source</a>` : ""}</div></section>` : "";
@@ -418,7 +428,7 @@ async function load() {
         if (resumeCard?.dataset.videoId) {
           resumeCard.click();
         } else if (firstCard?.dataset.videoId && player) {
-          player.src = `https://www.dailymotion.com/embed/video/${encodeURIComponent(firstCard.dataset.videoId)}`;
+          player.src = `https://geo.dailymotion.com/player.html?video=${encodeURIComponent(firstCard.dataset.videoId)}`;
           document.querySelectorAll("[data-episode]").forEach((item) => item.classList.toggle("active", item === firstCard));
         }
       })
@@ -442,7 +452,7 @@ async function load() {
         if (player) player.src = `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(playlistId)}&enablejsapi=1&origin=${encodeURIComponent(location.origin)}&index=${playlistIndex}&autoplay=1&rel=0`;
       }
     } else if (playlistKind === "dailymotion" && playlistId && videoId) {
-      if (player) player.src = `https://www.dailymotion.com/embed/video/${encodeURIComponent(videoId)}`;
+      if (player) player.src = `https://geo.dailymotion.com/player.html?video=${encodeURIComponent(videoId)}`;
     } else if (player && videoId) {
       player.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0`;
     } else {
