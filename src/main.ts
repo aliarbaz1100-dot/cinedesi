@@ -168,7 +168,7 @@ function init() {
     root.querySelectorAll("img[data-poster-fallback]").forEach((img) => {
       img.addEventListener("error", () => {
         const current = String(img.currentSrc || img.src || "");
-        const maxres = current.match(/i\\.ytimg\\.com\\/vi\\/([\\w-]{11})\\/maxresdefault\\.jpg/i);
+        const maxres = current.match(/i\.ytimg\.com\/vi\/([\w-]{11})\/maxresdefault\.jpg/i);
         if (maxres && img.dataset.youtubeFallbackApplied !== "1") {
           img.dataset.youtubeFallbackApplied = "1";
           img.src = `https://i.ytimg.com/vi/${maxres[1]}/hqdefault.jpg`;
