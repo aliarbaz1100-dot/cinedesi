@@ -154,17 +154,36 @@ function init() {
     renderNew();
     renderWatchNow();
     if (desktopFastPath) {
-      scheduleDesktopWork(() => {
-        render();
-        renderPersonalized();
-        renderComingSoon();
-        renderBingeSeries();
-        renderVerified();
-        renderSeries();
-        renderGenres();
-        renderRegions();
-        renderWatchlist();
-      });
+      const deferredSections = [
+        [document.querySelector("#continue-watching"), renderPersonalized],
+        [document.querySelector("#coming-soon"), renderComingSoon],
+        [document.querySelector("#binge-series"), renderBingeSeries],
+        [document.querySelector("#verified"), renderVerified],
+        [document.querySelector("#series"), renderSeries],
+        [document.querySelector("#genres"), renderGenres],
+        [document.querySelector("#regions"), renderRegions],
+        [document.querySelector("#discover"), render],
+        [document.querySelector("#watchlist"), renderWatchlist]
+      ].filter(([node]) => node);
+      const rendered = new WeakSet();
+      const paintSection = (node, fn) => {
+        if (!node || rendered.has(node)) return;
+        rendered.add(node);
+        fn();
+      };
+      if ("IntersectionObserver" in window) {
+        const observer = new IntersectionObserver((entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            const pair = deferredSections.find(([node]) => node === entry.target);
+            if (pair) paintSection(pair[0], pair[1]);
+            observer.unobserve(entry.target);
+          }
+        }, { rootMargin: "1000px 0px", threshold: 0.01 });
+        deferredSections.forEach(([node]) => observer.observe(node));
+      } else {
+        deferredSections.forEach(([node, fn]) => scheduleDesktopWork(() => paintSection(node, fn)));
+      }
     } else {
       render();
       renderPersonalized();
@@ -698,7 +717,9 @@ function init() {
     }
   }
   function searchText(m) {
-    return `${m.title || ""} ${m.genre || ""} ${m.region || ""} ${m.content_type || ""} ${m.original_language || ""} ${m.cast_names || ""} ${m.release_year || ""} ${m.synopsis || ""} ${m.editorial || ""} ${m.source_name || ""} ${m.attribution_text || ""}`.toLowerCase();
+    if (m._search_text) return m._search_text;
+    m._search_text = `${m.title || ""} ${m.genre || ""} ${m.region || ""} ${m.content_type || ""} ${m.original_language || ""} ${m.cast_names || ""} ${m.release_year || ""} ${m.synopsis || ""} ${m.editorial || ""} ${m.source_name || ""} ${m.attribution_text || ""}`.toLowerCase();
+    return m._search_text;
   }
   function rankMatch(m, term) {
     const title = String(m.title || "").toLowerCase();
@@ -767,13 +788,22 @@ function init() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && modal.classList.contains("on")) closeModal();
   });
+  let desktopSearchTimer = 0;
   search.oninput = () => {
     activeCollection = "all";
     activeCollectionValue = "";
     discoverTitle.textContent = "Search results";
     visibleLimit = 30;
-    render();
-    renderSuggestions();
+    if (!desktopFastPath) {
+      render();
+      renderSuggestions();
+      return;
+    }
+    window.clearTimeout(desktopSearchTimer);
+    desktopSearchTimer = window.setTimeout(() => {
+      render();
+      renderSuggestions();
+    }, 90);
   };
   search.onfocus = renderSuggestions;
   search.onkeydown = (e) => {
