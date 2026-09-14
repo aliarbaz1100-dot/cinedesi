@@ -25,7 +25,7 @@ const videoThumb = (m) => {
 const normalizeExternalEmbed = (value) => {
   const url = String(value || "");
   const dmVideo = url.match(/(?:dailymotion\.com\/video\/|dailymotion\.com\/embed\/video\/|geo\.dailymotion\.com\/player(?:\/[^/.]+)?\.html\?[^#]*\bvideo=)([A-Za-z0-9]+)/i)?.[1];
-  if (dmVideo) return `https://geo.dailymotion.com/player.html?video=${encodeURIComponent(dmVideo)}`;
+  if (dmVideo) return `https://www.dailymotion.com/embed/video/${encodeURIComponent(dmVideo)}`;
   const dmPlaylist = url.match(/(?:dailymotion\.com\/playlist\/|dailymotion\.com\/embed\/playlist\/|geo\.dailymotion\.com\/player(?:\/[^/.]+)?\.html\?[^#]*\bplaylist=)([A-Za-z0-9]+)/i)?.[1];
   if (dmPlaylist) return `https://geo.dailymotion.com/player.html?playlist=${encodeURIComponent(dmPlaylist)}`;
   return url;
