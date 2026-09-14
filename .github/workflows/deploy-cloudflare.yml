@@ -34,11 +34,21 @@ jobs:
       - name: Verify Cloudflare credentials
         shell: bash
         run: |
-          TOKEN="$(printf '%s' "$CLOUDFLARE_API_TOKEN_RAW" | tr -d '\r\n' | sed -E 's/^[[:space:]]+//;s/[[:space:]]+$//;s/^Bearer[[:space:]]+//I;s/^["'\''']+//;s/["'\''']+$//')"
-          ACCOUNT="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID_RAW" | tr -d '\r\n')"
-          echo "Token verify HTTP: $(curl -sS -o /tmp/cf-token.json -w '%{http_code}' -H "Authorization: Bearer $TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify)"
-          echo "Account lookup HTTP: $(curl -sS -o /tmp/cf-account.json -w '%{http_code}' -H "Authorization: Bearer $TOKEN" "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT")"
-          echo "Workers services HTTP: $(curl -sS -o /tmp/cf-workers.json -w '%{http_code}' -H "Authorization: Bearer $TOKEN" "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/workers/services")"
+          python - <<'PY' > /tmp/cf-clean.env
+          import os
+          token=os.environ["CLOUDFLARE_API_TOKEN_RAW"].strip().strip('"').strip("'")
+          if token.lower().startswith("bearer "):
+              token=token[7:].strip()
+          account=os.environ["CLOUDFLARE_ACCOUNT_ID_RAW"].strip().strip('"').strip("'")
+          print(f"CLOUDFLARE_API_TOKEN={token}")
+          print(f"CLOUDFLARE_ACCOUNT_ID={account}")
+          PY
+          set -a
+          . /tmp/cf-clean.env
+          set +a
+          echo "Token verify HTTP: $(curl -sS -o /tmp/cf-token.json -w '%{http_code}' -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify)"
+          echo "Account lookup HTTP: $(curl -sS -o /tmp/cf-account.json -w '%{http_code}' -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID")"
+          echo "Workers services HTTP: $(curl -sS -o /tmp/cf-workers.json -w '%{http_code}' -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/services")"
           python - <<'PY'
           import json
           for p in ["/tmp/cf-token.json","/tmp/cf-account.json","/tmp/cf-workers.json"]:
@@ -55,8 +65,18 @@ jobs:
       - name: Deploy existing cinedesi Worker
         shell: bash
         run: |
-          export CLOUDFLARE_API_TOKEN="$(printf '%s' "$CLOUDFLARE_API_TOKEN_RAW" | tr -d '\r\n' | sed -E 's/^[[:space:]]+//;s/[[:space:]]+$//;s/^Bearer[[:space:]]+//I;s/^["'\''']+//;s/["'\''']+$//')"
-          export CLOUDFLARE_ACCOUNT_ID="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID_RAW" | tr -d '\r\n')"
+          python - <<'PY' > /tmp/cf-clean.env
+          import os
+          token=os.environ["CLOUDFLARE_API_TOKEN_RAW"].strip().strip('"').strip("'")
+          if token.lower().startswith("bearer "):
+              token=token[7:].strip()
+          account=os.environ["CLOUDFLARE_ACCOUNT_ID_RAW"].strip().strip('"').strip("'")
+          print(f"CLOUDFLARE_API_TOKEN={token}")
+          print(f"CLOUDFLARE_ACCOUNT_ID={account}")
+          PY
+          set -a
+          . /tmp/cf-clean.env
+          set +a
           npx wrangler@4 deploy --config wrangler.jsonc
         env:
           CLOUDFLARE_API_TOKEN_RAW: ${{ secrets.CLOUDFLARE_API_TOKEN }}
