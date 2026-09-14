@@ -34,7 +34,7 @@ jobs:
       - name: Verify Cloudflare credentials
         shell: bash
         run: |
-          TOKEN="$(printf '%s' "$CLOUDFLARE_API_TOKEN_RAW" | tr -d '\r\n')"
+          TOKEN="$(printf '%s' "$CLOUDFLARE_API_TOKEN_RAW" | tr -d '\r\n' | sed -E 's/^[[:space:]]+//;s/[[:space:]]+$//;s/^Bearer[[:space:]]+//I;s/^["'\''']+//;s/["'\''']+$//')"
           ACCOUNT="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID_RAW" | tr -d '\r\n')"
           echo "Token verify HTTP: $(curl -sS -o /tmp/cf-token.json -w '%{http_code}' -H "Authorization: Bearer $TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify)"
           echo "Account lookup HTTP: $(curl -sS -o /tmp/cf-account.json -w '%{http_code}' -H "Authorization: Bearer $TOKEN" "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT")"
@@ -55,7 +55,7 @@ jobs:
       - name: Deploy existing cinedesi Worker
         shell: bash
         run: |
-          export CLOUDFLARE_API_TOKEN="$(printf '%s' "$CLOUDFLARE_API_TOKEN_RAW" | tr -d '\r\n')"
+          export CLOUDFLARE_API_TOKEN="$(printf '%s' "$CLOUDFLARE_API_TOKEN_RAW" | tr -d '\r\n' | sed -E 's/^[[:space:]]+//;s/[[:space:]]+$//;s/^Bearer[[:space:]]+//I;s/^["'\''']+//;s/["'\''']+$//')"
           export CLOUDFLARE_ACCOUNT_ID="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID_RAW" | tr -d '\r\n')"
           npx wrangler@4 deploy --config wrangler.jsonc
         env:
