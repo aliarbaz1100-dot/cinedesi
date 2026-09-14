@@ -70,12 +70,18 @@ const videoThumb = (m) => {
   if (m.trailer_verified) urls.push(m.trailer_url);
   for (const value of urls.filter(Boolean)) {
     const match = String(value).match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/))([\w-]{11})/i);
-    if (match) return `https://i.ytimg.com/vi/${match[1]}/maxresdefault.jpg`;
+    if (match) return `https://i.ytimg.com/vi/${match[1]}/${window.matchMedia("(min-width: 900px)").matches ? "hqdefault" : "maxresdefault"}.jpg`;
   }
   return "";
 };
 const licensedPoster = (m) => Boolean(m.poster_source_url && m.poster_license && !/cinedesi original|generated cover/i.test(String(m.poster_license)));
 function init() {
+  const desktopFastPath = window.matchMedia("(min-width: 900px)").matches;
+  const scheduleDesktopWork = (fn) => {
+    if (!desktopFastPath) return fn();
+    if ("requestIdleCallback" in window) window.requestIdleCallback(fn, { timeout: 650 });
+    else setTimeout(fn, 120);
+  };
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
   window.addEventListener("pageshow", () => {
     if (!location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
@@ -140,19 +146,36 @@ function init() {
     statWatch.textContent = String(movies.filter((m) => m.watch_verified && m.watch_url).length);
     statRegions.textContent = String(new Set(movies.map((m) => m.region).filter(Boolean)).size);
     updateSchema();
-    render();
-    renderPersonalized();
+    // Laptop/desktop: paint the above-the-fold experience first, then build
+    // heavier off-screen rails when the browser is idle. Mobile keeps the
+    // existing immediate rendering path unchanged.
+    renderHero();
     renderTop();
     renderNew();
-    renderComingSoon();
     renderWatchNow();
-    renderBingeSeries();
-    renderVerified();
-    renderSeries();
-    renderGenres();
-    renderRegions();
-    renderHero();
-    renderWatchlist();
+    if (desktopFastPath) {
+      scheduleDesktopWork(() => {
+        render();
+        renderPersonalized();
+        renderComingSoon();
+        renderBingeSeries();
+        renderVerified();
+        renderSeries();
+        renderGenres();
+        renderRegions();
+        renderWatchlist();
+      });
+    } else {
+      render();
+      renderPersonalized();
+      renderComingSoon();
+      renderBingeSeries();
+      renderVerified();
+      renderSeries();
+      renderGenres();
+      renderRegions();
+      renderWatchlist();
+    }
     count.textContent = String(saved.length);
   }
   function card(m) {
