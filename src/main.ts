@@ -70,7 +70,7 @@ const videoThumb = (m) => {
   if (m.trailer_verified) urls.push(m.trailer_url);
   for (const value of urls.filter(Boolean)) {
     const match = String(value).match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/))([\w-]{11})/i);
-    if (match) return `https://i.ytimg.com/vi/${match[1]}/${window.matchMedia("(min-width: 900px)").matches ? "hqdefault" : "maxresdefault"}.jpg`;
+    if (match) return `https://i.ytimg.com/vi/${match[1]}/maxresdefault.jpg`;
   }
   return "";
 };
