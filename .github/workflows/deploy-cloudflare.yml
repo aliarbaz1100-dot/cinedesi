@@ -31,6 +31,27 @@ jobs:
       - name: Build CineDesi
         run: npm run build
 
+      - name: Verify Cloudflare credentials
+        shell: bash
+        run: |
+          TOKEN="$(printf '%s' "$CLOUDFLARE_API_TOKEN_RAW" | tr -d '\r\n')"
+          ACCOUNT="$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID_RAW" | tr -d '\r\n')"
+          echo "Token verify HTTP: $(curl -sS -o /tmp/cf-token.json -w '%{http_code}' -H "Authorization: Bearer $TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify)"
+          echo "Account lookup HTTP: $(curl -sS -o /tmp/cf-account.json -w '%{http_code}' -H "Authorization: Bearer $TOKEN" "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT")"
+          echo "Workers services HTTP: $(curl -sS -o /tmp/cf-workers.json -w '%{http_code}' -H "Authorization: Bearer $TOKEN" "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/workers/services")"
+          python - <<'PY'
+          import json
+          for p in ["/tmp/cf-token.json","/tmp/cf-account.json","/tmp/cf-workers.json"]:
+              try:
+                  d=json.load(open(p))
+                  print(p, "success=", d.get("success"), "errors=", d.get("errors"))
+              except Exception:
+                  print(p, "non-json response")
+          PY
+        env:
+          CLOUDFLARE_API_TOKEN_RAW: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID_RAW: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Deploy existing cinedesi Worker
         shell: bash
         run: |
