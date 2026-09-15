@@ -162,6 +162,7 @@ function init() {
   });
   let detailOverlay = null;
   let detailOverlayClosing = false;
+  const detailVideoId = (value) => String(value || "").match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/))([\w-]{11})/i)?.[1] || "";
   const closeDetailOverlay = ({ fromHistory = false } = {}) => {
     if (!detailOverlay) return;
     detailOverlayClosing = true;
@@ -172,29 +173,70 @@ function init() {
     requestAnimationFrame(() => { detailOverlayClosing = false; });
     if (!fromHistory && history.state?.cinedesiDetail) history.back();
   };
-  const openDetailOverlay = (href) => {
+  const openDetailOverlay = async (href) => {
     const target = new URL(href, location.href);
     if (target.origin !== location.origin) return false;
     const slug = target.searchParams.get("slug");
     if (!slug) return false;
+    const m = movies.find((item) => item.slug === slug);
+    if (!m) return false;
     if (detailOverlay) closeDetailOverlay({ fromHistory: true });
+
     const layer = document.createElement("div");
     layer.id = "cinedesi-detail-overlay";
     layer.setAttribute("role", "dialog");
-    layer.setAttribute("aria-label", "CineDesi title details");
-    layer.style.cssText = "position:fixed;inset:0;z-index:10050;background:#050506;overscroll-behavior:none;";
-    const frame = document.createElement("iframe");
-    frame.src = target.pathname + target.search + target.hash;
-    frame.title = "CineDesi title details";
-    frame.style.cssText = "width:100%;height:100%;border:0;display:block;background:#050506;";
-    frame.setAttribute("allow", "autoplay; fullscreen; picture-in-picture");
-    layer.appendChild(frame);
+    layer.setAttribute("aria-label", `${m.title} details`);
+    layer.style.cssText = "position:fixed;inset:0;z-index:10050;background:#050506;color:#fff;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;";
+    const playerId = detailVideoId(m.full_video_embed_url || m.full_video_url);
+    const trailerId = detailVideoId(m.trailer_url);
+    const heroImage = heroPosterUrl(videoThumb(m) || m.poster_url || posterArt(m));
+    const score = scoreLabel(m.score);
+    const watchBlock = m.full_video_verified && playerId
+      ? `<section id="detail-watch" style="margin:22px 0 0"><h2 style="margin:0 0 12px;font-size:1.2rem">Watch on CineDesi</h2><div style="aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#000"><iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(playerId)}?rel=0" title="${esc(m.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen style="width:100%;height:100%;border:0;display:block"></iframe></div></section>`
+      : "";
+    layer.innerHTML = `
+      <div style="position:sticky;top:0;z-index:3;height:54px;display:flex;align-items:center;padding:0 14px;background:linear-gradient(#050506 65%,transparent)">
+        <button id="detail-overlay-back" type="button" aria-label="Back" style="width:36px;height:36px;border-radius:50%;border:1px solid #34343a;background:#111217;color:#fff;font-size:20px">‹</button>
+        <strong style="margin-left:12px;font-size:.82rem;letter-spacing:.06em">CINE<span style="color:#e50914">DESI</span></strong>
+      </div>
+      <main style="max-width:980px;margin:0 auto;padding:0 14px 40px">
+        <div style="height:min(52vw,390px);min-height:220px;border-radius:0 0 16px 16px;background:linear-gradient(0deg,#050506 0%,transparent 58%),url('${esc(heroImage)}') center/cover no-repeat"></div>
+        <div style="margin-top:-50px;position:relative;padding:0 4px">
+          <small style="color:#e50914;font-weight:800;text-transform:uppercase">${m.content_type === "series" ? "Series" : "Movie"}</small>
+          <h1 style="font-size:clamp(1.9rem,7vw,3.2rem);margin:5px 0 8px;letter-spacing:-.035em">${esc(m.title)}</h1>
+          <div style="display:flex;gap:9px;flex-wrap:wrap;color:#aeb0b7;font-size:.88rem"><span>${esc(m.release_year || "")}</span>${m.original_language ? `<span>• ${esc(m.original_language)}</span>` : ""}${score ? `<span style="color:#62d98b">• ${esc(score)}</span>` : ""}${m.content_type === "series" && m.episode_count ? `<span>• ${esc(m.episode_count)} episodes</span>` : ""}</div>
+          <p style="color:#d7d8dc;line-height:1.55;margin:16px 0 0">${esc(m.synopsis || m.editorial || "Verified CineDesi title.")}</p>
+          <div style="display:flex;gap:9px;flex-wrap:wrap;margin:16px 0">
+            ${m.full_video_verified ? `<a href="#detail-watch" style="background:#fff;color:#050506;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:800">▶ Play</a>` : ""}
+            ${m.trailer_verified && trailerId ? `<a href="https://www.youtube.com/watch?v=${encodeURIComponent(trailerId)}" target="_blank" rel="noopener" style="background:#23242a;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:700">▶ Trailer</a>` : ""}
+            ${m.watch_verified && m.watch_url && !m.full_video_verified ? `<a href="${esc(m.watch_url)}" target="_blank" rel="noopener" style="background:#23242a;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:700">Legal watch</a>` : ""}
+          </div>
+          ${watchBlock}
+          <section id="detail-episodes" style="margin-top:24px" hidden><h2 style="font-size:1.2rem;margin:0 0 12px">Episodes</h2><div id="detail-episode-list" style="display:grid;gap:10px"></div></section>
+          <section style="margin-top:24px;padding:16px;border:1px solid #24262c;border-radius:14px;background:#0d0e12">
+            <strong>Source transparency</strong>
+            <p style="margin:8px 0 0;color:#aeb0b7;font-size:.86rem;line-height:1.5">Source: ${esc(m.source_name || "Verified source")} ${m.full_video_source ? `• Playback: ${esc(m.full_video_source)}` : ""}. Playback and availability remain controlled by the publisher.</p>
+          </section>
+        </div>
+      </main>`;
     document.body.appendChild(layer);
     detailOverlay = layer;
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
+    layer.querySelector("#detail-overlay-back")?.addEventListener("click", () => closeDetailOverlay());
     const hashUrl = location.pathname + location.search + "#detail=" + encodeURIComponent(slug);
     history.pushState({ ...(history.state || {}), cinedesiDetail: slug }, "", hashUrl);
+
+    if (m.content_type === "series") {
+      const { data: episodes } = await db.from("series_episodes").select("episode_number,title,video_id,verified").eq("movie_id", m.id).eq("verified", true).order("episode_number");
+      if (detailOverlay !== layer) return true;
+      const section = layer.querySelector("#detail-episodes");
+      const list = layer.querySelector("#detail-episode-list");
+      if (section && list && episodes?.length) {
+        section.hidden = false;
+        list.innerHTML = episodes.map((ep) => `<a href="https://www.youtube.com/watch?v=${encodeURIComponent(ep.video_id)}" target="_blank" rel="noopener" style="display:flex;gap:12px;align-items:center;padding:11px;border-radius:12px;background:#111217;color:#fff;text-decoration:none"><img src="https://i.ytimg.com/vi/${encodeURIComponent(ep.video_id)}/hqdefault.jpg" alt="" style="width:112px;aspect-ratio:16/9;object-fit:cover;border-radius:8px"><div><small style="color:#9da0a8">Episode ${ep.episode_number}</small><strong style="display:block;margin-top:3px">${esc(ep.title)}</strong></div></a>`).join("");
+      }
+    }
     return true;
   };
   document.addEventListener("click", (event) => {
@@ -202,15 +244,10 @@ function init() {
     if (!link || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || link.target === "_blank") return;
     const href = link.getAttribute("href");
     if (!href) return;
-    if (openDetailOverlay(href)) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-    }
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    void openDetailOverlay(href);
   }, true);
-  window.addEventListener("message", (event) => {
-    if (event.origin !== location.origin) return;
-    if (event.data?.type === "cinedesi-close-detail") closeDetailOverlay();
-  });
   window.addEventListener("popstate", () => {
     if (detailOverlay && !history.state?.cinedesiDetail && !detailOverlayClosing) closeDetailOverlay({ fromHistory: true });
   });
