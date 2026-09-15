@@ -160,6 +160,60 @@ function init() {
     // touching rail scrollLeft after the native back animation causes a visible blink.
     sessionStorage.removeItem(RETURN_PENDING_KEY);
   });
+  let detailOverlay = null;
+  let detailOverlayClosing = false;
+  const closeDetailOverlay = ({ fromHistory = false } = {}) => {
+    if (!detailOverlay) return;
+    detailOverlayClosing = true;
+    detailOverlay.remove();
+    detailOverlay = null;
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+    requestAnimationFrame(() => { detailOverlayClosing = false; });
+    if (!fromHistory && history.state?.cinedesiDetail) history.back();
+  };
+  const openDetailOverlay = (href) => {
+    const target = new URL(href, location.href);
+    if (target.origin !== location.origin) return false;
+    const slug = target.searchParams.get("slug");
+    if (!slug) return false;
+    if (detailOverlay) closeDetailOverlay({ fromHistory: true });
+    const layer = document.createElement("div");
+    layer.id = "cinedesi-detail-overlay";
+    layer.setAttribute("role", "dialog");
+    layer.setAttribute("aria-label", "CineDesi title details");
+    layer.style.cssText = "position:fixed;inset:0;z-index:10050;background:#050506;overscroll-behavior:none;";
+    const frame = document.createElement("iframe");
+    frame.src = target.pathname + target.search + target.hash;
+    frame.title = "CineDesi title details";
+    frame.style.cssText = "width:100%;height:100%;border:0;display:block;background:#050506;";
+    frame.setAttribute("allow", "autoplay; fullscreen; picture-in-picture");
+    layer.appendChild(frame);
+    document.body.appendChild(layer);
+    detailOverlay = layer;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    const hashUrl = location.pathname + location.search + "#detail=" + encodeURIComponent(slug);
+    history.pushState({ ...(history.state || {}), cinedesiDetail: slug }, "", hashUrl);
+    return true;
+  };
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest?.("a[href*='/movie?slug='], a[href*='movie?slug=']");
+    if (!link || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || link.target === "_blank") return;
+    const href = link.getAttribute("href");
+    if (!href) return;
+    if (openDetailOverlay(href)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  }, true);
+  window.addEventListener("message", (event) => {
+    if (event.origin !== location.origin) return;
+    if (event.data?.type === "cinedesi-close-detail") closeDetailOverlay();
+  });
+  window.addEventListener("popstate", () => {
+    if (detailOverlay && !history.state?.cinedesiDetail && !detailOverlayClosing) closeDetailOverlay({ fromHistory: true });
+  });
   const db = supabase.createClient(URL, KEY);
   const track = async (event, slug = null) => {
     const { error } = await db.rpc("track_cinedesi_event", { p_event_type: event, p_movie_slug: slug });
