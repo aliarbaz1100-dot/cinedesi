@@ -1,4 +1,4 @@
-const CACHE='cinedesi-shell-v13';
+const CACHE='cinedesi-shell-v12';
 const SHELL=['./index.html','./src/styles.css','./src/main.ts','./cinedesi-icon.svg','./cinedesi-launch-1170x2532.png'];
 
 self.addEventListener('install',e=>{
@@ -15,26 +15,18 @@ self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET') return;
 
   if(e.request.mode==='navigate'){
-    e.respondWith((async()=>{
-      const url=new URL(e.request.url);
-      const cached=(await caches.match(e.request)) || (url.pathname.startsWith('/movie') ? await caches.match('/movie') : await caches.match('./index.html'));
-      const refresh=fetch(e.request).then(async r=>{
-        if(r.ok){
+    e.respondWith(
+      fetch(e.request)
+        .then(r=>{
+          if(!r.ok) throw new Error('navigation_failed');
           const copy=r.clone();
-          const c=await caches.open(CACHE);
-          await c.put(e.request,copy);
-          if(url.pathname.startsWith('/movie')) await c.put('/movie',r.clone());
-        }
-        return r;
-      }).catch(()=>null);
-
-      if(cached){
-        e.waitUntil(refresh);
-        return cached;
-      }
-      const live=await refresh;
-      return live || Response.error();
-    })());
+          caches.open(CACHE).then(c=>c.put(e.request,copy));
+          return r;
+        })
+        .catch(async()=>{
+          return (await caches.match(e.request)) || (await caches.match('./index.html')) || Response.error();
+        })
+    );
     return;
   }
 
