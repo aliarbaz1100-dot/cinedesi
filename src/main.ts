@@ -596,12 +596,12 @@ function init() {
   }
   function renderHero() {
     const preferred = [
+      "raid-2-2025",
       "dhurandhar-2025",
       "son-of-sardaar-2-2025",
       "war-2-q124852530",
       "saiyaara-q135393743",
       "housefull-5-q125918989",
-      "raid-2-2025",
       "coolie-q127118132",
       "sikandar-q125861557",
       "chhaava-q127012906",
