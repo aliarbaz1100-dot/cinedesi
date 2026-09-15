@@ -7,7 +7,7 @@ if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || 
     setTimeout(() => launchSplash.remove(), reduceMotion ? 0 : 420);
   }, 2600)));
 } else launchSplash?.remove();
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=11").catch(() => {
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=13").catch(() => {
 }));
 let deferredInstall = null;
 const installBar = document.querySelector("#install-banner"), installButton = document.querySelector("#install-app"), installClose = document.querySelector("#install-close"), installCopy = document.querySelector("#install-copy");
@@ -75,6 +75,12 @@ const videoThumb = (m) => {
   return "";
 };
 const licensedPoster = (m) => Boolean(m.poster_source_url && m.poster_license && !/cinedesi original|generated cover/i.test(String(m.poster_license)));
+const scoreLabel = (score) => {
+  const value = Number(score);
+  if (!Number.isFinite(value) || value <= 0) return "";
+  return value <= 10 ? `${value.toFixed(value % 1 ? 1 : 0)}/10` : `${Math.round(value)}%`;
+};
+const heroPosterUrl = (value) => String(value || "").replace(/\/hqdefault\.jpg(?:\?.*)?$/i, "/maxresdefault.jpg");
 function init() {
   const desktopFastPath = window.matchMedia("(min-width: 900px)").matches;
   const scheduleDesktopWork = (fn) => {
@@ -204,7 +210,7 @@ function init() {
     const upcoming = typeof isUpcomingTitle === "function" && isUpcomingTitle(m);
     const availabilityBadge = upcoming ? "<span class='badge'>Coming soon</span>" : m.full_video_verified && m.full_video_embed_url ? "<span class='badge watch-now'>Watch here</span>" : m.watch_verified && m.watch_url ? "<span class='badge'>Legal watch</span>" : m.trailer_verified ? "<span class='badge'>Official trailer</span>" : "<span class='badge'>Editorial</span>";
     const ribbon = upcoming ? "<span class='poster-ribbon new'>Upcoming</span>" : m.full_video_verified && m.full_video_embed_url ? "<span class='poster-ribbon'>\u25B6 Watch here</span>" : Number(m.release_year) >= 2025 ? "<span class='poster-ribbon new'>New</span>" : "";
-    return `<article class='card' data-id='${m.id}'><a class='poster-link' href='/movie?slug=${encodeURIComponent(m.slug)}' aria-label='Open ${esc(m.title)}'><div class='poster'>${image}<span class='poster-region'>${esc(m.region)}</span>${ribbon}</div></a><div class='info'><div class='card-title-row'><h3>${esc(m.title)}</h3>${m.score ? `<strong class='match-score'>${esc(m.score)}%</strong>` : ""}</div><p class='muted'>${esc(m.content_type === "series" ? "Series" : m.genre || "Film")} \u2022 ${esc(m.release_year || "")}${m.original_language ? ` \u2022 ${esc(m.original_language)}` : ""}</p><div class='badges'>${availabilityBadge}${m.rights_status === "official_link" || m.rights_status === "cleared" ? "<span class='badge verified-badge'>\u2713 Source checked</span>" : ""}</div><div class='card-actions streaming-actions'><a class='btn play-mini' href='/movie?slug=${encodeURIComponent(m.slug)}'>\u25B6 Details</a><button class='circle-action' data-save='${m.id}' aria-label='${saved.includes(m.id) ? "Remove from My List" : "Add to My List"}'>${saved.includes(m.id) ? "\u2713" : "\uFF0B"}</button><button class='circle-action info-action' data-open='${m.id}' aria-label='More information'>i</button></div></div></article>`;
+    return `<article class='card' data-id='${m.id}'><a class='poster-link' href='/movie?slug=${encodeURIComponent(m.slug)}' aria-label='Open ${esc(m.title)}'><div class='poster'>${image}<span class='poster-region'>${esc(m.region)}</span>${ribbon}</div></a><div class='info'><div class='card-title-row'><h3>${esc(m.title)}</h3>${scoreLabel(m.score) ? `<strong class='match-score'>${esc(scoreLabel(m.score))}</strong>` : ""}</div><p class='muted'>${esc(m.content_type === "series" ? "Series" : m.genre || "Film")} \u2022 ${esc(m.release_year || "")}${m.original_language ? ` \u2022 ${esc(m.original_language)}` : ""}</p><div class='badges'>${availabilityBadge}${m.rights_status === "official_link" || m.rights_status === "cleared" ? "<span class='badge verified-badge'>\u2713 Source checked</span>" : ""}</div><div class='card-actions streaming-actions'><a class='btn play-mini' href='/movie?slug=${encodeURIComponent(m.slug)}'>\u25B6 Details</a><button class='circle-action' data-save='${m.id}' aria-label='${saved.includes(m.id) ? "Remove from My List" : "Add to My List"}'>${saved.includes(m.id) ? "\u2713" : "\uFF0B"}</button><button class='circle-action info-action' data-open='${m.id}' aria-label='More information'>i</button></div></div></article>`;
   }
   function wire(root) {
     root.querySelectorAll("img[data-poster-fallback]").forEach((img) => {
@@ -688,12 +694,20 @@ function init() {
       const eyebrow = q("#hero-eyebrow");
       if (eyebrow) eyebrow.textContent = `${heroState} • ${badge}`;
       const shown = Math.min(heroPool.length, 9);
-      heroShowcase.innerHTML = `<a class='hero-feature hero-feature-live' href='${url}' style="background-image:url('${esc(m.poster_url)}')" aria-label='Open ${esc(m.title)}'></a><div class='hero-dots' aria-label='Featured titles'>${heroPool.slice(0,shown).map((_,i)=>`<button type='button' class='${i === heroIndex % shown ? "active" : ""}' data-hero-dot='${i}' aria-label='Featured title ${i+1}'></button>`).join("")}</div>`;
+      const heroImage = heroPosterUrl(m.poster_url);
+      heroShowcase.innerHTML = `<a class='hero-feature hero-feature-live' href='${url}' style="background-image:url('${esc(heroImage)}')" aria-label='Open ${esc(m.title)}'></a><div class='hero-dots' aria-label='Featured titles'>${heroPool.slice(0,shown).map((_,i)=>`<button type='button' class='${i === heroIndex % shown ? "active" : ""}' data-hero-dot='${i}' aria-label='Featured title ${i+1}'></button>`).join("")}</div>`;
       const heroFeature = heroShowcase.querySelector(".hero-feature");
       if (heroFeature && m.poster_url) {
         const probe = new Image();
-        probe.onerror = () => { heroFeature.style.backgroundImage = `url("${posterArt(m)}")`; };
-        probe.src = m.poster_url;
+        probe.onerror = () => {
+          if (heroImage !== m.poster_url) {
+            const fallbackProbe = new Image();
+            fallbackProbe.onload = () => { heroFeature.style.backgroundImage = `url("${m.poster_url}")`; };
+            fallbackProbe.onerror = () => { heroFeature.style.backgroundImage = `url("${posterArt(m)}")`; };
+            fallbackProbe.src = m.poster_url;
+          } else heroFeature.style.backgroundImage = `url("${posterArt(m)}")`;
+        };
+        probe.src = heroImage;
       }
       heroShowcase.querySelectorAll("[data-hero-dot]").forEach((el) => el.onclick = (e) => {
         e.preventDefault();

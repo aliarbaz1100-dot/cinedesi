@@ -28,6 +28,8 @@ const normalizeExternalEmbed = (value) => {
   if (dmVideo) return `https://www.dailymotion.com/embed/video/${encodeURIComponent(dmVideo)}`;
   const dmPlaylist = url.match(/(?:dailymotion\.com\/playlist\/|dailymotion\.com\/embed\/playlist\/|geo\.dailymotion\.com\/player(?:\/[^/.]+)?\.html\?[^#]*\bplaylist=)([A-Za-z0-9]+)/i)?.[1];
   if (dmPlaylist) return `https://geo.dailymotion.com/player.html?playlist=${encodeURIComponent(dmPlaylist)}`;
+  const youtubeVideo = url.match(/youtube(?:-nocookie)?\.com\/embed\/([\w-]{11})/i)?.[1];
+  if (youtubeVideo) return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(youtubeVideo)}?enablejsapi=1&origin=${encodeURIComponent(location.origin)}&rel=0`;
   return url;
 };
 const licensedPoster = (m) => Boolean(m.poster_source_url && m.poster_license && !/cinedesi original|generated cover/i.test(String(m.poster_license)));
@@ -235,7 +237,7 @@ async function load() {
       ? `https://geo.dailymotion.com/player.html?playlist=${encodeURIComponent(dmPlaylistId)}`
       : normalizeExternalEmbed(m.full_video_embed_url);
   const initialPlayerUrl = individualEpisode ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(episodeItems[0].id)}?rel=0` : playlistPlayerUrl;
-  const fullVideo = m.full_video_verified && m.full_video_embed_url ? `<section id='watch' class='legal-player-section'><div class='legal-player-head'><div><small>WATCH ON CINEDESI</small><h2>${esc(m.full_video_label || "Official full video")}</h2><p>${esc(m.full_video_language || "Official source")}</p></div><span class='badge'>Rights-holder source verified</span></div><div class='legal-player'><iframe id='official-player' src='${esc(initialPlayerUrl)}' title='${esc(m.title)} official video' loading='lazy' referrerpolicy='strict-origin-when-cross-origin' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' allowfullscreen></iframe></div>${episodeList}<div class='source-card'><strong>Playback source</strong><br>${esc(m.full_video_source || "Official rights-holder source")} \u2022 Playback, ads and regional availability remain controlled by the source platform/rights-holder.${m.full_video_url ? ` <a target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Open official source</a>` : ""}</div></section>` : "";
+  const fullVideo = m.full_video_verified && m.full_video_embed_url ? `<section id='watch' class='legal-player-section'><div class='legal-player-head'><div><small>WATCH ON CINEDESI</small><h2>${esc(m.full_video_label || "Official full video")}</h2><p>${esc(m.full_video_language || "Official source")}</p></div><span class='badge'>Rights-holder source verified</span></div><div class='legal-player'><iframe id='official-player' src='${esc(initialPlayerUrl)}' title='${esc(m.title)} official video' loading='lazy' referrerpolicy='strict-origin-when-cross-origin' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' allowfullscreen></iframe><div class='player-fallback' hidden><span aria-hidden='true'>!</span><strong>Playback is not available inside CineDesi</strong><p>The verified publisher has disabled playback on other websites.</p>${m.full_video_url ? `<a class='btn' target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Watch on official source</a>` : ""}</div></div>${episodeList}<div class='source-card'><strong>Playback source</strong><br>${esc(m.full_video_source || "Official rights-holder source")} \u2022 Playback, ads and regional availability remain controlled by the source platform/rights-holder.${m.full_video_url ? ` <a target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Open official source</a>` : ""}</div></section>` : "";
   const providerSection = providers?.length ? `<section class='engage-section'><div class='engage-head'><div><small>VERIFIED DESTINATIONS</small><h2>Where to watch</h2></div><span class='badge'>Only verified links shown</span></div><div class='provider-grid'>${providers.map((p) => `<a class='provider-card' data-track-watch='1' data-provider='${esc(p.provider_name)}' data-destination='${esc(p.destination_url)}' target='_blank' rel='noopener' href='${esc(p.destination_url)}'><strong>${esc(p.provider_name)}</strong><span>${esc(String(p.access_type || "official_platform").replaceAll("_", " "))}${p.country_code ? ` \u2022 ${esc(p.country_code)}` : ""}</span>${p.dub_language ? `<small>Dub: ${esc(p.dub_language)}</small>` : ""}${p.subtitle_language ? `<small>Subs: ${esc(p.subtitle_language)}</small>` : ""}</a>`).join("")}</div></section>` : `<section class='engage-section compact-engage'><small>WHERE TO WATCH</small><h2>Verification in progress</h2><p class='muted'>CineDesi will show a platform here only after the exact destination and availability evidence pass review.</p></section>`;
   const upNext = related?.[0];
   const moreLikeThis = (related || []).slice(1, 7);
@@ -259,6 +261,26 @@ async function load() {
   root.innerHTML = `<section class='movie-hero'><div class='movie-art' ${m.poster_url ? `style="background-image:linear-gradient(#0003,#0008),url('${esc(m.poster_url)}'),url('${esc(posterArt(m))}');background-size:${preserveFullPoster ? "contain" : "cover"};background-repeat:no-repeat;background-position:center;background-color:#050506"` : ""}><span>${licensedPoster(m) ? "Licensed image" : m._cover_kind === "youtube" ? "Official video thumbnail" : "CineDesi dark cover"}</span>${trailer}</div><div class='movie-copy'><small>${esc(m.region)}</small><h1>${esc(m.title)}</h1><div class='modal-meta'><span>${esc(m.genre || "Film")}</span><span>${esc(m.release_year || "")}</span>${m.score ? `<span>CineDesi score ${esc(m.score)}</span>` : ""}</div>${titleFacts}<div class='badges'><span class='badge'>${m.rights_status === "cleared" ? "Rights cleared" : "Official links checked"}</span>${m.trailer_verified ? "<span class='badge'>Official trailer verified</span>" : ""}${m.watch_verified ? "<span class='badge'>Legal watch verified</span>" : ""}${m.full_video_verified && m.full_video_embed_url ? "<span class='badge'>Official full video on CineDesi</span>" : ""}${licensedPoster(m) ? "<span class='badge'>Licensed image</span>" : "<span class='badge'>CineDesi original cover</span>"}</div><p class='lead'>${esc(m.editorial || m.synopsis || "Editorial coming soon.")}</p>${castSection}${availabilityCallout}<div class='actions'>${watch}<button id='share' class='ghost'>Share page</button></div><div class='source-card'><strong>Verification & source transparency</strong><br>Metadata: ${esc(m.source_name || "Verified source")}${m.source_license ? ` \u2022 ${esc(m.source_license)}` : ""}${m.source_url ? ` \u2022 <a target='_blank' rel='noopener' href='${esc(m.source_url)}'>source page</a>` : ""}${m.attribution_text ? `<br>Attribution: ${esc(m.attribution_text)}` : ""}${m.trailer_source ? `<br>Trailer source: ${esc(m.trailer_source)}` : ""}<br>Poster: ${posterLine}<br>Rights checked: ${esc(checked)}</div></div></section>${fullVideo}${providerSection}${upNextSection}${relatedSection}`;
   let youtubePlaylistPlayer = null;
   let pendingYoutubePlaylistIndex = null;
+
+  const showPlayerFallback = () => {
+    const player = document.querySelector("#official-player");
+    const fallback = document.querySelector(".player-fallback");
+    if (!player || !fallback) return;
+    player.hidden = true;
+    fallback.hidden = false;
+    document.querySelector("#watch")?.classList.add("embed-unavailable");
+    const callout = document.querySelector(".availability-callout");
+    if (callout) {
+      callout.classList.remove("is-live");
+      callout.classList.add("is-external");
+      const icon = callout.querySelector(".availability-icon");
+      const strong = callout.querySelector(".availability-copy strong");
+      const note = callout.querySelector(".availability-copy > span");
+      if (icon) icon.textContent = "↗";
+      if (strong) strong.textContent = "Official-source viewing only";
+      if (note) note.textContent = "The publisher has disabled playback on other websites.";
+    }
+  };
 
   const markEpisodeActive = (el) => {
     document.querySelectorAll("[data-episode]").forEach((item) => item.classList.toggle("active", item === el));
@@ -324,6 +346,9 @@ async function load() {
               const card = document.querySelector(`[data-playlist-kind='youtube'][data-playlist-index='${idx}']`);
               if (card) document.querySelectorAll("[data-episode]").forEach((item) => item.classList.toggle("active", item === card));
             }
+          },
+          onError: (event) => {
+            if ([100, 101, 150].includes(Number(event?.data))) showPlayerFallback();
           }
         }
       });
@@ -339,6 +364,37 @@ async function load() {
       window.onYouTubeIframeAPIReady = () => {
         try { previousReady?.(); } catch {}
         initYoutubePlaylistApi();
+      };
+      if (!document.querySelector("script[data-cinedesi-youtube-api]")) {
+        const script = document.createElement("script");
+        script.src = "https://www.youtube.com/iframe_api";
+        script.async = true;
+        script.dataset.cinedesiYoutubeApi = "1";
+        document.head.appendChild(script);
+      }
+    }
+  }
+
+  const singleYoutubeId = !playlistGenerated ? String(initialPlayerUrl || "").match(/youtube(?:-nocookie)?\.com\/embed\/([\w-]{11})/i)?.[1] : "";
+  const initSingleYoutubeApi = () => {
+    if (!singleYoutubeId || !document.querySelector("#official-player") || !window.YT?.Player) return;
+    try {
+      youtubePlaylistPlayer = new window.YT.Player("official-player", {
+        events: {
+          onError: (event) => {
+            if ([100, 101, 150].includes(Number(event?.data))) showPlayerFallback();
+          }
+        }
+      });
+    } catch {}
+  };
+  if (singleYoutubeId) {
+    if (window.YT?.Player) initSingleYoutubeApi();
+    else {
+      const previousReady = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        try { previousReady?.(); } catch {}
+        initSingleYoutubeApi();
       };
       if (!document.querySelector("script[data-cinedesi-youtube-api]")) {
         const script = document.createElement("script");
