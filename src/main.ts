@@ -596,6 +596,7 @@ function init() {
   }
   function renderHero() {
     const preferred = [
+      "tamasha-season-5",
       "raid-2-2025",
       "dhurandhar-2025",
       "son-of-sardaar-2-2025",
