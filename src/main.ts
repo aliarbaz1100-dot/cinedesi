@@ -694,7 +694,7 @@ function init() {
       const eyebrow = q("#hero-eyebrow");
       if (eyebrow) eyebrow.textContent = `${heroState} • ${badge}`;
       const shown = Math.min(heroPool.length, 9);
-      const heroImage = heroPosterUrl(m.poster_url);
+      const heroImage = heroPosterUrl(videoThumb(m) || m.poster_url);
       heroShowcase.innerHTML = `<a class='hero-feature hero-feature-live' href='${url}' style="background-image:url('${esc(heroImage)}')" aria-label='Open ${esc(m.title)}'></a><div class='hero-dots' aria-label='Featured titles'>${heroPool.slice(0,shown).map((_,i)=>`<button type='button' class='${i === heroIndex % shown ? "active" : ""}' data-hero-dot='${i}' aria-label='Featured title ${i+1}'></button>`).join("")}</div>`;
       const heroFeature = heroShowcase.querySelector(".hero-feature");
       if (heroFeature && m.poster_url) {
