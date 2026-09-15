@@ -700,12 +700,22 @@ function init() {
       if (heroFeature && m.poster_url) {
         const probe = new Image();
         probe.onerror = () => {
-          if (heroImage !== m.poster_url) {
+          const candidates = [
+            heroImage.replace(/\/maxresdefault\.jpg(?:\?.*)?$/i, "/hqdefault.jpg"),
+            m.poster_url
+          ].filter((value, index, list) => value && value !== heroImage && list.indexOf(value) === index);
+          const tryFallback = (index = 0) => {
+            const value = candidates[index];
+            if (!value) {
+              heroFeature.style.backgroundImage = `url("${posterArt(m)}")`;
+              return;
+            }
             const fallbackProbe = new Image();
-            fallbackProbe.onload = () => { heroFeature.style.backgroundImage = `url("${m.poster_url}")`; };
-            fallbackProbe.onerror = () => { heroFeature.style.backgroundImage = `url("${posterArt(m)}")`; };
-            fallbackProbe.src = m.poster_url;
-          } else heroFeature.style.backgroundImage = `url("${posterArt(m)}")`;
+            fallbackProbe.onload = () => { heroFeature.style.backgroundImage = `url("${value}")`; };
+            fallbackProbe.onerror = () => tryFallback(index + 1);
+            fallbackProbe.src = value;
+          };
+          tryFallback();
         };
         probe.src = heroImage;
       }
