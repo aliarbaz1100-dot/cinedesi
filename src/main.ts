@@ -7,7 +7,7 @@ if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || 
     setTimeout(() => launchSplash.remove(), reduceMotion ? 0 : 420);
   }, 2600)));
 } else launchSplash?.remove();
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=14").catch(() => {
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=13").catch(() => {
 }));
 let deferredInstall = null;
 const installBar = document.querySelector("#install-banner"), installButton = document.querySelector("#install-app"), installClose = document.querySelector("#install-close"), installCopy = document.querySelector("#install-copy");
@@ -88,7 +88,10 @@ function init() {
     if ("requestIdleCallback" in window) window.requestIdleCallback(fn, { timeout: 650 });
     else setTimeout(fn, 120);
   };
-  if ("scrollRestoration" in history) history.scrollRestoration = "auto";
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+  window.addEventListener("pageshow", () => {
+    if (!location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  });
   const db = supabase.createClient(URL, KEY);
   const track = async (event, slug = null) => {
     const { error } = await db.rpc("track_cinedesi_event", { p_event_type: event, p_movie_slug: slug });
