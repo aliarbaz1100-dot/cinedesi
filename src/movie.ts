@@ -50,10 +50,6 @@ document.head.appendChild(sdk);
 async function load() {
   const backButton = document.querySelector("#movie-back");
   backButton?.addEventListener("click", () => {
-    if (window.parent !== window) {
-      window.parent.postMessage({ type: "cinedesi-mobile-detail-back" }, location.origin);
-      return;
-    }
     const sameSiteReferrer = document.referrer && new URL(document.referrer, location.href).origin === location.origin;
     if (sameSiteReferrer && history.length > 1) history.back();
     else location.href = "./";
@@ -263,8 +259,6 @@ async function load() {
   const posterLine = licensedPoster(m) ? `${esc(m.poster_license)}${m.poster_attribution ? ` \u2022 ${esc(m.poster_attribution)}` : ""}${m.poster_source_url ? ` \u2022 <a target='_blank' rel='noopener' href='${esc(m.poster_source_url)}'>poster source</a>` : ""}` : m._cover_kind === "youtube" ? `Official video thumbnail supplied by ${esc(m.full_video_source || m.trailer_source || "YouTube")}; linked to the verified upload.` : "CineDesi dark original fallback; no third-party poster reused.";
   const preserveFullPoster = ["cid-official-series", "crime-patrol-city-crimes-2026"].includes(String(m.slug || ""));
   root.innerHTML = `<section class='movie-hero'><div class='movie-art' ${m.poster_url ? `style="background-image:linear-gradient(#0003,#0008),url('${esc(m.poster_url)}'),url('${esc(posterArt(m))}');background-size:${preserveFullPoster ? "contain" : "cover"};background-repeat:no-repeat;background-position:center;background-color:#050506"` : ""}><span>${licensedPoster(m) ? "Licensed image" : m._cover_kind === "youtube" ? "Official video thumbnail" : "CineDesi dark cover"}</span>${trailer}</div><div class='movie-copy'><small>${esc(m.region)}</small><h1>${esc(m.title)}</h1><div class='modal-meta'><span>${esc(m.genre || "Film")}</span><span>${esc(m.release_year || "")}</span>${m.score ? `<span>CineDesi score ${esc(m.score)}</span>` : ""}</div>${titleFacts}<div class='badges'><span class='badge'>${m.rights_status === "cleared" ? "Rights cleared" : "Official links checked"}</span>${m.trailer_verified ? "<span class='badge'>Official trailer verified</span>" : ""}${m.watch_verified ? "<span class='badge'>Legal watch verified</span>" : ""}${m.full_video_verified && m.full_video_embed_url ? "<span class='badge'>Official full video on CineDesi</span>" : ""}${licensedPoster(m) ? "<span class='badge'>Licensed image</span>" : "<span class='badge'>CineDesi original cover</span>"}</div><p class='lead'>${esc(m.editorial || m.synopsis || "Editorial coming soon.")}</p>${castSection}${availabilityCallout}<div class='actions'>${watch}<button id='share' class='ghost'>Share page</button></div><div class='source-card'><strong>Verification & source transparency</strong><br>Metadata: ${esc(m.source_name || "Verified source")}${m.source_license ? ` \u2022 ${esc(m.source_license)}` : ""}${m.source_url ? ` \u2022 <a target='_blank' rel='noopener' href='${esc(m.source_url)}'>source page</a>` : ""}${m.attribution_text ? `<br>Attribution: ${esc(m.attribution_text)}` : ""}${m.trailer_source ? `<br>Trailer source: ${esc(m.trailer_source)}` : ""}<br>Poster: ${posterLine}<br>Rights checked: ${esc(checked)}</div></div></section>${fullVideo}${providerSection}${upNextSection}${relatedSection}`;
-
-  if (window.parent !== window) window.parent.postMessage({ type: "cinedesi-mobile-detail-ready" }, location.origin);
   let youtubePlaylistPlayer = null;
   let pendingYoutubePlaylistIndex = null;
 
