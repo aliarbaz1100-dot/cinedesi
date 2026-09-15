@@ -21,14 +21,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="CineDesi" />
-    <script>
-      try {
-        const nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
-        if (nav && nav.type === "back_forward") document.documentElement.classList.add("history-return");
-      } catch {}
-    </script>
     <style id="pwa-splash-critical">
-      .app-splash{display:none}.history-return .app-splash{display:none!important}
+      .app-splash{display:none}
       @media (display-mode:standalone){html,body{background:#08090b}.app-splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 44%,#19191d 0,#08090b 40%,#020203 100%)}.splash-brand{text-align:center}.splash-logo{color:#fff;font:950 clamp(2rem,10vw,3.25rem)/1 Arial,sans-serif;letter-spacing:-.065em}.splash-logo span{color:#e50914}.splash-line{width:38px;height:2px;margin:18px auto 13px;background:#e50914}.splash-brand p{margin:0;color:#858991;font:700 .72rem/1.4 Arial,sans-serif;letter-spacing:.15em;text-transform:uppercase}.splash-brand strong{color:#ddd}}
     </style>
     <link rel="manifest" href="/manifest.webmanifest?v=7" />
