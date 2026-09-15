@@ -88,9 +88,61 @@ function init() {
     if ("requestIdleCallback" in window) window.requestIdleCallback(fn, { timeout: 650 });
     else setTimeout(fn, 120);
   };
+  const NAV_STATE_KEY = "cinedesi:return-position";
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
-  window.addEventListener("pageshow", () => {
-    if (!location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  const readReturnPosition = () => {
+    try {
+      const raw = sessionStorage.getItem(NAV_STATE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  };
+  const saveReturnPosition = (slug = "") => {
+    try {
+      const rails = [...document.querySelectorAll(".rail")].map((rail) => ({
+        id: rail.id || rail.closest("section")?.id || "",
+        left: Math.round(rail.scrollLeft || 0)
+      })).filter((item) => item.id && item.left > 0);
+      sessionStorage.setItem(NAV_STATE_KEY, JSON.stringify({
+        path: location.pathname + location.search + location.hash,
+        scrollY: Math.round(window.scrollY || 0),
+        slug,
+        rails,
+        savedAt: Date.now()
+      }));
+    } catch {}
+  };
+  const restoreReturnPosition = () => {
+    const nav = performance.getEntriesByType?.("navigation")?.[0];
+    const state = readReturnPosition();
+    if (!state || nav?.type !== "back_forward") return;
+    const restore = () => {
+      for (const item of state.rails || []) {
+        const rail = document.getElementById(item.id) || document.querySelector(`section#${CSS.escape(item.id)} .rail`);
+        if (rail) rail.scrollLeft = Number(item.left) || 0;
+      }
+      window.scrollTo({ top: Number(state.scrollY) || 0, left: 0, behavior: "instant" });
+    };
+    requestAnimationFrame(() => requestAnimationFrame(restore));
+    setTimeout(restore, 120);
+    setTimeout(restore, 420);
+  };
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest?.("a[href*='/movie?slug='], a[href*='movie?slug=']");
+    if (!link) return;
+    try {
+      const target = new URL(link.href, location.href);
+      if (target.origin !== location.origin) return;
+      saveReturnPosition(target.searchParams.get("slug") || "");
+    } catch {}
+  }, true);
+  window.addEventListener("pagehide", () => {
+    if (!location.pathname.endsWith("/movie") && !location.pathname.endsWith("/movie.html")) saveReturnPosition();
+  });
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) return;
+    restoreReturnPosition();
   });
   const db = supabase.createClient(URL, KEY);
   const track = async (event, slug = null) => {
@@ -110,6 +162,7 @@ function init() {
     renderWatchlist();
     render();
     count.textContent = String(saved.length);
+    restoreReturnPosition();
   }
   function toggle(id) {
     const adding = !saved.includes(id);
