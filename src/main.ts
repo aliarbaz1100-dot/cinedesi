@@ -89,6 +89,66 @@ function init() {
     else setTimeout(fn, 120);
   };
   if ("scrollRestoration" in history) history.scrollRestoration = "auto";
+  // Mobile only: keep the catalog document alive while showing the existing
+  // movie page inside a full-screen layer. This avoids iOS' cross-document
+  // back snapshot flash while preserving the exact movie page UI.
+  const mobileSamePageDetail = window.matchMedia("(max-width: 820px)").matches;
+  let mobileDetailLayer = null;
+  let mobileDetailClosing = false;
+  const closeMobileDetail = () => {
+    if (!mobileDetailLayer || mobileDetailClosing) return;
+    mobileDetailClosing = true;
+    const layer = mobileDetailLayer;
+    layer.style.opacity = "0";
+    const finish = () => {
+      layer.remove();
+      if (mobileDetailLayer === layer) mobileDetailLayer = null;
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      mobileDetailClosing = false;
+    };
+    layer.addEventListener("transitionend", finish, { once: true });
+    setTimeout(finish, 180);
+  };
+  const openMobileDetail = (href) => {
+    if (!mobileSamePageDetail || mobileDetailLayer) return false;
+    const target = new URL(href, location.href);
+    if (target.origin !== location.origin || !target.searchParams.get("slug")) return false;
+    const layer = document.createElement("div");
+    layer.id = "mobile-movie-layer";
+    layer.style.cssText = "position:fixed;inset:0;z-index:10050;background:#050506;opacity:1;transition:opacity .12s ease-out;will-change:opacity;transform:translateZ(0);backface-visibility:hidden;contain:paint;";
+    const frame = document.createElement("iframe");
+    frame.src = target.pathname + target.search + target.hash;
+    frame.title = "CineDesi movie details";
+    frame.style.cssText = "width:100%;height:100%;border:0;display:block;background:#050506;transform:translateZ(0);backface-visibility:hidden;";
+    frame.setAttribute("allow", "autoplay; fullscreen; picture-in-picture");
+    layer.appendChild(frame);
+    document.body.appendChild(layer);
+    mobileDetailLayer = layer;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    history.pushState({ ...(history.state || {}), cinedesiMobileDetail: true }, "", "#detail=" + encodeURIComponent(target.searchParams.get("slug")));
+    return true;
+  };
+  document.addEventListener("click", (event) => {
+    if (!mobileSamePageDetail) return;
+    const link = event.target.closest?.("a[href*='/movie?slug='],a[href*='movie?slug=']");
+    if (!link || link.target === "_blank" || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const href = link.getAttribute("href");
+    if (!href || !openMobileDetail(href)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }, true);
+  window.addEventListener("message", (event) => {
+    if (!mobileSamePageDetail || event.origin !== location.origin) return;
+    if (event.data?.type === "cinedesi-mobile-detail-back" && mobileDetailLayer) {
+      history.back();
+    }
+  });
+  window.addEventListener("popstate", () => {
+    if (mobileSamePageDetail && mobileDetailLayer && !history.state?.cinedesiMobileDetail) closeMobileDetail();
+  });
+
   const db = supabase.createClient(URL, KEY);
   const track = async (event, slug = null) => {
     const { error } = await db.rpc("track_cinedesi_event", { p_event_type: event, p_movie_slug: slug });
