@@ -90,7 +90,7 @@ function init() {
   };
   const NAV_STATE_KEY = "cinedesi:return-position";
   const RETURN_PENDING_KEY = "cinedesi:return-pending";
-  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+  if ("scrollRestoration" in history) history.scrollRestoration = "auto";
   const readReturnPosition = () => {
     try {
       const raw = sessionStorage.getItem(NAV_STATE_KEY);
@@ -114,30 +114,23 @@ function init() {
       }));
     } catch {}
   };
-  let restoreTimer = 0;
-  const restoreReturnPosition = (force = false) => {
+  const restoreRails = (state) => {
+    for (const item of state?.rails || []) {
+      const rail = document.getElementById(item.id) || document.querySelector(`section#${CSS.escape(item.id)} .rail`);
+      if (rail) rail.scrollLeft = Number(item.left) || 0;
+    }
+  };
+  const restoreFallbackAfterLoad = () => {
     const state = readReturnPosition();
     const pending = sessionStorage.getItem(RETURN_PENDING_KEY) === "1";
     const nav = performance.getEntriesByType?.("navigation")?.[0];
-    if (!state || (!force && !pending && nav?.type !== "back_forward")) return;
-    const restore = () => {
-      for (const item of state.rails || []) {
-        const rail = document.getElementById(item.id) || document.querySelector(`section#${CSS.escape(item.id)} .rail`);
-        if (rail) rail.scrollLeft = Number(item.left) || 0;
-      }
-      window.scrollTo(0, Number(state.scrollY) || 0);
-    };
-    restore();
-    requestAnimationFrame(() => requestAnimationFrame(restore));
-    [80, 180, 360, 700, 1200].forEach((delay) => setTimeout(restore, delay));
-    window.clearTimeout(restoreTimer);
-    restoreTimer = window.setTimeout(() => {
-      sessionStorage.removeItem(RETURN_PENDING_KEY);
-    }, 1400);
+    if (!state || !pending || nav?.type !== "back_forward") return;
+    restoreRails(state);
+    window.scrollTo(0, Number(state.scrollY) || 0);
+    sessionStorage.removeItem(RETURN_PENDING_KEY);
   };
   let saveRaf = 0;
   const schedulePositionSave = () => {
-    if (sessionStorage.getItem(RETURN_PENDING_KEY) === "1") return;
     if (saveRaf) return;
     saveRaf = requestAnimationFrame(() => {
       saveRaf = 0;
@@ -162,7 +155,10 @@ function init() {
     if (!location.pathname.endsWith("/movie") && !location.pathname.endsWith("/movie.html")) saveReturnPosition();
   });
   window.addEventListener("pageshow", (event) => {
-    restoreReturnPosition(Boolean(event.persisted));
+    if (!event.persisted) return;
+    const state = readReturnPosition();
+    restoreRails(state);
+    sessionStorage.removeItem(RETURN_PENDING_KEY);
   });
   const db = supabase.createClient(URL, KEY);
   const track = async (event, slug = null) => {
@@ -274,7 +270,7 @@ function init() {
       renderWatchlist();
     }
     count.textContent = String(saved.length);
-    restoreReturnPosition();
+    restoreFallbackAfterLoad();
   }
   function card(m) {
     const preserveFullThumb = ["cid-official-series", "crime-patrol-city-crimes-2026"].includes(String(m.slug || ""));
