@@ -89,6 +89,7 @@ function init() {
     else setTimeout(fn, 120);
   };
   const NAV_STATE_KEY = "cinedesi:return-position";
+  const RETURN_PENDING_KEY = "cinedesi:return-pending";
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
   const readReturnPosition = () => {
     try {
@@ -103,7 +104,7 @@ function init() {
       const rails = [...document.querySelectorAll(".rail")].map((rail) => ({
         id: rail.id || rail.closest("section")?.id || "",
         left: Math.round(rail.scrollLeft || 0)
-      })).filter((item) => item.id && item.left > 0);
+      })).filter((item) => item.id);
       sessionStorage.setItem(NAV_STATE_KEY, JSON.stringify({
         path: location.pathname + location.search + location.hash,
         scrollY: Math.round(window.scrollY || 0),
@@ -113,21 +114,40 @@ function init() {
       }));
     } catch {}
   };
-  const restoreReturnPosition = () => {
-    const nav = performance.getEntriesByType?.("navigation")?.[0];
+  let restoreTimer = 0;
+  const restoreReturnPosition = (force = false) => {
     const state = readReturnPosition();
-    if (!state || nav?.type !== "back_forward") return;
+    const pending = sessionStorage.getItem(RETURN_PENDING_KEY) === "1";
+    const nav = performance.getEntriesByType?.("navigation")?.[0];
+    if (!state || (!force && !pending && nav?.type !== "back_forward")) return;
     const restore = () => {
       for (const item of state.rails || []) {
         const rail = document.getElementById(item.id) || document.querySelector(`section#${CSS.escape(item.id)} .rail`);
         if (rail) rail.scrollLeft = Number(item.left) || 0;
       }
-      window.scrollTo({ top: Number(state.scrollY) || 0, left: 0, behavior: "instant" });
+      window.scrollTo(0, Number(state.scrollY) || 0);
     };
+    restore();
     requestAnimationFrame(() => requestAnimationFrame(restore));
-    setTimeout(restore, 120);
-    setTimeout(restore, 420);
+    [80, 180, 360, 700, 1200].forEach((delay) => setTimeout(restore, delay));
+    window.clearTimeout(restoreTimer);
+    restoreTimer = window.setTimeout(() => {
+      sessionStorage.removeItem(RETURN_PENDING_KEY);
+    }, 1400);
   };
+  let saveRaf = 0;
+  const schedulePositionSave = () => {
+    if (sessionStorage.getItem(RETURN_PENDING_KEY) === "1") return;
+    if (saveRaf) return;
+    saveRaf = requestAnimationFrame(() => {
+      saveRaf = 0;
+      saveReturnPosition();
+    });
+  };
+  window.addEventListener("scroll", schedulePositionSave, { passive: true });
+  document.addEventListener("scroll", (event) => {
+    if (event.target?.classList?.contains("rail")) schedulePositionSave();
+  }, true);
   document.addEventListener("click", (event) => {
     const link = event.target.closest?.("a[href*='/movie?slug='], a[href*='movie?slug=']");
     if (!link) return;
@@ -135,14 +155,14 @@ function init() {
       const target = new URL(link.href, location.href);
       if (target.origin !== location.origin) return;
       saveReturnPosition(target.searchParams.get("slug") || "");
+      sessionStorage.setItem(RETURN_PENDING_KEY, "1");
     } catch {}
   }, true);
   window.addEventListener("pagehide", () => {
     if (!location.pathname.endsWith("/movie") && !location.pathname.endsWith("/movie.html")) saveReturnPosition();
   });
-  window.addEventListener("pageshow", (event) => {
-    if (event.persisted) return;
-    restoreReturnPosition();
+  window.addEventListener("pageshow", () => {
+    restoreReturnPosition(true);
   });
   const db = supabase.createClient(URL, KEY);
   const track = async (event, slug = null) => {
@@ -162,7 +182,6 @@ function init() {
     renderWatchlist();
     render();
     count.textContent = String(saved.length);
-    restoreReturnPosition();
   }
   function toggle(id) {
     const adding = !saved.includes(id);
@@ -255,6 +274,7 @@ function init() {
       renderWatchlist();
     }
     count.textContent = String(saved.length);
+    restoreReturnPosition();
   }
   function card(m) {
     const preserveFullThumb = ["cid-official-series", "crime-patrol-city-crimes-2026"].includes(String(m.slug || ""));
