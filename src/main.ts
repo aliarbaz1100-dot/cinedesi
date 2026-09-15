@@ -156,8 +156,8 @@ function init() {
   });
   window.addEventListener("pageshow", (event) => {
     if (!event.persisted) return;
-    const state = readReturnPosition();
-    restoreRails(state);
+    // Safari/iOS restored this page from bfcache. Do not mutate layout here:
+    // touching rail scrollLeft after the native back animation causes a visible blink.
     sessionStorage.removeItem(RETURN_PENDING_KEY);
   });
   const db = supabase.createClient(URL, KEY);
