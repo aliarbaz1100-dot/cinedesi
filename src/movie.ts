@@ -262,7 +262,21 @@ async function load() {
   let youtubePlaylistPlayer = null;
   let pendingYoutubePlaylistIndex = null;
 
-  const showPlayerFallback = () => {
+  let playbackFailureLogged = false;
+  const showPlayerFallback = (errorCode = 0) => {
+    if (!playbackFailureLogged) {
+      playbackFailureLogged = true;
+      db.from("playback_failures").insert({
+        movie_id: m.id,
+        movie_slug: m.slug,
+        source_name: m.full_video_source || m.source_name || "",
+        source_url: m.full_video_url || m.full_video_embed_url || "",
+        error_code: Number(errorCode) || null,
+        user_agent: String(navigator.userAgent || "").slice(0, 500)
+      }).then(({ error }) => {
+        if (error) console.warn("CineDesi playback failure logging failed", error.message);
+      });
+    }
     const player = document.querySelector("#official-player");
     const fallback = document.querySelector(".player-fallback");
     if (!player || !fallback) return;
@@ -348,7 +362,7 @@ async function load() {
             }
           },
           onError: (event) => {
-            if ([100, 101, 150].includes(Number(event?.data))) showPlayerFallback();
+            if ([100, 101, 150].includes(Number(event?.data))) showPlayerFallback(Number(event?.data) || 0);
           }
         }
       });
@@ -382,7 +396,7 @@ async function load() {
       youtubePlaylistPlayer = new window.YT.Player("official-player", {
         events: {
           onError: (event) => {
-            if ([100, 101, 150].includes(Number(event?.data))) showPlayerFallback();
+            if ([100, 101, 150].includes(Number(event?.data))) showPlayerFallback(Number(event?.data) || 0);
           }
         }
       });
