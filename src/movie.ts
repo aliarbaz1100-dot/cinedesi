@@ -50,6 +50,10 @@ document.head.appendChild(sdk);
 async function load() {
   const backButton = document.querySelector("#movie-back");
   backButton?.addEventListener("click", () => {
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: "cinedesi-close-detail" }, location.origin);
+      return;
+    }
     const sameSiteReferrer = document.referrer && new URL(document.referrer, location.href).origin === location.origin;
     if (sameSiteReferrer && history.length > 1) history.back();
     else location.href = "./";
