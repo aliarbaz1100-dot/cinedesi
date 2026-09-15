@@ -88,10 +88,13 @@ function init() {
     if ("requestIdleCallback" in window) window.requestIdleCallback(fn, { timeout: 650 });
     else setTimeout(fn, 120);
   };
-  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
-  window.addEventListener("pageshow", () => {
-    if (!location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-  });
+  const desktopBackRestore = window.matchMedia("(min-width: 900px)").matches;
+  if ("scrollRestoration" in history) history.scrollRestoration = desktopBackRestore ? "auto" : "manual";
+  if (!desktopBackRestore) {
+    window.addEventListener("pageshow", () => {
+      if (!location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    });
+  }
   const db = supabase.createClient(URL, KEY);
   const track = async (event, slug = null) => {
     const { error } = await db.rpc("track_cinedesi_event", { p_event_type: event, p_movie_slug: slug });
