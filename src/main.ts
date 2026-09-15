@@ -558,9 +558,11 @@ function init() {
   function renderNew() {
     if (!newGrid) return;
     const currentYear = new Date().getFullYear();
+    const featuredLatestSlugs = new Set(["ekaki-ashish-chanchlani"]);
     const all = [...movies]
       .filter((m) => Number(m.release_year) >= currentYear - 1)
       .sort((a, b) =>
+        Number(featuredLatestSlugs.has(b.slug)) - Number(featuredLatestSlugs.has(a.slug)) ||
         (Number(b._trend_score) || 0) - (Number(a._trend_score) || 0) ||
         (Number(b.release_year) || 0) - (Number(a.release_year) || 0) ||
         String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || "")) ||
@@ -596,6 +598,7 @@ function init() {
   }
   function renderHero() {
     const preferred = [
+      "ekaki-ashish-chanchlani",
       "tamasha-season-5",
       "raid-2-2025",
       "dhurandhar-2025",
