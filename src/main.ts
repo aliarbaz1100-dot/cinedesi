@@ -1,6 +1,9 @@
 import "./styles.css";
 const launchSplash = document.querySelector("#app-splash");
-if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true)) {
+const navEntry = performance.getEntriesByType?.("navigation")?.[0];
+const returningFromHistory = navEntry?.type === "back_forward";
+if (returningFromHistory) launchSplash?.remove();
+else if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true)) {
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => {
     launchSplash.classList.add("splash-exit");
@@ -159,86 +162,6 @@ function init() {
     // Safari/iOS restored this page from bfcache. Do not mutate layout here:
     // touching rail scrollLeft after the native back animation causes a visible blink.
     sessionStorage.removeItem(RETURN_PENDING_KEY);
-  });
-  let detailOverlay = null;
-  let detailOverlayClosing = false;
-  const mobileDetailNav = window.matchMedia("(max-width: 820px)").matches;
-  const closeDetailOverlay = ({ fromHistory = false } = {}) => {
-    if (!detailOverlay) return;
-
-    // iOS/mobile Safari can flash a black compositor frame when an iframe is
-    // removed immediately before history.back(). Keep desktop behavior intact,
-    // but on mobile let history move first, then tear down the iframe cleanly.
-    if (mobileDetailNav && !fromHistory && history.state?.cinedesiDetail) {
-      history.back();
-      return;
-    }
-
-    detailOverlayClosing = true;
-    const layer = detailOverlay;
-    detailOverlay = null;
-    document.body.style.overflow = "";
-    document.documentElement.style.overflow = "";
-
-    if (mobileDetailNav) {
-      const frame = layer.querySelector("iframe");
-      if (frame) {
-        frame.style.visibility = "hidden";
-        frame.style.opacity = "0";
-      }
-      layer.style.background = "transparent";
-      layer.style.pointerEvents = "none";
-      requestAnimationFrame(() => {
-        layer.remove();
-        detailOverlayClosing = false;
-      });
-    } else {
-      layer.remove();
-      requestAnimationFrame(() => { detailOverlayClosing = false; });
-      if (!fromHistory && history.state?.cinedesiDetail) history.back();
-    }
-  };
-  const openDetailOverlay = (href) => {
-    const target = new URL(href, location.href);
-    if (target.origin !== location.origin) return false;
-    const slug = target.searchParams.get("slug");
-    if (!slug) return false;
-    if (detailOverlay) closeDetailOverlay({ fromHistory: true });
-    const layer = document.createElement("div");
-    layer.id = "cinedesi-detail-overlay";
-    layer.setAttribute("role", "dialog");
-    layer.setAttribute("aria-label", "CineDesi title details");
-    layer.style.cssText = "position:fixed;inset:0;z-index:10050;background:#050506;overscroll-behavior:none;";
-    const frame = document.createElement("iframe");
-    frame.src = target.pathname + target.search + target.hash;
-    frame.title = "CineDesi title details";
-    frame.style.cssText = "width:100%;height:100%;border:0;display:block;background:#050506;";
-    frame.setAttribute("allow", "autoplay; fullscreen; picture-in-picture");
-    layer.appendChild(frame);
-    document.body.appendChild(layer);
-    detailOverlay = layer;
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
-    const hashUrl = location.pathname + location.search + "#detail=" + encodeURIComponent(slug);
-    history.pushState({ ...(history.state || {}), cinedesiDetail: slug }, "", hashUrl);
-    return true;
-  };
-  document.addEventListener("click", (event) => {
-    const link = event.target.closest?.("a[href*='/movie?slug='], a[href*='movie?slug=']");
-    if (!link || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || link.target === "_blank") return;
-    const href = link.getAttribute("href");
-    if (!href) return;
-    if (openDetailOverlay(href)) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-    }
-  }, true);
-  window.addEventListener("message", (event) => {
-    if (event.origin !== location.origin) return;
-    if (event.data?.type === "cinedesi-close-detail") closeDetailOverlay();
-  });
-  window.addEventListener("popstate", () => {
-    if (detailOverlay && !history.state?.cinedesiDetail && !detailOverlayClosing) closeDetailOverlay({ fromHistory: true });
   });
   const db = supabase.createClient(URL, KEY);
   const track = async (event, slug = null) => {
