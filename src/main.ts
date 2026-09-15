@@ -161,8 +161,8 @@ function init() {
   window.addEventListener("pagehide", () => {
     if (!location.pathname.endsWith("/movie") && !location.pathname.endsWith("/movie.html")) saveReturnPosition();
   });
-  window.addEventListener("pageshow", () => {
-    restoreReturnPosition(true);
+  window.addEventListener("pageshow", (event) => {
+    restoreReturnPosition(Boolean(event.persisted));
   });
   const db = supabase.createClient(URL, KEY);
   const track = async (event, slug = null) => {
