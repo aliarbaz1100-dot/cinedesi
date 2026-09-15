@@ -162,15 +162,41 @@ function init() {
   });
   let detailOverlay = null;
   let detailOverlayClosing = false;
+  const mobileDetailNav = window.matchMedia("(max-width: 820px)").matches;
   const closeDetailOverlay = ({ fromHistory = false } = {}) => {
     if (!detailOverlay) return;
+
+    // iOS/mobile Safari can flash a black compositor frame when an iframe is
+    // removed immediately before history.back(). Keep desktop behavior intact,
+    // but on mobile let history move first, then tear down the iframe cleanly.
+    if (mobileDetailNav && !fromHistory && history.state?.cinedesiDetail) {
+      history.back();
+      return;
+    }
+
     detailOverlayClosing = true;
-    detailOverlay.remove();
+    const layer = detailOverlay;
     detailOverlay = null;
     document.body.style.overflow = "";
     document.documentElement.style.overflow = "";
-    requestAnimationFrame(() => { detailOverlayClosing = false; });
-    if (!fromHistory && history.state?.cinedesiDetail) history.back();
+
+    if (mobileDetailNav) {
+      const frame = layer.querySelector("iframe");
+      if (frame) {
+        frame.style.visibility = "hidden";
+        frame.style.opacity = "0";
+      }
+      layer.style.background = "transparent";
+      layer.style.pointerEvents = "none";
+      requestAnimationFrame(() => {
+        layer.remove();
+        detailOverlayClosing = false;
+      });
+    } else {
+      layer.remove();
+      requestAnimationFrame(() => { detailOverlayClosing = false; });
+      if (!fromHistory && history.state?.cinedesiDetail) history.back();
+    }
   };
   const openDetailOverlay = (href) => {
     const target = new URL(href, location.href);
