@@ -188,7 +188,10 @@ async function load() {
   const trailer = m.trailer_verified && m.trailer_url ? `<a id='trailer-link' class='movie-hero-trailer' target='_blank' rel='noopener' href='${esc(m.trailer_url)}'>Watch Trailer</a>` : ``;
   const watch = m.watch_verified && m.watch_url ? `<a id='watch-link' class='btn secondary legal-watch-btn' target='_blank' rel='noopener' href='${esc(m.watch_url)}'>Where to watch legally</a>` : ``;
   const checked = m.rights_checked_at ? new Date(m.rights_checked_at).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" }) : "Not recorded";
-  const seasonNumber = String(m.title || "").match(/season\s*(\d+)/i)?.[1] || (Number(m.season_count) === 1 ? "1" : "");
+  const seasonNumber = String(m.title || "").match(/season\s*(\d+)/i)?.[1] || String(m.title || "").match(/bigg\s+boss\s+(\d+)/i)?.[1] || (Number(m.season_count) === 1 ? "1" : "");
+  const detailSeasonLabel = m.content_type === "series"
+    ? (seasonNumber ? `Season ${seasonNumber}` : (Number(m.season_count) > 0 ? `${Number(m.season_count)} Season${Number(m.season_count) === 1 ? "" : "s"}` : "Series"))
+    : "";
   const ytPlaylistId = String(m.full_video_embed_url || "").match(/youtube(?:-nocookie)?\.com\/embed\/videoseries\?[^#]*\blist=([^&]+)/i)?.[1] || "";
   const dmEmbed = String(m.full_video_embed_url || "");
   const dmPlaylistId =
@@ -245,7 +248,7 @@ async function load() {
   const upNextSection = upNext ? `<section class='up-next-section'><div class='up-next-art' style="background-image:linear-gradient(90deg,#08090bee 0%,#08090b99 48%,#08090b22 100%),url('${esc(upNext._thumb)}')"></div><div class='up-next-copy'><small>UP NEXT FOR YOU</small><h2>${esc(upNext.title)}</h2><p>${esc(recommendationReason(upNext))} · ${esc(upNext.genre || "Title")}${upNext.release_year ? ` · ${esc(upNext.release_year)}` : ""}</p><div class='actions'><a class='btn' data-rec-click='up_next' href='/movie?slug=${encodeURIComponent(upNext.slug)}'>▶ Open next</a>${upNext.full_video_verified && upNext.full_video_embed_url ? `<a class='btn secondary' data-rec-click='up_next_watch' href='/movie?slug=${encodeURIComponent(upNext.slug)}#watch'>Watch here</a>` : ""}</div></div></section>` : "";
   const relatedSection = moreLikeThis.length ? `<section class='engage-section recommendation-section'><div class='engage-head'><div><small>PERSONALIZED DISCOVERY</small><h2>More Like This</h2></div><a class='muted' href='./#discover'>Browse all →</a></div><div class='recommendation-grid'>${moreLikeThis.map((r) => `<a class='recommendation-card' data-rec-click='more_like_this' href='/movie?slug=${encodeURIComponent(r.slug)}'><span class='recommendation-art' style="background-image:url('${esc(r._thumb)}')"></span><span class='recommendation-copy'><small>${esc(recommendationReason(r))}</small><strong>${esc(r.title)}</strong><em>${esc(r.content_type === "series" ? "Series" : r.genre || "Movie")}${r.release_year ? ` · ${esc(r.release_year)}` : ""}</em></span></a>`).join("")}</div></section>` : "";
   const detailFacts = [
-    m.content_type === "series" && Number(m.season_count) > 0 ? `${Number(m.season_count)} Season${Number(m.season_count) === 1 ? "" : "s"}` : "",
+    m.content_type === "series" ? detailSeasonLabel : "",
     m.content_type === "series" && Number(m.episode_count) > 0 ? `${Number(m.episode_count)} Episodes` : "",
     m.original_language ? String(m.original_language) : "",
     m.full_video_language && m.full_video_language !== m.original_language ? String(m.full_video_language) : ""
