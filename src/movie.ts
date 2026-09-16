@@ -228,7 +228,7 @@ async function load() {
   const playlistEpisodeCount = Math.max(0, Math.min(Number(m.episode_count || 0), 400));
   const reverseYoutubeSourceOrder =
     Boolean(ytPlaylistId) &&
-    /ARY\s+Digital/i.test(String(m.full_video_source || m.source_name || ""));
+    /(ARY\s+Digital|Urdu\s*1)/i.test(String(m.full_video_source || m.source_name || ""));
   const playlistItems = !(dbEpisodes || []).length && playlistEpisodeCount && (ytPlaylistId || dmPlaylistId)
     ? Array.from({ length: playlistEpisodeCount }, (_, i) => ({
         id: "",
