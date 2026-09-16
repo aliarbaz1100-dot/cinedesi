@@ -5,6 +5,19 @@
     linear-gradient(120deg, #151517 0%, #09090a 48%, #050505 100%);
 }
 
+/* Keep the dark poster shell visible while artwork resolves, then reveal the
+   image without the harsh flash that is most noticeable on mobile data. */
+.home-body img[data-poster-fallback] {
+  opacity: 0;
+  transform: scale(1.015);
+  transition: opacity .24s ease, transform .45s cubic-bezier(.2, .75, .2, 1);
+}
+
+.home-body img[data-poster-fallback].poster-ready {
+  opacity: 1;
+  transform: none;
+}
+
 body:has(.movie-page) .movie-copy .actions .detail-play-btn {
   background: #f4f4f4 !important;
   color: #080808 !important;
@@ -26,6 +39,12 @@ body:has(.movie-page) .movie-copy .actions #share {
   body:has(.movie-page) .movie-copy .actions {
     grid-template-columns: 1.15fr 1fr .8fr !important;
   }
+
+  /* Desktop already exposes Genres in the main navigation, so this strip
+     stays focused on the four destinations people use most. */
+  .home-body .browse-strip button:nth-child(n + 5) {
+    display: none;
+  }
 }
 
 @media (max-width: 760px) {
@@ -37,5 +56,13 @@ body:has(.movie-page) .movie-copy .actions #share {
     grid-column: 1 / -1;
     min-height: 44px !important;
     font-size: 11px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-body img[data-poster-fallback] {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }

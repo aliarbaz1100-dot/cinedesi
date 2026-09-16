@@ -47,6 +47,8 @@ const ensureDailymotionReferrerPolicy = () => {
 ensureDailymotionReferrerPolicy();
 const sdk = document.createElement("script");
 sdk.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/dist/umd/supabase.min.js";
+sdk.crossOrigin = "anonymous";
+sdk.fetchPriority = "high";
 sdk.onload = () => load();
 document.head.appendChild(sdk);
 async function load() {

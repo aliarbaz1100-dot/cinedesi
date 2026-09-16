@@ -10,7 +10,7 @@ if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || 
     setTimeout(() => launchSplash.remove(), reduceMotion ? 0 : 320);
   }, 1050)));
 } else launchSplash?.remove();
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=20").catch(() => {
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=21").catch(() => {
 }));
 let deferredInstall = null;
 const installBar = document.querySelector("#install-banner"), installButton = document.querySelector("#install-app"), installClose = document.querySelector("#install-close"), installCopy = document.querySelector("#install-copy");
@@ -60,6 +60,8 @@ const URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co";
 const KEY = "sb_publishable_ZEAZWO-Q-_rvMsy6krr_nw_JDRmP_kI";
 const sdk = document.createElement("script");
 sdk.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/dist/umd/supabase.min.js";
+sdk.crossOrigin = "anonymous";
+sdk.fetchPriority = "high";
 sdk.onload = () => init();
 document.head.appendChild(sdk);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -162,8 +164,13 @@ function init() {
     const selectColumns = "id,slug,title,region,genre,release_year,score,trailer_url,trailer_source,trailer_verified,watch_url,watch_verified,full_video_url,full_video_embed_url,full_video_verified,full_video_source,full_video_label,full_video_language,content_type,season_count,episode_count,original_language,availability_note,cast_names,poster_url,poster_source_url,poster_license,poster_attribution,rights_status,rights_checked_at,source_name,source_url,source_license,created_at,updated_at";
     let data = [];
     let error = null;
-    for (let start = 0; ; start += 1e3) {
-      const batch = await db.from("movies").select(selectColumns).eq("status", "published").order("rights_checked_at", { ascending: false }).range(start, start + 999);
+    // Keep the first response deliberately small so a new visitor gets a real
+    // hero and rails quickly. The remaining catalog still loads immediately
+    // afterwards and the final count/data set stays complete.
+    let start = 0;
+    while (true) {
+      const pageSize = start === 0 ? 160 : 1000;
+      const batch = await db.from("movies").select(selectColumns).eq("status", "published").order("rights_checked_at", { ascending: false }).range(start, start + pageSize - 1);
       if (batch.error) {
         error = batch.error;
         break;
@@ -174,7 +181,8 @@ function init() {
         movies = hydrateMovies(rows);
         paintPrimaryRails();
       }
-      if (rows.length < 1e3) break;
+      if (rows.length < pageSize) break;
+      start += pageSize;
     }
     if (error && !data.length && hadCachedPaint) {
       status.textContent = "Showing your saved CineDesi home while the live catalog reconnects.";
@@ -288,6 +296,9 @@ function init() {
   }
   function wire(root) {
     root.querySelectorAll("img[data-poster-fallback]").forEach((img) => {
+      const reveal = () => img.classList.add("poster-ready");
+      if (img.complete && img.naturalWidth) reveal();
+      else img.addEventListener("load", reveal, { passive: true });
       img.addEventListener("error", () => {
         const current = String(img.currentSrc || img.src || "");
         const maxres = current.match(/i\.ytimg\.com\/vi\/([\w-]{11})\/maxresdefault\.jpg/i);
@@ -780,11 +791,16 @@ function init() {
       return true;
     }).slice(0, 14);
     if (!heroPool.length) return;
-    heroPool.slice(0, 5).forEach((m) => {
+    const preloadHero = (m, priority = "low") => {
       const image = new Image();
       image.decoding = "async";
+      image.fetchPriority = priority;
       image.src = heroPosterUrl(videoThumb(m) || m.poster_url);
-    });
+    };
+    preloadHero(heroPool[0], "high");
+    const warmNextHeroes = () => heroPool.slice(1, 4).forEach((m) => preloadHero(m));
+    if ("requestIdleCallback" in window) window.requestIdleCallback(warmNextHeroes, { timeout: 1200 });
+    else setTimeout(warmNextHeroes, 600);
     let heroIndex = 0;
     const paintHero = () => {
       const m = heroPool[heroIndex % heroPool.length];
