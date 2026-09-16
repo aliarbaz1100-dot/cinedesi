@@ -230,45 +230,18 @@ async function load() {
     Boolean(ytPlaylistId) &&
     /ARY\s+Digital/i.test(String(m.full_video_source || m.source_name || ""));
   const youtubePlaylistStartOffset = m.slug === "ishq-e-mamnu-forbidden-love-urdu-hindi" ? 1 : 0;
-  const isDayDreamer = m.slug === "day-dreamer-pehla-panchi-hindi-urdu";
   const playlistItems = !(dbEpisodes || []).length && playlistEpisodeCount && (ytPlaylistId || dmPlaylistId)
-    ? Array.from({ length: playlistEpisodeCount }, (_, i) => {
-        if (isDayDreamer && i === 0) {
-          return {
-            id: "YXVHupladNw",
-            title: "Episode 1",
-            season_number: Number(seasonNumber || 1),
-            episode_number: 1,
-            playlist_index: -1,
-            playlist_id: "",
-            playlist_kind: ""
-          };
-        }
-        if (isDayDreamer && i === 1) {
-          return {
-            id: "awsuxTqaaow",
-            title: "Episode 2",
-            season_number: Number(seasonNumber || 1),
-            episode_number: 2,
-            playlist_index: -1,
-            playlist_id: "",
-            playlist_kind: ""
-          };
-        }
-        return {
-          id: "",
-          title: `Episode ${i + 1}`,
-          season_number: Number(seasonNumber || 1),
-          episode_number: i + 1,
-          playlist_index: ytPlaylistId
-            ? (reverseYoutubeSourceOrder
-                ? Math.max(0, playlistEpisodeCount - 1 - i)
-                : i + youtubePlaylistStartOffset + (isDayDreamer ? 1 : 0))
-            : i,
-          playlist_id: ytPlaylistId || dmPlaylistId,
-          playlist_kind: ytPlaylistId ? "youtube" : "dailymotion"
-        };
-      })
+    ? Array.from({ length: playlistEpisodeCount }, (_, i) => ({
+        id: "",
+        title: `Episode ${i + 1}`,
+        season_number: Number(seasonNumber || 1),
+        episode_number: i + 1,
+        playlist_index: ytPlaylistId
+          ? (reverseYoutubeSourceOrder ? Math.max(0, playlistEpisodeCount - 1 - i) : i + youtubePlaylistStartOffset)
+          : i,
+        playlist_id: ytPlaylistId || dmPlaylistId,
+        playlist_kind: ytPlaylistId ? "youtube" : "dailymotion"
+      }))
     : [];
   const episodeItems = (dbEpisodes || []).length ? (dbEpisodes || []).map((e) => ({ id: e.video_id, title: `S${e.season_number}E${e.episode_number} · ${e.title}`, season_number: e.season_number, episode_number: e.episode_number })) : m.slug === "tamasha-season-5" ? tamashaSeason5Episodes : playlistItems;
   const episodeLabel = (title, position) => {
@@ -374,18 +347,21 @@ async function load() {
     const indexed = videoIds
       .map((videoId, sourceIndex) => ({ videoId: String(videoId || ""), sourceIndex }))
       .filter((item) => item.videoId);
+    const bySourceIndex = new Map(indexed.map((item) => [item.sourceIndex, item]));
     const ordered = reverseYoutubePlaylistOrder ? [...indexed].reverse() : indexed;
-    document.querySelectorAll("[data-playlist-kind='youtube']").forEach((el, i) => {
-      const item = ordered[i];
+    document.querySelectorAll("[data-playlist-kind='youtube']").forEach((el) => {
+      const sourceIndex = Number(el.dataset.playlistIndex || "0");
+      const item = bySourceIndex.get(sourceIndex);
       const videoId = String(item?.videoId || "");
       if (!videoId) return;
       el.dataset.videoId = videoId;
-      el.dataset.playlistIndex = String(Number(item.sourceIndex));
-      el.dataset.episodeNumber = String(i + 1);
+      el.dataset.playlistIndex = String(sourceIndex);
+      const episodeNumber = Math.max(1, Number(el.dataset.episode || "0") + 1);
+      el.dataset.episodeNumber = String(episodeNumber);
       const img = el.querySelector("img");
       if (img) img.src = `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/mqdefault.jpg`;
       const strong = el.querySelector(".episode-copy strong");
-      if (strong) strong.textContent = `Episode ${i + 1}`;
+      if (strong) strong.textContent = `Episode ${episodeNumber}`;
       const small = el.querySelector(".episode-copy small");
       if (small) small.textContent = "Official full episode";
     });
@@ -582,7 +558,9 @@ async function load() {
     const playlistIndex = Math.max(0, Number(el.dataset.playlistIndex || "0"));
     const player = document.querySelector("#official-player");
 
-    if (playlistKind === "youtube" && playlistId) {
+    if (playlistKind === "youtube" && playlistId && videoId) {
+      if (player) player.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0`;
+    } else if (playlistKind === "youtube" && playlistId) {
       if (youtubePlaylistPlayer?.playVideoAt) {
         youtubePlaylistPlayer.playVideoAt(playlistIndex);
       } else {
