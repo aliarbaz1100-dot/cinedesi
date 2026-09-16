@@ -1780,3 +1780,56 @@ body:has(.movie-page) footer{
   body:has(.movie-page) .movie-copy h1{font-size:31px!important}
   body:has(.movie-page) .movie-copy .actions{grid-template-columns:1fr 1fr!important}
 }
+
+
+/* Mobile billboard — Netflix-style framing */
+@media(max-width:760px){
+  .streaming-hero{
+    margin:8px 0 18px!important;
+    border-radius:0!important;
+    border:0!important;
+    box-shadow:none!important;
+    background:#050505!important;
+  }
+  .hero-showcase{
+    position:relative!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    aspect-ratio:16/10!important;
+    overflow:hidden!important;
+  }
+  .hero-showcase .hero-feature,
+  .hero-showcase .hero-poster:first-child,
+  .hero-feature-live{
+    inset:0!important;
+    width:100%!important;
+    height:100%!important;
+    background-size:cover!important;
+    background-position:center 28%!important;
+    transform:none!important;
+  }
+  .streaming-hero:before{
+    background:
+      linear-gradient(0deg,#050505 0%,rgba(5,5,5,.95) 13%,rgba(5,5,5,.52) 31%,rgba(5,5,5,.08) 58%,rgba(5,5,5,.03) 100%)!important;
+  }
+  .hero-content{
+    left:0!important;
+    right:0!important;
+    bottom:0!important;
+    padding:0 16px 14px!important;
+  }
+  .hero-content h1{
+    max-width:92%!important;
+    font-size:clamp(24px,8vw,36px)!important;
+    line-height:1!important;
+    margin:0 auto 6px!important;
+  }
+  .hero-meta{font-size:10px!important;margin-bottom:6px!important}
+  .hero-actions{max-width:360px!important;margin:8px auto 0!important}
+  .hero-dots{bottom:6px!important}
+}
+@media(max-width:390px){
+  .hero-showcase{aspect-ratio:16/11!important}
+  .hero-content{padding-inline:12px!important}
+}
