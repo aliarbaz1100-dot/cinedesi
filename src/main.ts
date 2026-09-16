@@ -432,8 +432,9 @@ function init() {
     } else if (kind === "region") {
       region.value = value;
       label = `All ${value} titles`;
-    } else if (kind === "verified") {
-      label = "All verified picks";
+    } else if (kind === "turkish") {
+      contentType.value = "series";
+      label = "All Turkish dramas";
     } else if (kind === "top") {
       label = "Top titles on CineDesi";
     } else if (kind === "new") {
@@ -640,11 +641,17 @@ function init() {
   }
 
   function renderVerified() {
-    const all = rankRail(movies.filter((m) => isHomeDisplayTitle(m) && (m.rights_status === "official_link" || m.rights_status === "cleared") && m.source_name && m.source_url && m.source_license));
-    const list = claimRail(all, 8);
-    verifiedGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover'><span>See all verified</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>Verified picks are being prepared.</div>`;
+    const isTurkishDrama = (m) =>
+      m.content_type === "series" &&
+      ["turkey", "turkish"].includes(String(m.region || "").toLowerCase()) &&
+      isHomeDisplayTitle(m);
+    const all = rankRail(movies.filter(isTurkishDrama));
+    const list = all.slice(0, 8);
+    verifiedGrid.innerHTML = list.length
+      ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover' data-turkish-see='true'><span>See all Turkish dramas</span><strong>\u2192</strong></a>` : "")
+      : `<div class='empty'>Turkish dramas are being prepared.</div>`;
     wire(verifiedGrid);
-    document.querySelectorAll("[data-verified-all]").forEach((el) => el.onclick = () => showCollection("verified"));
+    document.querySelectorAll("[data-turkish-see],[data-turkish-all]").forEach((el) => el.onclick = () => showCollection("turkish"));
   }
   function renderPersonalized() {
     const continueSection = q("#continue-watching");
@@ -966,7 +973,7 @@ function init() {
   function render() {
     const term = search.value.trim().toLowerCase(), r = region.value, a = availability.value, s = sort.value, t = contentType.value;
     const south = (v) => ["South", "South Indian", "India / South Indian"].includes(String(v));
-    const list = movies.filter((m) => (activeCollection !== "new" || Number(m.release_year) >= new Date().getFullYear() - 1) && (activeCollection !== "upcoming" || isUpcomingTitle(m)) && (activeCollection !== "binge" || (m.content_type === "series" && m.full_video_verified && m.full_video_embed_url && Number(m.episode_count || 0) >= 5)) && (activeCollection !== "verified" || (m.rights_status === "official_link" || m.rights_status === "cleared")) && (activeCollection !== "genre" || genreMatch(m, activeCollectionValue)) && (t === "all" || m.content_type === t) && (r === "All" || m.region === r || r === "South" && south(m.region)) && (a === "all" || a === "watch" && m.watch_verified && m.watch_url || a === "trailer" && m.trailer_verified && m.trailer_url || a === "cinedesi" && m.full_video_verified && m.full_video_embed_url) && searchText(m).includes(term)).sort((x, y) => activeCollection === "top" ? (Number(y._trend_score) || 0) - (Number(x._trend_score) || 0) || (Number(y.score) || 0) - (Number(x.score) || 0) : activeCollection === "upcoming" ? (Number(y.score) || 0) - (Number(x.score) || 0) || String(y.updated_at || "").localeCompare(String(x.updated_at || "")) : s === "title" ? String(x.title).localeCompare(String(y.title)) : s === "newest" ? (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : 0), shown = list.slice(0, visibleLimit);
+    const list = movies.filter((m) => (activeCollection !== "new" || Number(m.release_year) >= new Date().getFullYear() - 1) && (activeCollection !== "upcoming" || isUpcomingTitle(m)) && (activeCollection !== "binge" || (m.content_type === "series" && m.full_video_verified && m.full_video_embed_url && Number(m.episode_count || 0) >= 5)) && (activeCollection !== "turkish" || (m.content_type === "series" && ["turkey", "turkish"].includes(String(m.region || "").toLowerCase()))) && (activeCollection !== "genre" || genreMatch(m, activeCollectionValue)) && (t === "all" || m.content_type === t) && (r === "All" || m.region === r || r === "South" && south(m.region)) && (a === "all" || a === "watch" && m.watch_verified && m.watch_url || a === "trailer" && m.trailer_verified && m.trailer_url || a === "cinedesi" && m.full_video_verified && m.full_video_embed_url) && searchText(m).includes(term)).sort((x, y) => activeCollection === "top" ? (Number(y._trend_score) || 0) - (Number(x._trend_score) || 0) || (Number(y.score) || 0) - (Number(x.score) || 0) : activeCollection === "upcoming" ? (Number(y.score) || 0) - (Number(x.score) || 0) || String(y.updated_at || "").localeCompare(String(x.updated_at || "")) : s === "title" ? String(x.title).localeCompare(String(y.title)) : s === "newest" ? (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : 0), shown = list.slice(0, visibleLimit);
     grid.innerHTML = shown.length ? shown.map((m) => card(m)).join("") : `<div class='empty'>No published titles match these filters yet.</div>`;
     status.textContent = list.length ? `Showing ${shown.length} of ${list.length} matching titles` : "No matching published titles";
     loadMore.hidden = shown.length >= list.length;
