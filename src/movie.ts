@@ -230,18 +230,45 @@ async function load() {
     Boolean(ytPlaylistId) &&
     /ARY\s+Digital/i.test(String(m.full_video_source || m.source_name || ""));
   const youtubePlaylistStartOffset = m.slug === "ishq-e-mamnu-forbidden-love-urdu-hindi" ? 1 : 0;
+  const isDayDreamer = m.slug === "day-dreamer-pehla-panchi-hindi-urdu";
   const playlistItems = !(dbEpisodes || []).length && playlistEpisodeCount && (ytPlaylistId || dmPlaylistId)
-    ? Array.from({ length: playlistEpisodeCount }, (_, i) => ({
-        id: "",
-        title: `Episode ${i + 1}`,
-        season_number: Number(seasonNumber || 1),
-        episode_number: i + 1,
-        playlist_index: ytPlaylistId
-          ? (reverseYoutubeSourceOrder ? Math.max(0, playlistEpisodeCount - 1 - i) : i + youtubePlaylistStartOffset)
-          : i,
-        playlist_id: ytPlaylistId || dmPlaylistId,
-        playlist_kind: ytPlaylistId ? "youtube" : "dailymotion"
-      }))
+    ? Array.from({ length: playlistEpisodeCount }, (_, i) => {
+        if (isDayDreamer && i === 0) {
+          return {
+            id: "YXVHupladNw",
+            title: "Episode 1",
+            season_number: Number(seasonNumber || 1),
+            episode_number: 1,
+            playlist_index: -1,
+            playlist_id: "",
+            playlist_kind: ""
+          };
+        }
+        if (isDayDreamer && i === 1) {
+          return {
+            id: "awsuxTqaaow",
+            title: "Episode 2",
+            season_number: Number(seasonNumber || 1),
+            episode_number: 2,
+            playlist_index: -1,
+            playlist_id: "",
+            playlist_kind: ""
+          };
+        }
+        return {
+          id: "",
+          title: `Episode ${i + 1}`,
+          season_number: Number(seasonNumber || 1),
+          episode_number: i + 1,
+          playlist_index: ytPlaylistId
+            ? (reverseYoutubeSourceOrder
+                ? Math.max(0, playlistEpisodeCount - 1 - i)
+                : i + youtubePlaylistStartOffset + (isDayDreamer ? 1 : 0))
+            : i,
+          playlist_id: ytPlaylistId || dmPlaylistId,
+          playlist_kind: ytPlaylistId ? "youtube" : "dailymotion"
+        };
+      })
     : [];
   const episodeItems = (dbEpisodes || []).length ? (dbEpisodes || []).map((e) => ({ id: e.video_id, title: `S${e.season_number}E${e.episode_number} · ${e.title}`, season_number: e.season_number, episode_number: e.episode_number })) : m.slug === "tamasha-season-5" ? tamashaSeason5Episodes : playlistItems;
   const episodeLabel = (title, position) => {
