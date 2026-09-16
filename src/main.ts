@@ -277,7 +277,7 @@ function init() {
     return "other";
   };
   function fillRail(root, name) {
-    const all = rankRail(movies.filter((m) => m.region === name && isHomeDisplayTitle(m)));
+    const all = rankRail(movies.filter((m) => m.region === name));
     const list = all.filter((m) => homeRailOwner(m) === `region-${name.toLowerCase()}`).slice(0, 8);
     root.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover' data-region-see='${esc(name)}'><span>See all</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>No ${esc(name)} title is published yet.</div>`;
     wire(root);
@@ -323,7 +323,7 @@ function init() {
     q("#discover").scrollIntoView({ behavior: "smooth", block: "start" });
   }
   function renderSeries() {
-    const all = rankRail(movies.filter((m) => m.content_type === "series" && isHomeDisplayTitle(m))), list = all.filter((m) => homeRailOwner(m) === "series").slice(0, 8);
+    const all = rankRail(movies.filter((m) => m.content_type === "series")), list = all.filter((m) => homeRailOwner(m) === "series").slice(0, 8);
     seriesGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover' data-series-see='true'><span>See all series</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>Verified series are being prepared.</div>`;
     wire(seriesGrid);
     document.querySelectorAll("[data-series-see],[data-series-all]").forEach((el) => el.onclick = () => showCollection("series"));
@@ -351,7 +351,7 @@ function init() {
     const gs = ["Action", "Comedy", "Horror", "Drama", "Romance", "Thriller", "Cartoons"];
     genreChips.innerHTML = gs.map((g) => `<button class='genre-chip' data-genre='${g}'>${g}</button>`).join("");
     genreRails.innerHTML = gs.map((g) => {
-      const all = rankRail(movies.filter((m) => genreMatch(m, g) && isHomeDisplayTitle(m))), list = all.filter((m) => homeRailOwner(m) === `genre-${g.toLowerCase()}`).slice(0, 8);
+      const all = rankRail(movies.filter((m) => genreMatch(m, g))), list = all.filter((m) => homeRailOwner(m) === `genre-${g.toLowerCase()}`).slice(0, 8);
       if (!list.length) return "";
       return `<div class='rail-block genre-block' id='genre-${g.toLowerCase()}'><div class='rail-heading'><h3>${g}</h3><button type='button' data-genre-see='${g}'>See all \u2192</button></div><div class='grid rail genre-rail'>${list.map((m) => card(m)).join("")}</div></div>`;
     }).join("");
@@ -501,7 +501,6 @@ function init() {
     if (!bingeGrid || !section) return;
     const all = rankRail(movies.filter((m) =>
       m.content_type === "series" &&
-      isHomeDisplayTitle(m) &&
       m.full_video_verified &&
       m.full_video_embed_url &&
       Number(m.episode_count || 0) >= 5
@@ -516,7 +515,7 @@ function init() {
   }
 
   function renderVerified() {
-    const all = rankRail(movies.filter((m) => isHomeDisplayTitle(m) && (m.rights_status === "official_link" || m.rights_status === "cleared") && m.source_name && m.source_url && m.source_license));
+    const all = rankRail(movies.filter((m) => (m.rights_status === "official_link" || m.rights_status === "cleared") && m.source_name && m.source_url && m.source_license));
     const list = all.filter((m) => homeRailOwner(m) === "verified").slice(0, 8);
     verifiedGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover'><span>See all verified</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>Verified picks are being prepared.</div>`;
     wire(verifiedGrid);
