@@ -1,5 +1,6 @@
 import "./cinematic-v2.css";
 import "./mobile-navigation.css";
+import "./launch-polish.css";
 import { tamashaSeason5Episodes } from "./tamashaSeason5";
 const URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co", KEY = "sb_publishable_ZEAZWO-Q-_rvMsy6krr_nw_JDRmP_kI";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -77,6 +78,8 @@ async function load() {
   const thumb = videoThumb(m);
   m._cover_kind = m.poster_url ? "poster" : thumb ? "youtube" : "original";
   if (!m.poster_url) m.poster_url = thumb || posterArt(m);
+  let detailSaved = [];
+  try { detailSaved = JSON.parse(localStorage.getItem("cinedesi-watchlist") || "[]"); } catch {}
   track("movie_view");
   const [{ data: providers }, { data: relatedCandidates }, { data: dbEpisodes }, { data: trendingRows }] = await Promise.all([
     db.from("watch_sources").select("provider_name,destination_url,access_type,country_code,language,dub_language,subtitle_language,verified_at").eq("movie_id", m.id).eq("verification_status", "verified").order("provider_name").limit(8),
@@ -187,7 +190,16 @@ async function load() {
   document.querySelector("#movie-schema")?.remove();
   document.head.appendChild(schema);
   const trailer = m.trailer_verified && m.trailer_url ? `<a id='trailer-link' class='movie-hero-trailer' target='_blank' rel='noopener' href='${esc(m.trailer_url)}'>Watch Trailer</a>` : ``;
-  const watch = m.watch_verified && m.watch_url ? `<a id='watch-link' class='btn secondary legal-watch-btn' target='_blank' rel='noopener' href='${esc(m.watch_url)}'>Where to watch legally</a>` : ``;
+  const hasCineDesiPlayback = Boolean(m.full_video_verified && m.full_video_embed_url);
+  const primaryAction = hasCineDesiPlayback
+    ? `<a id='primary-play' class='btn detail-play-btn' href='#watch'>▶ Play</a>`
+    : m.watch_verified && m.watch_url
+      ? `<a id='watch-link' class='btn detail-play-btn' target='_blank' rel='noopener' href='${esc(m.watch_url)}'>▶ Watch legally</a>`
+      : m.trailer_verified && m.trailer_url
+        ? `<a class='btn detail-play-btn' target='_blank' rel='noopener' href='${esc(m.trailer_url)}'>▶ Trailer</a>`
+        : ``;
+  const isDetailSaved = detailSaved.includes(m.id);
+  const watch = `${primaryAction}<button id='detail-list' class='ghost' type='button' aria-pressed='${isDetailSaved}'>${isDetailSaved ? "✓ In My List" : "＋ My List"}</button>`;
   const checked = m.rights_checked_at ? new Date(m.rights_checked_at).toLocaleDateString(void 0, { year: "numeric", month: "short", day: "numeric" }) : "Not recorded";
   const seasonNumber = String(m.title || "").match(/season\s*(\d+)/i)?.[1] || String(m.title || "").match(/bigg\s+boss\s+(\d+)/i)?.[1] || (Number(m.season_count) === 1 ? "1" : "");
   const detailSeasonLabel = m.content_type === "series"
@@ -263,6 +275,13 @@ async function load() {
   const posterLine = licensedPoster(m) ? `${esc(m.poster_license)}${m.poster_attribution ? ` \u2022 ${esc(m.poster_attribution)}` : ""}${m.poster_source_url ? ` \u2022 <a target='_blank' rel='noopener' href='${esc(m.poster_source_url)}'>poster source</a>` : ""}` : m._cover_kind === "youtube" ? `Official video thumbnail supplied by ${esc(m.full_video_source || m.trailer_source || "YouTube")}; linked to the verified upload.` : "CineDesi dark original fallback; no third-party poster reused.";
   const preserveFullPoster = ["cid-official-series", "crime-patrol-city-crimes-2026"].includes(String(m.slug || ""));
   root.innerHTML = `<section class='movie-hero'><div class='movie-art' ${m.poster_url ? `style="background-image:linear-gradient(#0003,#0008),url('${esc(m.poster_url)}'),url('${esc(posterArt(m))}');background-size:${preserveFullPoster ? "contain" : "cover"};background-repeat:no-repeat;background-position:center;background-color:#050506"` : ""}><span>${licensedPoster(m) ? "Licensed image" : m._cover_kind === "youtube" ? "Official video thumbnail" : "CineDesi dark cover"}</span>${trailer}</div><div class='movie-copy'><small>${esc(m.region)}</small><h1>${esc(m.title)}</h1><div class='modal-meta'><span>${esc(m.genre || "Film")}</span><span>${esc(m.release_year || "")}</span>${m.score ? `<span>CineDesi score ${esc(m.score)}</span>` : ""}</div>${titleFacts}<div class='badges'><span class='badge'>${m.rights_status === "cleared" ? "Rights cleared" : "Official links checked"}</span>${m.trailer_verified ? "<span class='badge'>Official trailer verified</span>" : ""}${m.watch_verified ? "<span class='badge'>Legal watch verified</span>" : ""}${m.full_video_verified && m.full_video_embed_url ? "<span class='badge'>Official full video on CineDesi</span>" : ""}${licensedPoster(m) ? "<span class='badge'>Licensed image</span>" : "<span class='badge'>CineDesi original cover</span>"}</div><p class='lead'>${esc(m.editorial || m.synopsis || "Editorial coming soon.")}</p>${castSection}${availabilityCallout}<div class='actions'>${watch}<button id='share' class='ghost'>Share page</button></div><div class='source-card'><strong>Verification & source transparency</strong><br>Metadata: ${esc(m.source_name || "Verified source")}${m.source_license ? ` \u2022 ${esc(m.source_license)}` : ""}${m.source_url ? ` \u2022 <a target='_blank' rel='noopener' href='${esc(m.source_url)}'>source page</a>` : ""}${m.attribution_text ? `<br>Attribution: ${esc(m.attribution_text)}` : ""}${m.trailer_source ? `<br>Trailer source: ${esc(m.trailer_source)}` : ""}<br>Poster: ${posterLine}<br>Rights checked: ${esc(checked)}</div></div></section>${fullVideo}${providerSection}${upNextSection}${relatedSection}`;
+  document.querySelector("#detail-list")?.addEventListener("click", (event) => {
+    const adding = !detailSaved.includes(m.id);
+    detailSaved = adding ? [...detailSaved, m.id] : detailSaved.filter((id) => id !== m.id);
+    localStorage.setItem("cinedesi-watchlist", JSON.stringify(detailSaved));
+    event.currentTarget.textContent = adding ? "✓ In My List" : "＋ My List";
+    event.currentTarget.setAttribute("aria-pressed", String(adding));
+  });
   let youtubePlaylistPlayer = null;
   let pendingYoutubePlaylistIndex = null;
 

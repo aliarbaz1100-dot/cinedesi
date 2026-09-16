@@ -1,6 +1,7 @@
 import "./cinematic-v2.css";
 import "./mobile-navigation.css";
 import "./top-ten.css";
+import "./launch-polish.css";
 const launchSplash = document.querySelector("#app-splash");
 if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true)) {
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -9,16 +10,17 @@ if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || 
     setTimeout(() => launchSplash.remove(), reduceMotion ? 0 : 320);
   }, 1050)));
 } else launchSplash?.remove();
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=18").catch(() => {
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=19").catch(() => {
 }));
 let deferredInstall = null;
 const installBar = document.querySelector("#install-banner"), installButton = document.querySelector("#install-app"), installClose = document.querySelector("#install-close"), installCopy = document.querySelector("#install-copy");
 const isStandalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isCompactInstall = window.matchMedia("(max-width: 620px)").matches;
 const installDismissedAt = Number(localStorage.getItem("cinedesi-install-dismissed") || 0);
 const installDismissed = installDismissedAt > Date.now() - 7 * 24 * 60 * 60 * 1000;
 const showInstall = () => {
-  if (installBar && !isStandalone && !installDismissed) installBar.hidden = false;
+  if (installBar && isCompactInstall && !isStandalone && !installDismissed) installBar.hidden = false;
 };
 const hideInstall = (remember = false) => {
   if (installBar) installBar.hidden = true;
@@ -27,7 +29,7 @@ const hideInstall = (remember = false) => {
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
   deferredInstall = event;
-  showInstall();
+  setTimeout(showInstall, 4200);
 });
 window.addEventListener("appinstalled", () => {
   localStorage.setItem("cinedesi-installed", "1");
@@ -48,7 +50,7 @@ installButton?.addEventListener("click", async () => {
   }
 });
 installClose?.addEventListener("click", () => hideInstall(true));
-if (isIOS && !isStandalone && !installDismissed) setTimeout(showInstall, 1400);
+if (isIOS && !isStandalone && !installDismissed) setTimeout(showInstall, 4200);
 const skeletonMarkup = Array.from({ length: 6 }, () => `<article class="card skeleton-card" aria-hidden="true"><div class="poster"></div><div class="info"></div></article>`).join("");
 ["watch-now-grid", "top-grid", "new-grid"].forEach((id) => {
   const rail = document.getElementById(id);
@@ -108,6 +110,7 @@ function init() {
   let visibleLimit = 30;
   let activeCollection = "all";
   let activeCollectionValue = "";
+  let homeRailClaims = new Set();
   let saved = JSON.parse(localStorage.getItem("cinedesi-watchlist") || "[]");
   const q = (s) => document.querySelector(s);
   const search = q("#search"), suggestions = q("#search-suggestions"), searchClose = q("#search-close"), menuToggle = q("#menu-toggle"), catalogHeader = q(".catalog-header"), quickBrowse = q("#quick-browse"), region = q("#region"), availability = q("#availability"), sort = q("#sort"), grid = q("#grid"), loadMore = q("#load-more"), heroShowcase = q("#hero-showcase"), heroTitle = q("#hero-title"), heroMeta = q("#hero-meta"), heroLead = q("#hero-lead"), heroPlay = q("#hero-play"), heroInfo = q("#hero-info"), heroList = q("#hero-list"), topGrid = q("#top-grid"), newGrid = q("#new-grid"), comingGrid = q("#coming-grid"), continueGrid = q("#continue-grid"), recentGrid = q("#recent-grid"), becauseGrid = q("#because-grid"), verifiedGrid = q("#verified-grid"), watchNowGrid = q("#watch-now-grid"), bingeGrid = q("#binge-grid"), watchGrid = q("#watch-grid"), pakistanGrid = q("#pakistan-grid"), bollywoodGrid = q("#bollywood-grid"), southGrid = q("#south-grid"), seriesGrid = q("#series-grid"), contentType = q("#content-type"), discoverTitle = q("#discover-title"), genreRails = q("#genre-rails"), genreChips = q("#genre-chips"), status = q("#status"), modal = q("#modal"), count = q("#watch-count"), newsletter = q("#newsletter-form"), newsletterMsg = q("#newsletter-msg"), statPublished = q("#stat-published"), statTrailers = q("#stat-trailers"), statWatch = q("#stat-watch"), statRegions = q("#stat-regions");
@@ -131,7 +134,31 @@ function init() {
     if (!node) return;
     node.textContent = JSON.stringify({ "@context": "https://schema.org", "@type": "ItemList", numberOfItems: movies.length, itemListElement: movies.slice(0, 100).map((m, i) => ({ "@type": "ListItem", position: i + 1, url: `https://cinedesi.online/movie?slug=${encodeURIComponent(m.slug)}`, name: m.title })) });
   }
+  const claimRail = (items, limit) => {
+    const list = items.filter((m) => !homeRailClaims.has(m.id)).slice(0, limit);
+    list.forEach((m) => homeRailClaims.add(m.id));
+    return list;
+  };
+  const hydrateMovies = (rows) => (rows || []).map((m) => {
+    const thumb = videoThumb(m);
+    return { ...m, _trend_score: Number(m._trend_score) || 0, _cover_kind: m.poster_url ? "poster" : thumb ? "youtube" : "original", poster_url: m.poster_url || thumb || posterArt(m) };
+  });
+  const paintPrimaryRails = () => {
+    homeRailClaims = new Set();
+    renderHero();
+    renderWatchNow();
+    renderTop();
+    renderNew();
+  };
   async function load() {
+    try {
+      const cached = JSON.parse(localStorage.getItem("cinedesi-home-cache-v1") || "null");
+      if (cached?.savedAt > Date.now() - 12 * 60 * 60 * 1000 && Array.isArray(cached.items) && cached.items.length) {
+        movies = hydrateMovies(cached.items);
+        paintPrimaryRails();
+      }
+    } catch {}
+    const hadCachedPaint = movies.length > 0;
     const selectColumns = "id,slug,title,region,genre,release_year,score,trailer_url,trailer_source,trailer_verified,watch_url,watch_verified,full_video_url,full_video_embed_url,full_video_verified,full_video_source,full_video_label,full_video_language,content_type,season_count,episode_count,original_language,availability_note,cast_names,poster_url,poster_source_url,poster_license,poster_attribution,rights_status,rights_checked_at,source_name,source_url,source_license,created_at,updated_at";
     let data = [];
     let error = null;
@@ -143,15 +170,25 @@ function init() {
       }
       const rows = batch.data || [];
       data.push(...rows);
+      if (start === 0 && !hadCachedPaint && rows.length) {
+        movies = hydrateMovies(rows);
+        paintPrimaryRails();
+      }
       if (rows.length < 1e3) break;
     }
-    movies = (data || []).map((m) => {
-      const thumb = videoThumb(m);
-      return { ...m, _trend_score: 0, _cover_kind: m.poster_url ? "poster" : thumb ? "youtube" : "original", poster_url: m.poster_url || thumb || posterArt(m) };
-    });
+    if (error && !data.length && hadCachedPaint) {
+      status.textContent = "Showing your saved CineDesi home while the live catalog reconnects.";
+      return;
+    }
+    movies = hydrateMovies(data);
     const { data: trendingRows } = await db.rpc("get_cinedesi_trending", { p_days: 7, p_limit: 100 });
     const trendMap = new Map((trendingRows || []).map((row) => [row.movie_slug, Number(row.trend_score) || 0]));
     movies = movies.map((m) => ({ ...m, _trend_score: trendMap.get(m.slug) || 0 }));
+    try {
+      const homeItems = [...movies.filter((m) => isHomeDisplayTitle(m)).slice(0, 140), ...movies.filter((m) => m.full_video_verified && m.full_video_embed_url).slice(0, 80)];
+      const uniqueItems = [...new Map(homeItems.map((m) => [m.id, m])).values()];
+      localStorage.setItem("cinedesi-home-cache-v1", JSON.stringify({ savedAt: Date.now(), items: uniqueItems }));
+    } catch {}
     status.textContent = error ? "Catalog temporarily unavailable" : `${movies.length} published titles \u2022 live Supabase catalog`;
     statPublished.textContent = String(movies.length);
     statTrailers.textContent = String(movies.filter((m) => m.trailer_verified && m.trailer_url).length);
@@ -161,10 +198,7 @@ function init() {
     // Laptop/desktop: paint the above-the-fold experience first, then build
     // heavier off-screen rails when the browser is idle. Mobile keeps the
     // existing immediate rendering path unchanged.
-    renderHero();
-    renderTop();
-    renderNew();
-    renderWatchNow();
+    paintPrimaryRails();
     if (desktopFastPath) {
       const deferredSections = [
         [document.querySelector("#continue-watching"), renderPersonalized],
@@ -292,7 +326,7 @@ function init() {
   );
   function fillRail(root, name) {
     const all = rankRail(movies.filter((m) => m.region === name && isHomeDisplayTitle(m)));
-    const list = all.slice(0, 8);
+    const list = claimRail(all, 8);
     root.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover' data-region-see='${esc(name)}'><span>See all</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>No ${esc(name)} title is published yet.</div>`;
     wire(root);
     root.querySelectorAll("[data-region-see]").forEach((el) => el.onclick = () => showCollection("region", name));
@@ -337,7 +371,7 @@ function init() {
     q("#discover").scrollIntoView({ behavior: "smooth", block: "start" });
   }
   function renderSeries() {
-    const all = rankRail(movies.filter((m) => m.content_type === "series" && isHomeDisplayTitle(m))), list = all.slice(0, 8);
+    const all = rankRail(movies.filter((m) => m.content_type === "series" && isHomeDisplayTitle(m))), list = claimRail(all, 8);
     seriesGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover' data-series-see='true'><span>See all series</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>Verified series are being prepared.</div>`;
     wire(seriesGrid);
     document.querySelectorAll("[data-series-see],[data-series-all]").forEach((el) => el.onclick = () => showCollection("series"));
@@ -345,7 +379,7 @@ function init() {
   function renderRegions() {
     fillRail(pakistanGrid, "Pakistan");
     fillRail(bollywoodGrid, "Bollywood");
-    const all = rankRail(movies.filter((m) => ["South", "South Indian", "India / South Indian"].includes(String(m.region)) && isHomeDisplayTitle(m))), list = all.slice(0, 8);
+    const all = rankRail(movies.filter((m) => ["South", "South Indian", "India / South Indian"].includes(String(m.region)) && isHomeDisplayTitle(m))), list = claimRail(all, 8);
     southGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover' data-region-see='South'><span>See all</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>No South Indian title is published yet.</div>`;
     wire(southGrid);
     southGrid.querySelectorAll("[data-region-see]").forEach((el) => el.onclick = () => showCollection("region", "South"));
@@ -365,7 +399,7 @@ function init() {
     const gs = ["Action", "Comedy", "Horror", "Drama", "Romance", "Thriller", "Cartoons"];
     genreChips.innerHTML = gs.map((g) => `<button class='genre-chip' data-genre='${g}'>${g}</button>`).join("");
     genreRails.innerHTML = gs.map((g) => {
-      const all = rankRail(movies.filter((m) => genreMatch(m, g) && isHomeDisplayTitle(m))), list = all.slice(0, 8);
+      const all = rankRail(movies.filter((m) => genreMatch(m, g) && isHomeDisplayTitle(m))), list = claimRail(all, 8);
       if (!list.length) return "";
       return `<div class='rail-block genre-block' id='genre-${g.toLowerCase()}'><div class='rail-heading'><h3>${g}</h3><button type='button' data-genre-see='${g}'>See all \u2192</button></div><div class='grid rail genre-rail'>${list.map((m) => card(m)).join("")}</div></div>`;
     }).join("");
@@ -505,7 +539,7 @@ function init() {
     const preferred = watchPriority.map((slug) => all.find((m) => m.slug === slug)).filter(Boolean);
     const seen = new Set(preferred.map((m) => m.id));
     const rest = rankRail(all.filter((m) => !seen.has(m.id)));
-    const list = [...preferred, ...rest].slice(0, 12);
+    const list = claimRail([...preferred, ...rest], 12);
     watchNowGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 12 ? `<a class='see-all-card' href='#discover' data-watch-see='true'><span>See all ${all.length}</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>Official full titles are being verified.</div>`;
     wire(watchNowGrid);
     document.querySelectorAll("[data-watch-see],[data-watch-all]").forEach((el) => el.onclick = () => showCollection("watch"));
@@ -521,7 +555,7 @@ function init() {
       Number(m.episode_count || 0) >= 5
     ));
     section.hidden = all.length === 0;
-    const list = all.slice(0, 12);
+    const list = claimRail(all, 12);
     bingeGrid.innerHTML = list.length
       ? list.map((m) => card(m)).join("") + (all.length > 12 ? `<a class='see-all-card' href='#discover' data-binge-see='true'><span>See all complete series</span><strong>→</strong></a>` : "")
       : "";
@@ -531,7 +565,7 @@ function init() {
 
   function renderVerified() {
     const all = rankRail(movies.filter((m) => isHomeDisplayTitle(m) && (m.rights_status === "official_link" || m.rights_status === "cleared") && m.source_name && m.source_url && m.source_license));
-    const list = all.slice(0, 8);
+    const list = claimRail(all, 8);
     verifiedGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover'><span>See all verified</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>Verified picks are being prepared.</div>`;
     wire(verifiedGrid);
     document.querySelectorAll("[data-verified-all]").forEach((el) => el.onclick = () => showCollection("verified"));
@@ -608,7 +642,7 @@ function init() {
         String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || "")) ||
         (Number(b.score) || 0) - (Number(a.score) || 0)
       );
-    const list = all.slice(0, 12);
+    const list = claimRail(all, 12);
     newGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 12 ? `<a class='see-all-card' href='#discover' data-new-see='true'><span>See all new releases</span><strong>→</strong></a>` : "") : `<div class='empty'>New releases are being prepared.</div>`;
     wire(newGrid);
     document.querySelectorAll("[data-new-see],[data-new-all]").forEach((el) => el.onclick = () => showCollection("new"));
@@ -649,7 +683,7 @@ function init() {
         String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || "")) ||
         (Number(b.score) || 0) - (Number(a.score) || 0)
       );
-    const list = [...pinned, ...rest].slice(0, 10);
+    const list = claimRail([...pinned, ...rest], 10);
     topGrid.innerHTML = list.map((m, i) => card(m).replace("class='card'", `class='card top-card' data-rank='${i + 1}'`)).join("");
     wire(topGrid);
     document.querySelectorAll("[data-top-all]").forEach((el) => el.onclick = () => showCollection("top"));
