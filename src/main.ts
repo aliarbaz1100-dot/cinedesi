@@ -174,7 +174,7 @@ function init() {
   let homeRailClaims = new Set();
   let saved = JSON.parse(localStorage.getItem("cinedesi-watchlist") || "[]");
   const q = (s) => document.querySelector(s);
-  const search = q("#search"), suggestions = q("#search-suggestions"), searchClose = q("#search-close"), menuToggle = q("#menu-toggle"), catalogHeader = q(".catalog-header"), quickBrowse = q("#quick-browse"), region = q("#region"), availability = q("#availability"), sort = q("#sort"), grid = q("#grid"), loadMore = q("#load-more"), heroShowcase = q("#hero-showcase"), heroTitle = q("#hero-title"), heroMeta = q("#hero-meta"), heroLead = q("#hero-lead"), heroPlay = q("#hero-play"), heroInfo = q("#hero-info"), heroList = q("#hero-list"), topGrid = q("#top-grid"), newGrid = q("#new-grid"), comingGrid = q("#coming-grid"), continueGrid = q("#continue-grid"), recentGrid = q("#recent-grid"), becauseGrid = q("#because-grid"), verifiedGrid = q("#verified-grid"), watchNowGrid = q("#watch-now-grid"), bingeGrid = q("#binge-grid"), watchGrid = q("#watch-grid"), pakistanGrid = q("#pakistan-grid"), bollywoodGrid = q("#bollywood-grid"), southGrid = q("#south-grid"), seriesGrid = q("#series-grid"), contentType = q("#content-type"), discoverTitle = q("#discover-title"), genreRails = q("#genre-rails"), genreChips = q("#genre-chips"), status = q("#status"), modal = q("#modal"), count = q("#watch-count"), newsletter = q("#newsletter-form"), newsletterMsg = q("#newsletter-msg"), statPublished = q("#stat-published"), statTrailers = q("#stat-trailers"), statWatch = q("#stat-watch"), statRegions = q("#stat-regions");
+  const search = q("#search"), suggestions = q("#search-suggestions"), searchClose = q("#search-close"), menuToggle = q("#menu-toggle"), catalogHeader = q(".catalog-header"), quickBrowse = q("#quick-browse"), region = q("#region"), availability = q("#availability"), sort = q("#sort"), grid = q("#grid"), loadMore = q("#load-more"), heroShowcase = q("#hero-showcase"), heroTitle = q("#hero-title"), heroMeta = q("#hero-meta"), heroLead = q("#hero-lead"), heroPlay = q("#hero-play"), heroInfo = q("#hero-info"), heroList = q("#hero-list"), topGrid = q("#top-grid"), newGrid = q("#new-grid"), comingGrid = q("#coming-grid"), continueGrid = q("#continue-grid"), recentGrid = q("#recent-grid"), verifiedGrid = q("#verified-grid"), watchNowGrid = q("#watch-now-grid"), bingeGrid = q("#binge-grid"), watchGrid = q("#watch-grid"), pakistanGrid = q("#pakistan-grid"), bollywoodGrid = q("#bollywood-grid"), southGrid = q("#south-grid"), seriesGrid = q("#series-grid"), contentType = q("#content-type"), discoverTitle = q("#discover-title"), genreRails = q("#genre-rails"), genreChips = q("#genre-chips"), status = q("#status"), modal = q("#modal"), count = q("#watch-count"), newsletter = q("#newsletter-form"), newsletterMsg = q("#newsletter-msg"), statPublished = q("#stat-published"), statTrailers = q("#stat-trailers"), statWatch = q("#stat-watch"), statRegions = q("#stat-regions");
   function persist() {
     localStorage.setItem("cinedesi-watchlist", JSON.stringify(saved));
     renderWatchlist();
@@ -658,7 +658,6 @@ function init() {
   function renderPersonalized() {
     const continueSection = q("#continue-watching");
     const recentSection = q("#recently-viewed");
-    const becauseSection = q("#because-you-watched");
 
     let recentItems = [];
     let continueItems = [];
@@ -695,23 +694,6 @@ function init() {
       wire(recentGrid);
     }
 
-    if (becauseGrid && becauseSection) {
-      const seed = recentMovies[0];
-      if (!seed) {
-        becauseSection.hidden = true;
-      } else {
-        const seedGenre = String(seed.genre || "").split(/[ ,/]/)[0];
-        const recommendations = movies
-          .filter((m) => m.id !== seed.id && !recentMovies.some((x) => x.id === m.id) && (m.region === seed.region || genreMatch(m, seedGenre)))
-          .sort((a,b) => (Number(b._trend_score)||0) - (Number(a._trend_score)||0) || (Number(b.score)||0) - (Number(a.score)||0))
-          .slice(0, 12);
-        becauseSection.hidden = recommendations.length === 0;
-        const title = q("#because-title");
-        if (title) title.textContent = `Because you watched ${seed.title}`;
-        becauseGrid.innerHTML = recommendations.map((m) => card(m)).join("");
-        wire(becauseGrid);
-      }
-    }
   }
 
   function renderNew() {
