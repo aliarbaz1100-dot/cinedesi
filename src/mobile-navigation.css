@@ -1,0 +1,46 @@
+/* Keep the previous document snapshot painted while iOS swaps pages. */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-group(root) {
+  animation-duration: 140ms;
+  animation-timing-function: ease-out;
+  background: #050505;
+}
+
+::view-transition-old(root) {
+  animation: none;
+  opacity: 1;
+}
+
+::view-transition-new(root) {
+  animation: cinedesi-page-ready 140ms ease-out both;
+  background: #050505;
+}
+
+@keyframes cinedesi-page-ready {
+  from { opacity: .985; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 899px) {
+  html,
+  body {
+    background-color: #050505;
+  }
+
+  /* WebKit can briefly skip auto-contained rails during history restore. */
+  .home-body .section {
+    content-visibility: visible !important;
+    contain-intrinsic-size: auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 1ms !important;
+  }
+}

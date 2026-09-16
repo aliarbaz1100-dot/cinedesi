@@ -1,4 +1,5 @@
 import "./cinematic-v2.css";
+import "./mobile-navigation.css";
 import { tamashaSeason5Episodes } from "./tamashaSeason5";
 const URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co", KEY = "sb_publishable_ZEAZWO-Q-_rvMsy6krr_nw_JDRmP_kI";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
