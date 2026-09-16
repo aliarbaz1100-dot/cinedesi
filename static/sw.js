@@ -1,4 +1,4 @@
-const CACHE = "cinedesi-shell-v24";
+const CACHE = "cinedesi-shell-v25";
 const SHELL = [
   "./index.html",
   "./cinedesi-icon.svg",

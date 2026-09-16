@@ -8,22 +8,35 @@ document.addEventListener("click", (event) => {
   if (!link) return;
   const section = link.closest("section[id]");
   try {
-    sessionStorage.setItem(homeReturnKey, JSON.stringify({
+    const returnState = {
       y: Math.round(window.scrollY),
       sectionId: section?.id || "",
       sectionOffset: section ? Math.round(window.scrollY - section.offsetTop) : 0,
       at: Date.now()
-    }));
+    };
+    sessionStorage.setItem(homeReturnKey, JSON.stringify(returnState));
+    const destination = new URL(link.href, location.href);
+    destination.searchParams.set("returnY", String(returnState.y));
+    destination.searchParams.set("returnSection", returnState.sectionId);
+    destination.searchParams.set("returnOffset", String(returnState.sectionOffset));
+    link.href = destination.href;
   } catch {}
 }, { capture: true });
 window.addEventListener("pageshow", (event) => {
   let savedReturn = null;
   try { savedReturn = JSON.parse(sessionStorage.getItem(homeReturnKey) || "null"); } catch {}
+  const returnParams = new URLSearchParams(location.search);
+  if (returnParams.has("returnY")) savedReturn = {
+    y: Number(returnParams.get("returnY") || 0),
+    sectionId: returnParams.get("returnSection") || "",
+    sectionOffset: Number(returnParams.get("returnOffset") || 0),
+    at: Date.now()
+  };
   if (!savedReturn || Date.now() - Number(savedReturn.at || 0) > 30 * 60 * 1000) return;
   let fromDetail = false;
   try { fromDetail = new URL(document.referrer).pathname.replace(/\/$/, "") === "/movie"; } catch {}
   const navigation = performance.getEntriesByType?.("navigation")?.[0];
-  if (!fromDetail && !event.persisted && navigation?.type !== "back_forward") return;
+  if (!returnParams.has("returnY") && !fromDetail && !event.persisted && navigation?.type !== "back_forward") return;
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
   const html = document.documentElement;
   const previousBehavior = html.style.scrollBehavior;
@@ -39,6 +52,11 @@ window.addEventListener("pageshow", (event) => {
     html.style.scrollBehavior = previousBehavior;
     if ("scrollRestoration" in history) history.scrollRestoration = "auto";
     try { sessionStorage.removeItem(homeReturnKey); } catch {}
+    if (returnParams.has("returnY")) {
+      const cleanUrl = new URL(location.href);
+      ["returnY", "returnSection", "returnOffset"].forEach((key) => cleanUrl.searchParams.delete(key));
+      history.replaceState(history.state, "", cleanUrl.href);
+    }
   }));
 });
 const launchSplash = document.querySelector("#app-splash");
@@ -49,7 +67,7 @@ if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || 
     setTimeout(() => launchSplash.remove(), reduceMotion ? 0 : 320);
   }, 1050)));
 } else launchSplash?.remove();
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=24").catch(() => {
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=25").catch(() => {
 }));
 let deferredInstall = null;
 const installBar = document.querySelector("#install-banner"), installButton = document.querySelector("#install-app"), installClose = document.querySelector("#install-close"), installCopy = document.querySelector("#install-copy");

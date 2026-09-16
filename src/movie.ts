@@ -9,7 +9,12 @@ movieBack?.addEventListener("click", (event) => {
   event.stopImmediatePropagation();
   try {
     const referrer = document.referrer ? new URL(document.referrer, location.href) : null;
-    location.replace(referrer?.origin === location.origin ? referrer.href : "./");
+    const destination = referrer?.origin === location.origin ? referrer : new URL("./", location.href);
+    const current = new URL(location.href);
+    ["returnY", "returnSection", "returnOffset"].forEach((key) => {
+      if (current.searchParams.has(key)) destination.searchParams.set(key, current.searchParams.get(key));
+    });
+    location.replace(destination.href);
   } catch {
     location.replace("./");
   }
