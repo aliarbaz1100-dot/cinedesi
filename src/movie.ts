@@ -2,6 +2,17 @@ import "./cinematic-v2.css";
 import "./mobile-navigation.css";
 import "./launch-polish.css";
 import { tamashaSeason5Episodes } from "./tamashaSeason5";
+const movieBack = document.querySelector("#movie-back");
+movieBack?.addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  try {
+    const referrer = document.referrer ? new URL(document.referrer, location.href) : null;
+    location.replace(referrer?.origin === location.origin ? referrer.href : "./");
+  } catch {
+    location.replace("./");
+  }
+}, { capture: true });
 const URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co", KEY = "sb_publishable_ZEAZWO-Q-_rvMsy6krr_nw_JDRmP_kI";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const xml = (s) => String(s ?? "").replace(/[&<>\"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);

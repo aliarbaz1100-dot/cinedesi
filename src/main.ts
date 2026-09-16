@@ -2,6 +2,45 @@ import "./cinematic-v2.css";
 import "./mobile-navigation.css";
 import "./top-ten.css";
 import "./launch-polish.css";
+const homeReturnKey = "cinedesi-home-return-v1";
+document.addEventListener("click", (event) => {
+  const link = event.target?.closest?.("a[href*='/movie?slug='],a[href*='./movie?slug=']");
+  if (!link) return;
+  const section = link.closest("section[id]");
+  try {
+    sessionStorage.setItem(homeReturnKey, JSON.stringify({
+      y: Math.round(window.scrollY),
+      sectionId: section?.id || "",
+      sectionOffset: section ? Math.round(window.scrollY - section.offsetTop) : 0,
+      at: Date.now()
+    }));
+  } catch {}
+}, { capture: true });
+window.addEventListener("pageshow", (event) => {
+  let savedReturn = null;
+  try { savedReturn = JSON.parse(sessionStorage.getItem(homeReturnKey) || "null"); } catch {}
+  if (!savedReturn || Date.now() - Number(savedReturn.at || 0) > 30 * 60 * 1000) return;
+  let fromDetail = false;
+  try { fromDetail = new URL(document.referrer).pathname.replace(/\/$/, "") === "/movie"; } catch {}
+  const navigation = performance.getEntriesByType?.("navigation")?.[0];
+  if (!fromDetail && !event.persisted && navigation?.type !== "back_forward") return;
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+  const html = document.documentElement;
+  const previousBehavior = html.style.scrollBehavior;
+  html.style.scrollBehavior = "auto";
+  const restore = () => {
+    const section = savedReturn.sectionId ? document.getElementById(savedReturn.sectionId) : null;
+    const target = section ? section.offsetTop + Number(savedReturn.sectionOffset || 0) : Number(savedReturn.y || 0);
+    window.scrollTo(0, Math.max(0, target));
+  };
+  restore();
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    restore();
+    html.style.scrollBehavior = previousBehavior;
+    if ("scrollRestoration" in history) history.scrollRestoration = "auto";
+    try { sessionStorage.removeItem(homeReturnKey); } catch {}
+  }));
+}, { once: true });
 const launchSplash = document.querySelector("#app-splash");
 if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true)) {
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -10,7 +49,7 @@ if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || 
     setTimeout(() => launchSplash.remove(), reduceMotion ? 0 : 320);
   }, 1050)));
 } else launchSplash?.remove();
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=22").catch(() => {
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=23").catch(() => {
 }));
 let deferredInstall = null;
 const installBar = document.querySelector("#install-banner"), installButton = document.querySelector("#install-app"), installClose = document.querySelector("#install-close"), installCopy = document.querySelector("#install-copy");
