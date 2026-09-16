@@ -1,13 +1,13 @@
-import "./styles.css";
+import "./cinematic-v2.css";
 const launchSplash = document.querySelector("#app-splash");
 if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true)) {
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => {
     launchSplash.classList.add("splash-exit");
-    setTimeout(() => launchSplash.remove(), reduceMotion ? 0 : 420);
-  }, 2600)));
+    setTimeout(() => launchSplash.remove(), reduceMotion ? 0 : 320);
+  }, 1050)));
 } else launchSplash?.remove();
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=13").catch(() => {
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=14").catch(() => {
 }));
 let deferredInstall = null;
 const installBar = document.querySelector("#install-banner"), installButton = document.querySelector("#install-app"), installClose = document.querySelector("#install-close"), installCopy = document.querySelector("#install-copy");
@@ -47,6 +47,11 @@ installButton?.addEventListener("click", async () => {
 });
 installClose?.addEventListener("click", () => hideInstall(true));
 if (isIOS && !isStandalone && !installDismissed) setTimeout(showInstall, 1400);
+const skeletonMarkup = Array.from({ length: 6 }, () => `<article class="card skeleton-card" aria-hidden="true"><div class="poster"></div><div class="info"></div></article>`).join("");
+["watch-now-grid", "top-grid", "new-grid"].forEach((id) => {
+  const rail = document.getElementById(id);
+  if (rail && !rail.children.length) rail.innerHTML = skeletonMarkup;
+});
 const URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co";
 const KEY = "sb_publishable_ZEAZWO-Q-_rvMsy6krr_nw_JDRmP_kI";
 const sdk = document.createElement("script");
@@ -215,6 +220,39 @@ function init() {
     const ribbon = upcoming ? "<span class='poster-ribbon new'>Upcoming</span>" : m.full_video_verified && m.full_video_embed_url ? "<span class='poster-ribbon'>\u25B6 Watch here</span>" : Number(m.release_year) >= 2025 ? "<span class='poster-ribbon new'>New</span>" : "";
     return `<article class='card' data-id='${m.id}'><a class='poster-link' href='/movie?slug=${encodeURIComponent(m.slug)}' aria-label='Open ${esc(m.title)}'><div class='poster'>${image}<span class='poster-region'>${esc(m.region)}</span>${ribbon}</div></a><div class='info'><div class='card-title-row'><h3>${esc(m.title)}</h3>${scoreLabel(m.score) ? `<strong class='match-score'>${esc(scoreLabel(m.score))}</strong>` : ""}</div><p class='muted'>${esc(m.content_type === "series" ? "Series" : m.genre || "Film")} \u2022 ${esc(m.release_year || "")}${m.original_language ? ` \u2022 ${esc(m.original_language)}` : ""}</p><div class='badges'>${availabilityBadge}${m.rights_status === "official_link" || m.rights_status === "cleared" ? "<span class='badge verified-badge'>\u2713 Source checked</span>" : ""}</div><div class='card-actions streaming-actions'><a class='btn play-mini' href='/movie?slug=${encodeURIComponent(m.slug)}'>\u25B6 Details</a><button class='circle-action' data-save='${m.id}' aria-label='${saved.includes(m.id) ? "Remove from My List" : "Add to My List"}'>${saved.includes(m.id) ? "\u2713" : "\uFF0B"}</button><button class='circle-action info-action' data-open='${m.id}' aria-label='More information'>i</button></div></div></article>`;
   }
+  function enhanceRails(root) {
+    const rails = [
+      ...(root.matches?.(".grid.rail,#verified-grid") ? [root] : []),
+      ...root.querySelectorAll(".grid.rail,#verified-grid")
+    ];
+    rails.forEach((rail) => {
+      if (rail.parentElement?.classList.contains("rail-shell")) return;
+      const shell = document.createElement("div");
+      shell.className = "rail-shell";
+      rail.before(shell);
+      shell.appendChild(rail);
+      const previous = document.createElement("button");
+      const next = document.createElement("button");
+      previous.type = next.type = "button";
+      previous.className = "rail-control prev";
+      next.className = "rail-control next";
+      previous.setAttribute("aria-label", "Scroll titles left");
+      next.setAttribute("aria-label", "Scroll titles right");
+      previous.textContent = "‹";
+      next.textContent = "›";
+      shell.append(previous, next);
+      const update = () => {
+        previous.disabled = rail.scrollLeft <= 4;
+        next.disabled = rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 4;
+      };
+      const move = (direction) => rail.scrollBy({ left: direction * Math.max(rail.clientWidth * .86, 260), behavior: "smooth" });
+      previous.onclick = () => move(-1);
+      next.onclick = () => move(1);
+      rail.addEventListener("scroll", update, { passive: true });
+      window.addEventListener("resize", update, { passive: true });
+      requestAnimationFrame(update);
+    });
+  }
   function wire(root) {
     root.querySelectorAll("img[data-poster-fallback]").forEach((img) => {
       img.addEventListener("error", () => {
@@ -240,6 +278,7 @@ function init() {
       e.stopPropagation();
       toggle(Number(el.dataset.save));
     });
+    enhanceRails(root);
   }
   const isHomeDisplayTitle = (m) => {
     const currentYear = new Date().getFullYear();
@@ -678,6 +717,11 @@ function init() {
       return true;
     }).slice(0, 14);
     if (!heroPool.length) return;
+    heroPool.slice(0, 5).forEach((m) => {
+      const image = new Image();
+      image.decoding = "async";
+      image.src = heroPosterUrl(videoThumb(m) || m.poster_url);
+    });
     let heroIndex = 0;
     const paintHero = () => {
       const m = heroPool[heroIndex % heroPool.length];
@@ -850,6 +894,9 @@ function init() {
     const open = catalogHeader.classList.toggle("menu-open");
     menuToggle.setAttribute("aria-expanded", String(open));
   };
+  const syncHeader = () => catalogHeader.classList.toggle("is-scrolled", window.scrollY > 18);
+  window.addEventListener("scroll", syncHeader, { passive: true });
+  syncHeader();
   catalogHeader.querySelectorAll("nav a").forEach((a) => a.addEventListener("click", () => {
     catalogHeader.classList.remove("menu-open");
     menuToggle.setAttribute("aria-expanded", "false");
