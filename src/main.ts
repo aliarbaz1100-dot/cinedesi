@@ -3,9 +3,7 @@ import "./mobile-navigation.css";
 import "./top-ten.css";
 import "./launch-polish.css";
 const homeReturnKey = "cinedesi-home-return-v1";
-document.addEventListener("click", (event) => {
-  const link = event.target?.closest?.("a[href*='/movie?slug='],a[href*='./movie?slug=']");
-  if (!link) return;
+const rememberHomeReturn = (link) => {
   const section = link.closest("section[id]");
   try {
     const returnState = {
@@ -21,6 +19,10 @@ document.addEventListener("click", (event) => {
     destination.searchParams.set("returnOffset", String(returnState.sectionOffset));
     link.href = destination.href;
   } catch {}
+};
+document.addEventListener("click", (event) => {
+  const link = event.target?.closest?.("a[href*='movie?slug=']");
+  if (link) rememberHomeReturn(link);
 }, { capture: true });
 window.addEventListener("pageshow", (event) => {
   let savedReturn = null;
@@ -67,7 +69,7 @@ if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || 
     setTimeout(() => launchSplash.remove(), reduceMotion ? 0 : 320);
   }, 1050)));
 } else launchSplash?.remove();
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=25").catch(() => {
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=26").catch(() => {
 }));
 let deferredInstall = null;
 const installBar = document.querySelector("#install-banner"), installButton = document.querySelector("#install-app"), installClose = document.querySelector("#install-close"), installCopy = document.querySelector("#install-copy");
@@ -352,6 +354,11 @@ function init() {
     });
   }
   function wire(root) {
+    root.querySelectorAll("a[href*='movie?slug=']").forEach((link) => {
+      if (link.dataset.returnReady === "1") return;
+      link.dataset.returnReady = "1";
+      link.addEventListener("click", () => rememberHomeReturn(link), { capture: true });
+    });
     root.querySelectorAll("img[data-poster-fallback]").forEach((img) => {
       const reveal = () => img.classList.add("poster-ready");
       if (img.complete && img.naturalWidth) reveal();
