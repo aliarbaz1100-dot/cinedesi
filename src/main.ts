@@ -253,9 +253,32 @@ function init() {
     (Number(b.release_year)||0) - (Number(a.release_year)||0) ||
     String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || ""))
   );
+  // Give every title one semantic home on the landing page. A title can still
+  // be found through search and "See all", but it must not occupy several
+  // homepage rails and crowd other catalog titles out.
+  const homeRailOwner = (m) => {
+    const currentYear = new Date().getFullYear();
+    const note = String(m.availability_note || "");
+    const upcoming = /\b(?:premieres|coming|scheduled|arrives)\b/i.test(note) && !/\b(?:premiered|streaming now|available now)\b/i.test(note);
+    if (upcoming) return "upcoming";
+    if (m.content_type === "series" && m.full_video_verified && m.full_video_embed_url && Number(m.episode_count || 0) >= 5) return "binge";
+    if (Number(m.release_year || 0) >= currentYear - 1) return "new";
+    if (Number(m._trend_score || 0) > 0) return "top";
+    if (m.full_video_verified && m.full_video_embed_url) return "watch";
+    if ((m.rights_status === "official_link" || m.rights_status === "cleared") && m.source_name && m.source_url && m.source_license) return "verified";
+    if (m.content_type === "series") return "series";
+    for (const genre of ["Action", "Comedy", "Horror", "Drama", "Romance", "Thriller", "Cartoons"]) {
+      if (genreMatch(m, genre)) return `genre-${genre.toLowerCase()}`;
+    }
+    const regionName = String(m.region || "");
+    if (regionName === "Pakistan") return "region-pakistan";
+    if (regionName === "Bollywood") return "region-bollywood";
+    if (["South", "South Indian", "India / South Indian"].includes(regionName)) return "region-south";
+    return "other";
+  };
   function fillRail(root, name) {
     const all = rankRail(movies.filter((m) => m.region === name && isHomeDisplayTitle(m)));
-    const list = all.slice(0, 8);
+    const list = all.filter((m) => homeRailOwner(m) === `region-${name.toLowerCase()}`).slice(0, 8);
     root.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover' data-region-see='${esc(name)}'><span>See all</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>No ${esc(name)} title is published yet.</div>`;
     wire(root);
     root.querySelectorAll("[data-region-see]").forEach((el) => el.onclick = () => showCollection("region", name));
@@ -300,7 +323,7 @@ function init() {
     q("#discover").scrollIntoView({ behavior: "smooth", block: "start" });
   }
   function renderSeries() {
-    const all = rankRail(movies.filter((m) => m.content_type === "series" && isHomeDisplayTitle(m))), list = all.slice(0, 8);
+    const all = rankRail(movies.filter((m) => m.content_type === "series" && isHomeDisplayTitle(m))), list = all.filter((m) => homeRailOwner(m) === "series").slice(0, 8);
     seriesGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover' data-series-see='true'><span>See all series</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>Verified series are being prepared.</div>`;
     wire(seriesGrid);
     document.querySelectorAll("[data-series-see],[data-series-all]").forEach((el) => el.onclick = () => showCollection("series"));
@@ -328,7 +351,7 @@ function init() {
     const gs = ["Action", "Comedy", "Horror", "Drama", "Romance", "Thriller", "Cartoons"];
     genreChips.innerHTML = gs.map((g) => `<button class='genre-chip' data-genre='${g}'>${g}</button>`).join("");
     genreRails.innerHTML = gs.map((g) => {
-      const all = rankRail(movies.filter((m) => genreMatch(m, g) && isHomeDisplayTitle(m))), list = all.slice(0, 8);
+      const all = rankRail(movies.filter((m) => genreMatch(m, g) && isHomeDisplayTitle(m))), list = all.filter((m) => homeRailOwner(m) === `genre-${g.toLowerCase()}`).slice(0, 8);
       if (!list.length) return "";
       return `<div class='rail-block genre-block' id='genre-${g.toLowerCase()}'><div class='rail-heading'><h3>${g}</h3><button type='button' data-genre-see='${g}'>See all \u2192</button></div><div class='grid rail genre-rail'>${list.map((m) => card(m)).join("")}</div></div>`;
     }).join("");
@@ -468,7 +491,7 @@ function init() {
     const preferred = watchPriority.map((slug) => all.find((m) => m.slug === slug)).filter(Boolean);
     const seen = new Set(preferred.map((m) => m.id));
     const rest = rankRail(all.filter((m) => !seen.has(m.id)));
-    const list = [...preferred, ...rest].slice(0, 12);
+    const list = [...preferred, ...rest].filter((m) => homeRailOwner(m) === "watch").slice(0, 12);
     watchNowGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 12 ? `<a class='see-all-card' href='#discover' data-watch-see='true'><span>See all ${all.length}</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>Official full titles are being verified.</div>`;
     wire(watchNowGrid);
     document.querySelectorAll("[data-watch-see],[data-watch-all]").forEach((el) => el.onclick = () => showCollection("watch"));
@@ -484,7 +507,7 @@ function init() {
       Number(m.episode_count || 0) >= 5
     ));
     section.hidden = all.length === 0;
-    const list = all.slice(0, 12);
+    const list = all.filter((m) => homeRailOwner(m) === "binge").slice(0, 12);
     bingeGrid.innerHTML = list.length
       ? list.map((m) => card(m)).join("") + (all.length > 12 ? `<a class='see-all-card' href='#discover' data-binge-see='true'><span>See all complete series</span><strong>→</strong></a>` : "")
       : "";
@@ -494,7 +517,7 @@ function init() {
 
   function renderVerified() {
     const all = rankRail(movies.filter((m) => isHomeDisplayTitle(m) && (m.rights_status === "official_link" || m.rights_status === "cleared") && m.source_name && m.source_url && m.source_license));
-    const list = all.slice(0, 8);
+    const list = all.filter((m) => homeRailOwner(m) === "verified").slice(0, 8);
     verifiedGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover'><span>See all verified</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>Verified picks are being prepared.</div>`;
     wire(verifiedGrid);
     document.querySelectorAll("[data-verified-all]").forEach((el) => el.onclick = () => showCollection("verified"));
@@ -571,7 +594,7 @@ function init() {
         String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || "")) ||
         (Number(b.score) || 0) - (Number(a.score) || 0)
       );
-    const list = all.slice(0, 12);
+    const list = all.filter((m) => homeRailOwner(m) === "new").slice(0, 12);
     newGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 12 ? `<a class='see-all-card' href='#discover' data-new-see='true'><span>See all new releases</span><strong>→</strong></a>` : "") : `<div class='empty'>New releases are being prepared.</div>`;
     wire(newGrid);
     document.querySelectorAll("[data-new-see],[data-new-all]").forEach((el) => el.onclick = () => showCollection("new"));
@@ -587,14 +610,14 @@ function init() {
       .filter(isUpcomingTitle)
       .sort((a,b) => (Number(b.score)||0) - (Number(a.score)||0) || String(b.updated_at || "").localeCompare(String(a.updated_at || "")));
     section.hidden = all.length === 0;
-    const list = all.slice(0,12);
+    const list = all.filter((m) => homeRailOwner(m) === "upcoming").slice(0,12);
     comingGrid.innerHTML = list.map((m) => card(m).replace("<span class='poster-ribbon new'>New</span>", "<span class='poster-ribbon new'>Upcoming</span>")).join("") + (all.length > 12 ? `<a class='see-all-card' href='#discover' data-upcoming-see='true'><span>See all upcoming</span><strong>→</strong></a>` : "");
     wire(comingGrid);
     document.querySelectorAll("[data-upcoming-see],[data-upcoming-all]").forEach((el) => el.onclick = () => showCollection("upcoming"));
   }
 
   function renderTop() {
-    const list = [...movies].filter(isHomeDisplayTitle).sort((a, b) => (Number(b._trend_score) || 0) - (Number(a._trend_score) || 0) || (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.release_year) || 0) - (Number(a.release_year) || 0)).slice(0, 10);
+    const list = [...movies].filter((m) => isHomeDisplayTitle(m) && homeRailOwner(m) === "top").sort((a, b) => (Number(b._trend_score) || 0) - (Number(a._trend_score) || 0) || (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.release_year) || 0) - (Number(a.release_year) || 0)).slice(0, 10);
     topGrid.innerHTML = list.map((m, i) => card(m).replace("class='card'", `class='card top-card' data-rank='${i + 1}'`)).join("");
     wire(topGrid);
     document.querySelectorAll("[data-top-all]").forEach((el) => el.onclick = () => showCollection("top"));
