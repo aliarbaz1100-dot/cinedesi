@@ -225,7 +225,7 @@ async function load() {
     dmEmbed.match(/[?&]playlist=([^&#]+)/i)?.[1] ||
     String(m.full_video_url || "").match(/dailymotion\.com\/playlist\/([^?&#/]+)/i)?.[1] ||
     "";
-  const playlistEpisodeCount = Math.max(0, Math.min(Number(m.episode_count || 0), 200));
+  const playlistEpisodeCount = Math.max(0, Math.min(Number(m.episode_count || 0), 400));
   const reverseYoutubeSourceOrder =
     Boolean(ytPlaylistId) &&
     /ARY\s+Digital/i.test(String(m.full_video_source || m.source_name || ""));
