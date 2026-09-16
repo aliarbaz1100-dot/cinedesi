@@ -228,14 +228,17 @@ async function load() {
   const playlistEpisodeCount = Math.max(0, Math.min(Number(m.episode_count || 0), 400));
   const reverseYoutubeSourceOrder =
     Boolean(ytPlaylistId) &&
-    /(ARY\s+Digital|Urdu\s*1)/i.test(String(m.full_video_source || m.source_name || ""));
+    /ARY\s+Digital/i.test(String(m.full_video_source || m.source_name || ""));
+  const youtubePlaylistStartOffset = m.slug === "ishq-e-mamnu-forbidden-love-urdu-hindi" ? 1 : 0;
   const playlistItems = !(dbEpisodes || []).length && playlistEpisodeCount && (ytPlaylistId || dmPlaylistId)
     ? Array.from({ length: playlistEpisodeCount }, (_, i) => ({
         id: "",
         title: `Episode ${i + 1}`,
         season_number: Number(seasonNumber || 1),
         episode_number: i + 1,
-        playlist_index: ytPlaylistId && reverseYoutubeSourceOrder ? Math.max(0, playlistEpisodeCount - 1 - i) : i,
+        playlist_index: ytPlaylistId
+          ? (reverseYoutubeSourceOrder ? Math.max(0, playlistEpisodeCount - 1 - i) : i + youtubePlaylistStartOffset)
+          : i,
         playlist_id: ytPlaylistId || dmPlaylistId,
         playlist_kind: ytPlaylistId ? "youtube" : "dailymotion"
       }))
