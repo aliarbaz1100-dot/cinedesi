@@ -600,7 +600,7 @@ function init() {
   function renderNew() {
     if (!newGrid) return;
     const currentYear = new Date().getFullYear();
-    const featuredLatestSlugs = new Set(["ekaki-ashish-chanchlani"]);
+    const featuredLatestSlugs = new Set(["bigg-boss-20", "ekaki-ashish-chanchlani"]);
     const all = [...movies]
       .filter((m) => Number(m.release_year) >= currentYear - 1)
       .sort((a, b) =>
@@ -640,6 +640,7 @@ function init() {
   }
   function renderHero() {
     const preferred = [
+      "bigg-boss-20",
       "ekaki-ashish-chanchlani",
       "tamasha-season-5",
       "raid-2-2025",
