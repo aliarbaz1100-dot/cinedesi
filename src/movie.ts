@@ -351,14 +351,28 @@ async function load() {
       .map((videoId, sourceIndex) => ({ videoId: String(videoId || ""), sourceIndex }))
       .filter((item) => item.videoId);
     const bySourceIndex = new Map(indexed.map((item) => [item.sourceIndex, item]));
-    const ordered = reverseYoutubePlaylistOrder ? [...indexed].reverse() : indexed;
-    document.querySelectorAll("[data-playlist-kind='youtube']").forEach((el) => {
+    const sequenceAnchors = m.slug === "ek-haseen-intiqam-sweet-revenge-urdu-hindi"
+      ? { first: "5egZTgeLlLU", last: "UKLvi8jmP3U" }
+      : null;
+    let anchoredOrdered = null;
+    if (sequenceAnchors) {
+      const firstPos = indexed.findIndex((item) => item.videoId === sequenceAnchors.first);
+      const lastPos = indexed.findIndex((item) => item.videoId === sequenceAnchors.last);
+      if (firstPos >= 0 && lastPos >= 0) {
+        anchoredOrdered = firstPos <= lastPos
+          ? indexed.slice(firstPos, lastPos + 1)
+          : indexed.slice(lastPos, firstPos + 1).reverse();
+      }
+    }
+    const ordered = anchoredOrdered || (reverseYoutubePlaylistOrder ? [...indexed].reverse() : indexed);
+    const anchoredSequence = Boolean(anchoredOrdered);
+    document.querySelectorAll("[data-playlist-kind='youtube']").forEach((el, i) => {
       const sourceIndex = Number(el.dataset.playlistIndex || "0");
-      const item = bySourceIndex.get(sourceIndex);
+      const item = anchoredSequence ? ordered[i] : bySourceIndex.get(sourceIndex);
       const videoId = String(item?.videoId || "");
       if (!videoId) return;
       el.dataset.videoId = videoId;
-      el.dataset.playlistIndex = String(sourceIndex);
+      el.dataset.playlistIndex = String(Number(item.sourceIndex));
       const episodeNumber = Math.max(1, Number(el.dataset.episode || "0") + 1);
       el.dataset.episodeNumber = String(episodeNumber);
       const img = el.querySelector("img");
