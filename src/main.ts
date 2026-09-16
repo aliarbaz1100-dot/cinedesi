@@ -10,7 +10,7 @@ if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || 
     setTimeout(() => launchSplash.remove(), reduceMotion ? 0 : 320);
   }, 1050)));
 } else launchSplash?.remove();
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=19").catch(() => {
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=20").catch(() => {
 }));
 let deferredInstall = null;
 const installBar = document.querySelector("#install-banner"), installButton = document.querySelector("#install-app"), installClose = document.querySelector("#install-close"), installCopy = document.querySelector("#install-copy");
@@ -200,10 +200,11 @@ function init() {
     // existing immediate rendering path unchanged.
     paintPrimaryRails();
     if (desktopFastPath) {
+      // Hidden sections have no intersection box, so initialize them first.
+      renderPersonalized();
+      renderComingSoon();
+      renderBingeSeries();
       const deferredSections = [
-        [document.querySelector("#continue-watching"), renderPersonalized],
-        [document.querySelector("#coming-soon"), renderComingSoon],
-        [document.querySelector("#binge-series"), renderBingeSeries],
         [document.querySelector("#verified"), renderVerified],
         [document.querySelector("#series"), renderSeries],
         [document.querySelector("#genres"), renderGenres],
