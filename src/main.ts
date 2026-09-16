@@ -416,9 +416,10 @@ function init() {
     sort.value = "verified";
     visibleLimit = 30;
     let label = "All titles";
-    if (kind === "series") {
-      contentType.value = "series";
-      label = "All series & seasons";
+    if (kind === "hollywood") {
+      contentType.value = "movie";
+      region.value = "Hollywood";
+      label = "Hollywood";
     } else if (kind === "binge") {
       contentType.value = "series";
       availability.value = "cinedesi";
@@ -444,10 +445,16 @@ function init() {
     q("#discover").scrollIntoView({ behavior: "smooth", block: "start" });
   }
   function renderSeries() {
-    const all = rankRail(movies.filter((m) => m.content_type === "series" && isHomeDisplayTitle(m))), list = claimRail(all, 8);
-    seriesGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover' data-series-see='true'><span>See all series</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>Verified series are being prepared.</div>`;
+    const all = rankRail(movies.filter((m) =>
+      m.content_type === "movie" &&
+      String(m.region || "").toLowerCase() === "hollywood"
+    ));
+    const list = claimRail(all, 8);
+    seriesGrid.innerHTML = list.length
+      ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover' data-hollywood-see='true'><span>See all Hollywood</span><strong>\u2192</strong></a>` : "")
+      : `<div class='empty'>Hollywood movies are being prepared.</div>`;
     wire(seriesGrid);
-    document.querySelectorAll("[data-series-see],[data-series-all]").forEach((el) => el.onclick = () => showCollection("series"));
+    document.querySelectorAll("[data-hollywood-see],[data-hollywood-all]").forEach((el) => el.onclick = () => showCollection("hollywood"));
   }
   function renderRegions() {
     fillRail(pakistanGrid, "Pakistan");
