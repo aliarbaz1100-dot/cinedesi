@@ -646,8 +646,7 @@ function init() {
       String(m.region || "").toLowerCase() === "turkey" &&
       String(m.original_language || "").toLowerCase() === "turkish" &&
       m.full_video_verified &&
-      Boolean(m.full_video_embed_url) &&
-      isHomeDisplayTitle(m);
+      Boolean(m.full_video_embed_url);
     const all = rankRail(movies.filter(isTurkish));
     const list = all.slice(0, 8);
     verifiedGrid.innerHTML = list.length
