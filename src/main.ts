@@ -174,7 +174,7 @@ function init() {
   let homeRailClaims = new Set();
   let saved = JSON.parse(localStorage.getItem("cinedesi-watchlist") || "[]");
   const q = (s) => document.querySelector(s);
-  const search = q("#search"), suggestions = q("#search-suggestions"), searchClose = q("#search-close"), menuToggle = q("#menu-toggle"), catalogHeader = q(".catalog-header"), quickBrowse = q("#quick-browse"), region = q("#region"), availability = q("#availability"), sort = q("#sort"), grid = q("#grid"), loadMore = q("#load-more"), heroShowcase = q("#hero-showcase"), heroTitle = q("#hero-title"), heroMeta = q("#hero-meta"), heroLead = q("#hero-lead"), heroPlay = q("#hero-play"), heroInfo = q("#hero-info"), heroList = q("#hero-list"), topGrid = q("#top-grid"), newGrid = q("#new-grid"), comingGrid = q("#coming-grid"), continueGrid = q("#continue-grid"), recentGrid = q("#recent-grid"), verifiedGrid = q("#verified-grid"), watchNowGrid = q("#watch-now-grid"), bingeGrid = q("#binge-grid"), watchGrid = q("#watch-grid"), pakistanGrid = q("#pakistan-grid"), bollywoodGrid = q("#bollywood-grid"), southGrid = q("#south-grid"), seriesGrid = q("#series-grid"), contentType = q("#content-type"), discoverTitle = q("#discover-title"), genreRails = q("#genre-rails"), genreChips = q("#genre-chips"), status = q("#status"), modal = q("#modal"), count = q("#watch-count"), newsletter = q("#newsletter-form"), newsletterMsg = q("#newsletter-msg"), statPublished = q("#stat-published"), statTrailers = q("#stat-trailers"), statWatch = q("#stat-watch"), statRegions = q("#stat-regions");
+  const search = q("#search"), suggestions = q("#search-suggestions"), searchClose = q("#search-close"), menuToggle = q("#menu-toggle"), catalogHeader = q(".catalog-header"), quickBrowse = q("#quick-browse"), region = q("#region"), availability = q("#availability"), sort = q("#sort"), grid = q("#grid"), loadMore = q("#load-more"), heroShowcase = q("#hero-showcase"), heroTitle = q("#hero-title"), heroMeta = q("#hero-meta"), heroLead = q("#hero-lead"), heroPlay = q("#hero-play"), heroInfo = q("#hero-info"), heroList = q("#hero-list"), topGrid = q("#top-grid"), newGrid = q("#new-grid"), comingGrid = q("#coming-grid"), continueGrid = q("#continue-grid"), recentGrid = q("#recent-grid"), verifiedGrid = q("#verified-grid"), bingeGrid = q("#binge-grid"), watchGrid = q("#watch-grid"), pakistanGrid = q("#pakistan-grid"), bollywoodGrid = q("#bollywood-grid"), southGrid = q("#south-grid"), seriesGrid = q("#series-grid"), contentType = q("#content-type"), discoverTitle = q("#discover-title"), genreRails = q("#genre-rails"), genreChips = q("#genre-chips"), status = q("#status"), modal = q("#modal"), count = q("#watch-count"), newsletter = q("#newsletter-form"), newsletterMsg = q("#newsletter-msg"), statPublished = q("#stat-published"), statTrailers = q("#stat-trailers"), statWatch = q("#stat-watch"), statRegions = q("#stat-regions");
   function persist() {
     localStorage.setItem("cinedesi-watchlist", JSON.stringify(saved));
     renderWatchlist();
@@ -207,7 +207,6 @@ function init() {
   const paintPrimaryRails = () => {
     homeRailClaims = new Set();
     renderHero();
-    renderWatchNow();
     renderTop();
     renderNew();
   };
@@ -417,10 +416,7 @@ function init() {
     sort.value = "verified";
     visibleLimit = 30;
     let label = "All titles";
-    if (kind === "watch") {
-      availability.value = "cinedesi";
-      label = "All Watch on CineDesi";
-    } else if (kind === "series") {
+    if (kind === "series") {
       contentType.value = "series";
       label = "All series & seasons";
     } else if (kind === "binge") {
@@ -483,143 +479,6 @@ function init() {
     wire(genreRails);
     genreChips.querySelectorAll("[data-genre]").forEach((el) => el.onclick = () => document.querySelector(`#genre-${String(el.dataset.genre).toLowerCase()}`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
     genreRails.querySelectorAll("[data-genre-see]").forEach((el) => el.onclick = () => showCollection("genre", String(el.dataset.genreSee || "")));
-  }
-  function renderWatchNow() {
-    const watchPriority = [
-      "dabangg-2010-official-full-movie",
-      "darling-2007-official-full-movie",
-      "kajraare-2010-official-full-movie",
-      "hate-story-2012-official-full-movie",
-      "beiimaan-love-2016-official-full-movie",
-      "aksar-2006-official-full-movie",
-      "ankahee-2006-official-full-movie",
-      "love-ke-liye-kuch-bhi-karega-2001-official-full-movie",
-      "haan-maine-bhi-pyaar-kiya-2002-official-full-movie",
-      "dil-ka-rishta-2003-official-full-movie",
-      "ready-2011-official-full-movie",
-      "welcome-back-2015-official-full-movie",
-      "all-the-best-fun-begins-2009-official-full-movie",
-      "maine-pyaar-kyun-kiya-2005-official-full-movie",
-      "lucky-no-time-for-love-2005-official-full-movie",
-      "chaar-din-ki-chandni-2012-official-full-movie",
-      "fatso-2012-official-full-movie",
-      "aapko-pehle-bhi-kahin-dekha-hai-2003-official-full-movie",
-      "housefull-3-2016-official-full-movie",
-      "ghayal-once-again-2016-official-full-movie",
-      "tere-naam-2003-official-full-movie",
-      "big-brother-2007-official-full-movie",
-      "dil-juunglee-2018-official-full-movie",
-      "tera-intezaar-2017-official-full-movie",
-      "mastizaade-2016-official-full-movie",
-      "ishqedarriyaan-2015-official-full-movie",
-      "dishoom-2016-official-full-movie",
-      "ghost-2019-official-full-movie",
-      "1920-evil-returns-2012-official-full-movie",
-      "dangerous-ishhq-2012-official-full-movie",
-      "ek-villain-2014-official-full-movie",
-      "a-flying-jatt-2016-official-full-movie",
-      "great-grand-masti-2016-official-full-movie",
-      "love-games-2016-official-full-movie",
-      "ek-paheli-leela-2015-official-full-movie",
-      "yaariyan-2014-official-full-movie",
-      "ragini-mms-2-2014-official-full-movie",
-      "raabta-2017-official-full-movie",
-      "hate-story-3-2015-official-full-movie",
-      "wajah-tum-ho-2016-official-full-movie",
-      "junooniyat-2016-official-full-movie",
-      "hum-aapke-dil-mein-rehte-hain-1999-official-full-movie",
-      "joru-ka-ghulam-2000-official-full-movie",
-      "aap-mujhe-achche-lagne-lage-2002-official-full-movie",
-      "dhaai-akshar-prem-ke-2000-official-full-movie",
-      "aankhen-1993-official-full-movie",
-      "shola-aur-shabnam-1992-official-full-movie",
-      "jodi-no-1-2001-official-full-movie",
-      "hadh-kar-di-aapne-2000-official-full-movie",
-      "judwaa-1997-official-full-movie",
-      "akhiyon-se-goli-maare-2002-official-full-movie",
-      "garam-masala-2005-official-full-movie",
-      "malamaal-weekly-2006-official-full-movie",
-      "mere-baap-pehle-aap-2008-official-full-movie",
-      "dosti-friends-forever-2005-official-full-movie",
-      "mere-jeevan-saathi-2006-official-full-movie",
-      "kyaa-kool-hai-hum-2005-official-full-movie",
-      "chori-chori-chupke-chupke-2001-official-full-movie",
-      "shootout-at-lokhandwala-2007-official-full-movie",
-      "lootera-2013-official-full-movie",
-      "badal-2000-official-full-movie",
-      "masti-2004-official-full-movie",
-      "mujhse-shaadi-karogi-2004-official-full-movie",
-      "dhadkan-2000-official-full-movie",
-      "humraaz-2002-official-full-movie",
-      "ajnabee-2001-official-full-movie",
-      "hera-pheri-2000-official-full-movie",
-      "humko-deewana-kar-gaye-2006-official-full-movie",
-      "36-china-town-2006-official-full-movie",
-      "entertainment-2014-official-full-movie",
-      "dil-1990-official-full-movie",
-      "bhool-bhulaiyaa-2007-official-full-movie",
-      "khiladi-786-2012-official-full-movie",
-      "deewane-huye-paagal-2005-official-full-movie",
-      "waqt-the-race-against-time-2005-official-full-movie",
-      "son-of-sardaar-2012-official-full-movie",
-      "bhagam-bhag-2006",
-      "dhamaal-2007-official-full-movie",
-      "double-dhamaal-2011-official-full-movie",
-      "fida-2004-official-full-movie",
-      "dil-kya-kare-1999-official-full-movie",
-      "kunwara-2000-official-full-movie",
-      "dulaara-1994-official-full-movie",
-      "mann-1999",
-      "tango-charlie-2005",
-      "golmaal-again-2017-cinedesi",
-      "golmaal-3-2010",
-      "baadshaho-2017-official-full-movie",
-      "ajab-prem-ki-ghazab-kahani-2009-official-full-movie",
-      "ek-thi-daayan-2013-official-full-movie",
-      "u-turn-2-2026-hindi-dubbed",
-      "ranga-ranga-2025-hindi-dubbed",
-      "identity-2025-hindi-dubbed-official-full-movie",
-      "asthram-2025-hindi-dubbed-official-full-movie",
-      "retta-thala-2025-hindi-dubbed-official-full-movie",
-      "maargan-2025-hindi-dubbed-official-full-movie",
-      "ten-hours-2025-hindi-dubbed-official-full-movie",
-      "aranmanai-4-q124850102",
-      "demonte-colony-2-2024-hindi-dubbed",
-      "ooru-peru-bhairavakona-2024-hindi-dubbed",
-      "gaami-2024-hindi-dubbed-official-full-movie",
-      "rathnam-2024-hindi-dubbed-official-full-movie",
-      "the-signature-2024",
-      "kisko-tha-pata-2024-official-full-movie",
-      "chalti-rahe-zindagi-2024-official-full-movie",
-      "dangerous-waters-2023",
-      "safehouse-2023",
-      "i-did-it-my-way-2023",
-      "war-of-the-worlds-the-attack-2023",
-      "ramabanam-2023-hindi-dubbed-official-full-movie",
-      "antony-2023-hindi-dubbed",
-      "jailer-malayalam-2023-hindi-dubbed",
-      "geetasakshigaa-2023-hindi-dubbed",
-      "maama-mascheendra-2023-hindi-dubbed",
-      "bagha-jatin-2023-hindi-dubbed-official-full-movie",
-      "karthikeya-2-2022-cinedesi",
-      "f3-fun-and-frustration-hindi-dubbed-2022",
-      "maestro-2021-hindi-dubbed",
-      "f2-fun-and-frustration-2019-hindi-dubbed",
-      "trigger-2022-hindi-dubbed",
-      "tadka-2022",
-      "something-in-the-dirt-2022-hindi-dubbed-official-full-movie",
-      "mid-century-2022",
-      "jurassic-island-2022",
-      "play-dead-2022"
-    ];
-    const all = movies.filter((m) => m.full_video_verified && m.full_video_embed_url);
-    const preferred = watchPriority.map((slug) => all.find((m) => m.slug === slug)).filter(Boolean);
-    const seen = new Set(preferred.map((m) => m.id));
-    const rest = rankRail(all.filter((m) => !seen.has(m.id)));
-    const list = claimRail([...preferred, ...rest], 12);
-    watchNowGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 12 ? `<a class='see-all-card' href='#discover' data-watch-see='true'><span>See all ${all.length}</span><strong>\u2192</strong></a>` : "") : `<div class='empty'>Official full titles are being verified.</div>`;
-    wire(watchNowGrid);
-    document.querySelectorAll("[data-watch-see],[data-watch-all]").forEach((el) => el.onclick = () => showCollection("watch"));
   }
   function renderBingeSeries() {
     const section = q("#binge-series");
@@ -1053,7 +912,7 @@ function init() {
       showCollection("binge");
       return;
     }
-    availability.value = key === "watch" ? "cinedesi" : "all";
+    availability.value = "all";
     sort.value = key === "new" ? "newest" : "verified";
     visibleLimit = 30;
     render();
