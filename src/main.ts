@@ -596,7 +596,7 @@ function init() {
   function renderNew() {
     if (!newGrid) return;
     const currentYear = new Date().getFullYear();
-    const featuredLatestSlugs = new Set(["ekaki-ashish-chanchlani"]);
+    const featuredLatestSlugs = new Set(["bigg-boss-20", "pakistan-idol-season-2-2025-2026", "pakistans-got-talent-2026", "ekaki-ashish-chanchlani", "indias-got-latent-season-2-2026"]);
     const all = [...movies]
       .filter((m) => Number(m.release_year) >= currentYear - 1)
       .sort((a, b) =>
@@ -629,14 +629,44 @@ function init() {
   }
 
   function renderTop() {
-    const list = [...movies].filter(isHomeDisplayTitle).sort((a, b) => (Number(b._trend_score) || 0) - (Number(a._trend_score) || 0) || (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.release_year) || 0) - (Number(a.release_year) || 0)).slice(0, 10);
+    const trendingPriority = [
+      "bigg-boss-20",
+      "pakistan-idol-season-2-2025-2026",
+      "pakistans-got-talent-2026",
+      "ekaki-ashish-chanchlani",
+      "indias-got-latent-season-2-2026"
+    ];
+    const eligible = [...movies].filter(isHomeDisplayTitle);
+    const pinned = trendingPriority.map((slug) => eligible.find((m) => m.slug === slug)).filter(Boolean);
+    const pinnedIds = new Set(pinned.map((m) => m.id));
+    const rest = eligible
+      .filter((m) => !pinnedIds.has(m.id))
+      .sort((a, b) =>
+        (Number(b._trend_score) || 0) - (Number(a._trend_score) || 0) ||
+        (Number(b.release_year) || 0) - (Number(a.release_year) || 0) ||
+        String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || "")) ||
+        (Number(b.score) || 0) - (Number(a.score) || 0)
+      );
+    const list = [...pinned, ...rest].slice(0, 10);
     topGrid.innerHTML = list.map((m, i) => card(m).replace("class='card'", `class='card top-card' data-rank='${i + 1}'`)).join("");
     wire(topGrid);
     document.querySelectorAll("[data-top-all]").forEach((el) => el.onclick = () => showCollection("top"));
   }
+  const seriesSeasonLabel = (m) => {
+    const title = String(m?.title || "");
+    const explicit = title.match(/\bseason\s*(\d+)\b/i)?.[1] || title.match(/\bbigg\s+boss\s+(\d+)\b/i)?.[1];
+    if (explicit) return `Season ${explicit}`;
+    const count = Number(m?.season_count || 0);
+    return count ? `${count} Season${count === 1 ? "" : "s"}` : "Series";
+  };
+
   function renderHero() {
     const preferred = [
+      "bigg-boss-20",
+      "pakistan-idol-season-2-2025-2026",
+      "pakistans-got-talent-2026",
       "ekaki-ashish-chanchlani",
+      "indias-got-latent-season-2-2026",
       "tamasha-season-5",
       "raid-2-2025",
       "dhurandhar-2025",
@@ -723,7 +753,7 @@ function init() {
       const m = heroPool[heroIndex % heroPool.length];
       const url = `/movie?slug=${encodeURIComponent(m.slug)}`;
       heroTitle.textContent = m.title;
-      heroMeta.textContent = `${m.release_year || "Featured"} • ${m.content_type === "series" ? (m.season_count ? `${m.season_count} Season${Number(m.season_count) === 1 ? "" : "s"}` : "Series") : (m.genre || "Movie")}${m.original_language ? ` • ${m.original_language}` : ""}`;
+      heroMeta.textContent = `${m.release_year || "Featured"} • ${m.content_type === "series" ? seriesSeasonLabel(m) : (m.genre || "Movie")}${m.original_language ? ` • ${m.original_language}` : ""}`;
       heroLead.textContent = String(m.synopsis || m.editorial || "Open this verified CineDesi title for official trailers and legal viewing information.").slice(0, 190);
       heroPlay.href = url + (m.full_video_verified ? "#watch" : "");
       heroPlay.textContent = m.full_video_verified ? "▶ Play" : m.trailer_verified ? "▶ Trailer" : "▶ Details";
