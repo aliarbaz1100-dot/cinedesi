@@ -228,7 +228,10 @@ async function load() {
   const playlistEpisodeCount = Math.max(0, Math.min(Number(m.episode_count || 0), 400));
   const reverseYoutubeSourceOrder =
     Boolean(ytPlaylistId) &&
-    /ARY\s+Digital/i.test(String(m.full_video_source || m.source_name || ""));
+    (
+      /ARY\s+Digital/i.test(String(m.full_video_source || m.source_name || "")) ||
+      m.slug === "mr-wrong-bay-yanlis-urdu-hindi"
+    );
   const youtubePlaylistStartOffset = m.slug === "ishq-e-mamnu-forbidden-love-urdu-hindi" ? 1 : 0;
   const playlistItems = !(dbEpisodes || []).length && playlistEpisodeCount && (ytPlaylistId || dmPlaylistId)
     ? Array.from({ length: playlistEpisodeCount }, (_, i) => ({
