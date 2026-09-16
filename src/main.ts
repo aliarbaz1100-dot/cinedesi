@@ -600,7 +600,7 @@ function init() {
   function renderNew() {
     if (!newGrid) return;
     const currentYear = new Date().getFullYear();
-    const featuredLatestSlugs = new Set(["bigg-boss-20", "ekaki-ashish-chanchlani"]);
+    const featuredLatestSlugs = new Set(["bigg-boss-20", "pakistan-idol-season-2-2025-2026", "pakistans-got-talent-2026", "ekaki-ashish-chanchlani", "indias-got-latent-season-2-2026"]);
     const all = [...movies]
       .filter((m) => Number(m.release_year) >= currentYear - 1)
       .sort((a, b) =>
@@ -633,7 +633,25 @@ function init() {
   }
 
   function renderTop() {
-    const list = [...movies].filter(isHomeDisplayTitle).sort((a, b) => (Number(b._trend_score) || 0) - (Number(a._trend_score) || 0) || (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.release_year) || 0) - (Number(a.release_year) || 0)).slice(0, 10);
+    const trendingPriority = [
+      "bigg-boss-20",
+      "pakistan-idol-season-2-2025-2026",
+      "pakistans-got-talent-2026",
+      "ekaki-ashish-chanchlani",
+      "indias-got-latent-season-2-2026"
+    ];
+    const eligible = [...movies].filter(isHomeDisplayTitle);
+    const pinned = trendingPriority.map((slug) => eligible.find((m) => m.slug === slug)).filter(Boolean);
+    const pinnedIds = new Set(pinned.map((m) => m.id));
+    const rest = eligible
+      .filter((m) => !pinnedIds.has(m.id))
+      .sort((a, b) =>
+        (Number(b._trend_score) || 0) - (Number(a._trend_score) || 0) ||
+        (Number(b.release_year) || 0) - (Number(a.release_year) || 0) ||
+        String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || "")) ||
+        (Number(b.score) || 0) - (Number(a.score) || 0)
+      );
+    const list = [...pinned, ...rest].slice(0, 10);
     topGrid.innerHTML = list.map((m, i) => card(m).replace("class='card'", `class='card top-card' data-rank='${i + 1}'`)).join("");
     wire(topGrid);
     document.querySelectorAll("[data-top-all]").forEach((el) => el.onclick = () => showCollection("top"));
@@ -649,7 +667,10 @@ function init() {
   function renderHero() {
     const preferred = [
       "bigg-boss-20",
+      "pakistan-idol-season-2-2025-2026",
+      "pakistans-got-talent-2026",
       "ekaki-ashish-chanchlani",
+      "indias-got-latent-season-2-2026",
       "tamasha-season-5",
       "raid-2-2025",
       "dhurandhar-2025",
