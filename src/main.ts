@@ -638,6 +638,14 @@ function init() {
     wire(topGrid);
     document.querySelectorAll("[data-top-all]").forEach((el) => el.onclick = () => showCollection("top"));
   }
+  const seriesSeasonLabel = (m) => {
+    const title = String(m?.title || "");
+    const explicit = title.match(/\bseason\s*(\d+)\b/i)?.[1] || title.match(/\bbigg\s+boss\s+(\d+)\b/i)?.[1];
+    if (explicit) return `Season ${explicit}`;
+    const count = Number(m?.season_count || 0);
+    return count ? `${count} Season${count === 1 ? "" : "s"}` : "Series";
+  };
+
   function renderHero() {
     const preferred = [
       "bigg-boss-20",
@@ -728,7 +736,7 @@ function init() {
       const m = heroPool[heroIndex % heroPool.length];
       const url = `/movie?slug=${encodeURIComponent(m.slug)}`;
       heroTitle.textContent = m.title;
-      heroMeta.textContent = `${m.release_year || "Featured"} • ${m.content_type === "series" ? (m.season_count ? `${m.season_count} Season${Number(m.season_count) === 1 ? "" : "s"}` : "Series") : (m.genre || "Movie")}${m.original_language ? ` • ${m.original_language}` : ""}`;
+      heroMeta.textContent = `${m.release_year || "Featured"} • ${m.content_type === "series" ? seriesSeasonLabel(m) : (m.genre || "Movie")}${m.original_language ? ` • ${m.original_language}` : ""}`;
       heroLead.textContent = String(m.synopsis || m.editorial || "Open this verified CineDesi title for official trailers and legal viewing information.").slice(0, 190);
       heroPlay.href = url + (m.full_video_verified ? "#watch" : "");
       heroPlay.textContent = m.full_video_verified ? "▶ Play" : m.trailer_verified ? "▶ Trailer" : "▶ Details";
