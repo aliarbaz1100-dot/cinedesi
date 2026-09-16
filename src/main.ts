@@ -40,7 +40,7 @@ window.addEventListener("pageshow", (event) => {
     if ("scrollRestoration" in history) history.scrollRestoration = "auto";
     try { sessionStorage.removeItem(homeReturnKey); } catch {}
   }));
-}, { once: true });
+});
 const launchSplash = document.querySelector("#app-splash");
 if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true)) {
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -49,7 +49,7 @@ if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || 
     setTimeout(() => launchSplash.remove(), reduceMotion ? 0 : 320);
   }, 1050)));
 } else launchSplash?.remove();
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=23").catch(() => {
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=24").catch(() => {
 }));
 let deferredInstall = null;
 const installBar = document.querySelector("#install-banner"), installButton = document.querySelector("#install-app"), installClose = document.querySelector("#install-close"), installCopy = document.querySelector("#install-copy");

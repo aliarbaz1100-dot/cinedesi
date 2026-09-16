@@ -3,6 +3,7 @@ import "./mobile-navigation.css";
 import "./launch-polish.css";
 import { tamashaSeason5Episodes } from "./tamashaSeason5";
 const movieBack = document.querySelector("#movie-back");
+if (movieBack) movieBack.onclick = null;
 movieBack?.addEventListener("click", (event) => {
   event.preventDefault();
   event.stopImmediatePropagation();
