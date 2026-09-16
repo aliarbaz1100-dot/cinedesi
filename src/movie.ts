@@ -52,12 +52,6 @@ sdk.fetchPriority = "high";
 sdk.onload = () => load();
 document.head.appendChild(sdk);
 async function load() {
-  const backButton = document.querySelector("#movie-back");
-  backButton?.addEventListener("click", () => {
-    const sameSiteReferrer = document.referrer && new URL(document.referrer, location.href).origin === location.origin;
-    if (sameSiteReferrer && history.length > 1) history.back();
-    else location.href = "./";
-  });
   const root = document.querySelector("#movie-page"), slug = new URLSearchParams(location.search).get("slug");
   if (!slug) {
     root.innerHTML = `<div class='empty'>Movie not specified. <a href='./'>Return to CineDesi</a></div>`;
