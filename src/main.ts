@@ -444,12 +444,19 @@ function init() {
     render();
     q("#discover").scrollIntoView({ behavior: "smooth", block: "start" });
   }
+  const isHollywoodMovie = (m) =>
+    m.content_type === "movie" &&
+    String(m.region || "").trim().toLowerCase() === "hollywood";
+
+  const isCartoonTitle = (m) => {
+    const genre = String(m.genre || "").toLowerCase();
+    return ["movie", "series"].includes(String(m.content_type || "").toLowerCase()) &&
+      /(^|[\s,\/|;-])(cartoons?|animation|animated|anime)([\s,\/|;-]|$)/i.test(genre);
+  };
+
   function renderSeries() {
-    const all = rankRail(movies.filter((m) =>
-      m.content_type === "movie" &&
-      String(m.region || "").toLowerCase() === "hollywood"
-    ));
-    const list = claimRail(all, 8);
+    const all = rankRail(movies.filter(isHollywoodMovie));
+    const list = all.slice(0, 8);
     seriesGrid.innerHTML = list.length
       ? list.map((m) => card(m)).join("") + (all.length > 8 ? `<a class='see-all-card' href='#discover' data-hollywood-see='true'><span>See all Hollywood</span><strong>\u2192</strong></a>` : "")
       : `<div class='empty'>Hollywood movies are being prepared.</div>`;
@@ -472,14 +479,15 @@ function init() {
     if (g === "Drama") return /\bdrama\b/.test(x);
     if (g === "Romance") return /romance/.test(x);
     if (g === "Thriller") return /thriller/.test(x);
-    if (g === "Cartoons") return /animation|animated|cartoon|anime|kids/.test(x);
+    if (g === "Cartoons") return isCartoonTitle(m);
     return false;
   }
   function renderGenres() {
     const gs = ["Action", "Comedy", "Horror", "Drama", "Romance", "Thriller", "Cartoons"];
     genreChips.innerHTML = gs.map((g) => `<button class='genre-chip' data-genre='${g}'>${g}</button>`).join("");
     genreRails.innerHTML = gs.map((g) => {
-      const all = rankRail(movies.filter((m) => genreMatch(m, g) && isHomeDisplayTitle(m))), list = claimRail(all, 8);
+      const all = rankRail(movies.filter((m) => genreMatch(m, g) && (g === "Cartoons" || isHomeDisplayTitle(m))));
+      const list = g === "Cartoons" ? all.slice(0, 8) : claimRail(all, 8);
       if (!list.length) return "";
       return `<div class='rail-block genre-block' id='genre-${g.toLowerCase()}'><div class='rail-heading'><h3>${g}</h3><button type='button' data-genre-see='${g}'>See all \u2192</button></div><div class='grid rail genre-rail'>${list.map((m) => card(m)).join("")}</div></div>`;
     }).join("");
@@ -823,7 +831,7 @@ function init() {
   function render() {
     const term = search.value.trim().toLowerCase(), r = region.value, a = availability.value, s = sort.value, t = contentType.value;
     const south = (v) => ["South", "South Indian", "India / South Indian"].includes(String(v));
-    const list = movies.filter((m) => (activeCollection !== "new" || Number(m.release_year) >= new Date().getFullYear() - 1) && (activeCollection !== "upcoming" || isUpcomingTitle(m)) && (activeCollection !== "binge" || (m.content_type === "series" && m.full_video_verified && m.full_video_embed_url && Number(m.episode_count || 0) >= 5)) && (activeCollection !== "turkish" || (m.content_type === "series" && String(m.region || "").toLowerCase() === "turkey" && String(m.original_language || "").toLowerCase() === "turkish" && m.full_video_verified && Boolean(m.full_video_embed_url))) && (activeCollection !== "genre" || genreMatch(m, activeCollectionValue)) && (t === "all" || m.content_type === t) && (r === "All" || m.region === r || r === "South" && south(m.region)) && (a === "all" || a === "watch" && m.watch_verified && m.watch_url || a === "trailer" && m.trailer_verified && m.trailer_url || a === "cinedesi" && m.full_video_verified && m.full_video_embed_url) && searchText(m).includes(term)).sort((x, y) => activeCollection === "top" ? (Number(y._trend_score) || 0) - (Number(x._trend_score) || 0) || (Number(y.score) || 0) - (Number(x.score) || 0) : activeCollection === "upcoming" ? (Number(y.score) || 0) - (Number(x.score) || 0) || String(y.updated_at || "").localeCompare(String(x.updated_at || "")) : s === "title" ? String(x.title).localeCompare(String(y.title)) : s === "newest" ? (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : 0), shown = list.slice(0, visibleLimit);
+    const list = movies.filter((m) => (activeCollection !== "new" || Number(m.release_year) >= new Date().getFullYear() - 1) && (activeCollection !== "upcoming" || isUpcomingTitle(m)) && (activeCollection !== "binge" || (m.content_type === "series" && m.full_video_verified && m.full_video_embed_url && Number(m.episode_count || 0) >= 5)) && (activeCollection !== "turkish" || (m.content_type === "series" && String(m.region || "").toLowerCase() === "turkey" && String(m.original_language || "").toLowerCase() === "turkish" && m.full_video_verified && Boolean(m.full_video_embed_url))) && (activeCollection !== "hollywood" || isHollywoodMovie(m)) && (activeCollection !== "genre" || genreMatch(m, activeCollectionValue)) && (t === "all" || m.content_type === t) && (r === "All" || m.region === r || r === "South" && south(m.region)) && (a === "all" || a === "watch" && m.watch_verified && m.watch_url || a === "trailer" && m.trailer_verified && m.trailer_url || a === "cinedesi" && m.full_video_verified && m.full_video_embed_url) && searchText(m).includes(term)).sort((x, y) => activeCollection === "top" ? (Number(y._trend_score) || 0) - (Number(x._trend_score) || 0) || (Number(y.score) || 0) - (Number(x.score) || 0) : activeCollection === "upcoming" ? (Number(y.score) || 0) - (Number(x.score) || 0) || String(y.updated_at || "").localeCompare(String(x.updated_at || "")) : s === "title" ? String(x.title).localeCompare(String(y.title)) : s === "newest" ? (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : 0), shown = list.slice(0, visibleLimit);
     grid.innerHTML = shown.length ? shown.map((m) => card(m)).join("") : `<div class='empty'>No published titles match these filters yet.</div>`;
     status.textContent = list.length ? `Showing ${shown.length} of ${list.length} matching titles` : "No matching published titles";
     loadMore.hidden = shown.length >= list.length;
