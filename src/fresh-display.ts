@@ -31,6 +31,32 @@ const slugFromCard = (card: Element | null) => {
 const cardsIn = (root: Element | null) =>
   root ? Array.from(root.querySelectorAll<HTMLElement>(":scope > .card")) : [];
 
+const cardMetaText = (card: Element | null) =>
+  String(card?.querySelector(".info .muted")?.textContent || "").trim();
+
+const cardReleaseYear = (card: Element | null) => {
+  const match = cardMetaText(card).match(/\b(?:19|20)\d{2}\b/);
+  return match ? Number(match[0]) : 0;
+};
+
+const isSeriesCard = (card: Element | null) => /^Series\b/i.test(cardMetaText(card));
+
+const isWatchOnCinedesiCard = (card: Element | null) =>
+  Boolean(card?.querySelector(".badge.watch-now")) ||
+  Array.from(card?.querySelectorAll(".badge") || []).some((badge) => /watch here|watch on cinedesi/i.test(String(badge.textContent || "")));
+
+const isUpcomingCard = (card: Element | null) =>
+  Array.from(card?.querySelectorAll(".badge,.poster-ribbon") || []).some((node) => /coming soon|upcoming/i.test(String(node.textContent || "")));
+
+const isExclusiveNewMovieCard = (card: Element | null) => {
+  const currentYear = new Date().getFullYear();
+  return Boolean(card) &&
+    !isSeriesCard(card) &&
+    cardReleaseYear(card) >= currentYear - 1 &&
+    !isWatchOnCinedesiCard(card) &&
+    !isUpcomingCard(card);
+};
+
 const findSourceCard = (slug: string, except?: Element | null) =>
   Array.from(document.querySelectorAll<HTMLElement>(".card"))
     .find((card) => card !== except && card.dataset.freshDisplayClone !== "1" && slugFromCard(card) === slug) || null;
@@ -88,6 +114,35 @@ const promote = (grid: HTMLElement | null, slugs: string[], limit: number, allow
   trimRail(grid, limit, protectedSlugs);
 };
 
+const discoverAllowsExclusiveNewMovies = () => {
+  const heading = String(document.querySelector("#discover-title")?.textContent || "");
+  const searchTerm = String((document.querySelector("#search") as HTMLInputElement | null)?.value || "").trim();
+  return Boolean(searchTerm) || /new.*(?:release|movie|season|trend)|(?:release|movie|season|trend).*new/i.test(heading);
+};
+
+const removeExclusiveNewMovieCards = (root: Element | null) => {
+  cardsIn(root).forEach((card) => {
+    if (isExclusiveNewMovieCard(card)) card.remove();
+  });
+};
+
+const pruneExclusiveNewMoviesFromHome = () => {
+  [
+    "#top-grid",
+    "#binge-grid",
+    "#verified-grid",
+    "#series-grid",
+    "#pakistan-grid",
+    "#bollywood-grid",
+    "#south-grid"
+  ].forEach((selector) => removeExclusiveNewMovieCards(document.querySelector(selector)));
+
+  document.querySelectorAll("#genre-rails .genre-rail").forEach((rail) => removeExclusiveNewMovieCards(rail));
+
+  const discoverGrid = document.querySelector("#grid");
+  if (!discoverAllowsExclusiveNewMovies()) removeExclusiveNewMovieCards(discoverGrid);
+};
+
 const normalizeRailStyles = () => {
   const topGrid = document.querySelector<HTMLElement>("#top-grid");
   const newGrid = document.querySelector<HTMLElement>("#new-grid");
@@ -121,6 +176,31 @@ const updateHeadings = () => {
   if (comingEyebrow) comingEyebrow.textContent = "COMING NEXT";
 };
 
+let heroSkipHops = 0;
+const skipExclusiveNewMovieHero = () => {
+  const heroLink = document.querySelector<HTMLAnchorElement>("#hero-showcase a[href*='movie?slug=']");
+  if (!heroLink) return;
+  const meta = String(document.querySelector("#hero-meta")?.textContent || "");
+  const eyebrow = String(document.querySelector("#hero-eyebrow")?.textContent || "");
+  const yearMatch = meta.match(/\b(?:19|20)\d{2}\b/);
+  const year = yearMatch ? Number(yearMatch[0]) : 0;
+  const currentYear = new Date().getFullYear();
+  const isSeries = /\bSeries\b|\bSeason\s*\d+\b|\d+\s+Seasons?\b/i.test(meta);
+  const isWatchOnCinedesi = /WATCH ON CINEDESI/i.test(eyebrow);
+  const isExclusive = !isSeries && year >= currentYear - 1 && !isWatchOnCinedesi;
+
+  if (!isExclusive) {
+    heroSkipHops = 0;
+    return;
+  }
+
+  const dots = Array.from(document.querySelectorAll<HTMLButtonElement>("#hero-showcase [data-hero-dot]"));
+  if (dots.length <= 1 || heroSkipHops >= dots.length) return;
+  const activeIndex = Math.max(0, dots.findIndex((dot) => dot.classList.contains("active")));
+  heroSkipHops += 1;
+  dots[(activeIndex + 1) % dots.length]?.click();
+};
+
 let observer: MutationObserver | null = null;
 let scheduled = false;
 
@@ -130,8 +210,10 @@ const applyFreshDisplay = () => {
   updateHeadings();
   promote(document.querySelector<HTMLElement>("#top-grid"), freshPriority, 10, true);
   promote(document.querySelector<HTMLElement>("#new-grid"), allFreshPriority, 12, true);
+  pruneExclusiveNewMoviesFromHome();
   normalizeRailStyles();
   reorderUpcoming(document.querySelector<HTMLElement>("#coming-grid"));
+  skipExclusiveNewMovieHero();
   if (observer) {
     const app = document.querySelector("#app");
     if (app) observer.observe(app, { childList: true, subtree: true });
