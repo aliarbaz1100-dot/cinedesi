@@ -143,6 +143,44 @@ const pruneExclusiveNewMoviesFromHome = () => {
   if (!discoverAllowsExclusiveNewMovies()) removeExclusiveNewMovieCards(discoverGrid);
 };
 
+const isSouthCard = (card: Element | null) => {
+  const region = String(card?.querySelector(".poster-region")?.textContent || "").trim();
+  return /^(?:South|South Indian|India\s*\/\s*South Indian)$/i.test(region);
+};
+
+const fillSouthRail = () => {
+  const southGrid = document.querySelector<HTMLElement>("#south-grid");
+  if (!southGrid || cardsIn(southGrid).length >= 8) return;
+
+  const existingSlugs = new Set(cardsIn(southGrid).map(slugFromCard).filter(Boolean));
+  const candidateGroups = [
+    Array.from(document.querySelectorAll<HTMLElement>("#genre-rails .genre-rail > .card")),
+    Array.from(document.querySelectorAll<HTMLElement>("#top-grid > .card")),
+    Array.from(document.querySelectorAll<HTMLElement>("#grid > .card"))
+  ];
+  const candidates = candidateGroups.flat().filter((card) => {
+    const slug = slugFromCard(card);
+    return slug &&
+      !existingSlugs.has(slug) &&
+      isSouthCard(card) &&
+      isWatchOnCinedesiCard(card) &&
+      !isUpcomingCard(card) &&
+      !isExclusiveNewMovieCard(card);
+  });
+
+  for (const card of candidates) {
+    if (cardsIn(southGrid).length >= 8) break;
+    const slug = slugFromCard(card);
+    if (!slug || existingSlugs.has(slug)) continue;
+    existingSlugs.add(slug);
+    card.classList.remove("top-card");
+    card.removeAttribute("data-rank");
+    const seeAll = southGrid.querySelector(":scope > .see-all-card");
+    if (seeAll) southGrid.insertBefore(card, seeAll);
+    else southGrid.append(card);
+  }
+};
+
 const normalizeRailStyles = () => {
   const topGrid = document.querySelector<HTMLElement>("#top-grid");
   const newGrid = document.querySelector<HTMLElement>("#new-grid");
@@ -211,6 +249,7 @@ const applyFreshDisplay = () => {
   promote(document.querySelector<HTMLElement>("#top-grid"), freshPriority, 10, true);
   promote(document.querySelector<HTMLElement>("#new-grid"), allFreshPriority, 12, true);
   pruneExclusiveNewMoviesFromHome();
+  fillSouthRail();
   normalizeRailStyles();
   reorderUpcoming(document.querySelector<HTMLElement>("#coming-grid"));
   skipExclusiveNewMovieHero();
