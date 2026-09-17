@@ -15,7 +15,13 @@ const STATIC_PAGES = [
   '/disclosure.html',
   '/privacy.html',
   '/terms.html',
-  '/copyright.html'
+  '/copyright.html',
+  '/bollywood.html',
+  '/hollywood.html',
+  '/pakistani.html',
+  '/south-indian.html',
+  '/turkish.html',
+  '/cartoons.html'
 ];
 
 const esc = (value) => String(value)
