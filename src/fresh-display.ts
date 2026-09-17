@@ -88,6 +88,19 @@ const promote = (grid: HTMLElement | null, slugs: string[], limit: number, allow
   trimRail(grid, limit, protectedSlugs);
 };
 
+const normalizeRailStyles = () => {
+  const topGrid = document.querySelector<HTMLElement>("#top-grid");
+  const newGrid = document.querySelector<HTMLElement>("#new-grid");
+  cardsIn(topGrid).forEach((card, index) => {
+    card.classList.add("top-card");
+    card.dataset.rank = String(index + 1);
+  });
+  cardsIn(newGrid).forEach((card) => {
+    card.classList.remove("top-card");
+    card.removeAttribute("data-rank");
+  });
+};
+
 const reorderUpcoming = (grid: HTMLElement | null) => {
   if (!grid) return;
   const current = cardsIn(grid);
@@ -117,6 +130,7 @@ const applyFreshDisplay = () => {
   updateHeadings();
   promote(document.querySelector<HTMLElement>("#top-grid"), freshPriority, 10, true);
   promote(document.querySelector<HTMLElement>("#new-grid"), allFreshPriority, 12, true);
+  normalizeRailStyles();
   reorderUpcoming(document.querySelector<HTMLElement>("#coming-grid"));
   if (observer) {
     const app = document.querySelector("#app");
