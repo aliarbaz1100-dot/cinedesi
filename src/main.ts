@@ -158,8 +158,6 @@ function init() {
     if ("requestIdleCallback" in window) window.requestIdleCallback(fn, { timeout: 650 });
     else setTimeout(fn, 120);
   };
-  // Let the browser preserve the exact rail and page position on Back.
-  // Mobile previously forced the homepage to the top on every pageshow.
   if ("scrollRestoration" in history) history.scrollRestoration = "auto";
   const db = supabase.createClient(URL, KEY);
   const track = async (event, slug = null) => {
@@ -222,9 +220,6 @@ function init() {
     const selectColumns = "id,slug,title,region,genre,release_year,score,trailer_url,trailer_source,trailer_verified,watch_url,watch_verified,full_video_url,full_video_embed_url,full_video_verified,full_video_source,full_video_label,full_video_language,content_type,season_count,episode_count,original_language,availability_note,cast_names,poster_url,poster_source_url,poster_license,poster_attribution,rights_status,rights_checked_at,source_name,source_url,source_license,created_at,updated_at";
     let data = [];
     let error = null;
-    // Keep the first response deliberately small so a new visitor gets a real
-    // hero and rails quickly. The remaining catalog still loads immediately
-    // afterwards and the final count/data set stays complete.
     let start = 0;
     while (true) {
       const pageSize = start === 0 ? 160 : 1000;
@@ -261,12 +256,8 @@ function init() {
     statWatch.textContent = String(movies.filter((m) => m.watch_verified && m.watch_url).length);
     statRegions.textContent = String(new Set(movies.map((m) => m.region).filter(Boolean)).size);
     updateSchema();
-    // Laptop/desktop: paint the above-the-fold experience first, then build
-    // heavier off-screen rails when the browser is idle. Mobile keeps the
-    // existing immediate rendering path unchanged.
     paintPrimaryRails();
     if (desktopFastPath) {
-      // Hidden sections have no intersection box, so initialize them first.
       renderPersonalized();
       renderComingSoon();
       renderBingeSeries();
@@ -387,11 +378,14 @@ function init() {
     });
     enhanceRails(root);
   }
+  const isUpcomingTitle = (m) => {
+    const note = String(m.availability_note || "");
+    return /\b(?:premieres|coming|scheduled|arrives)\b/i.test(note) && !/\b(?:premiered|streaming now|available now)\b/i.test(note);
+  };
   const isHomeDisplayTitle = (m) => {
     const currentYear = new Date().getFullYear();
-    const note = String(m.availability_note || "");
-    const upcoming = /\b(?:premieres|coming|scheduled|arrives)\b/i.test(note) && !/\b(?:premiered|streaming now|available now)\b/i.test(note);
-    return upcoming || Number(m._trend_score || 0) > 0 || Number(m.release_year || 0) >= currentYear - 1;
+    if (isUpcomingTitle(m)) return false;
+    return Number(m._trend_score || 0) > 0 || Number(m.release_year || 0) >= currentYear - 1;
   };
   const rankRail = (list) => [...list].sort((a,b) =>
     (Number(b._trend_score)||0) - (Number(a._trend_score)||0) ||
@@ -419,6 +413,7 @@ function init() {
     if (kind === "hollywood") {
       contentType.value = "movie";
       region.value = "Hollywood";
+      availability.value = "cinedesi";
       label = "Hollywood";
     } else if (kind === "binge") {
       contentType.value = "series";
@@ -435,6 +430,7 @@ function init() {
     } else if (kind === "top") {
       label = "Top titles on CineDesi";
     } else if (kind === "new") {
+      contentType.value = "movie";
       sort.value = "newest";
       label = "New & trending releases";
     } else if (kind === "upcoming") {
@@ -446,12 +442,24 @@ function init() {
   }
   const isHollywoodMovie = (m) =>
     m.content_type === "movie" &&
-    String(m.region || "").trim().toLowerCase() === "hollywood";
+    String(m.region || "").trim().toLowerCase() === "hollywood" &&
+    m.full_video_verified &&
+    Boolean(m.full_video_embed_url) &&
+    !isUpcomingTitle(m);
 
   const isCartoonTitle = (m) => {
     const genre = String(m.genre || "").toLowerCase();
     return ["movie", "series"].includes(String(m.content_type || "").toLowerCase()) &&
-      /(^|[\s,\/|;-])(cartoons?|animation|animated|anime)([\s,\/|;-]|$)/i.test(genre);
+      /(^|[\s,\/|;-])(cartoons?|animation|animated|anime)([\s,\/|;-]|$)/i.test(genre) &&
+      !isUpcomingTitle(m);
+  };
+
+  const isNewNonCinedesiMovie = (m) => {
+    const currentYear = new Date().getFullYear();
+    return m.content_type === "movie" &&
+      Number(m.release_year || 0) >= currentYear - 1 &&
+      !(m.full_video_verified && m.full_video_embed_url) &&
+      !isUpcomingTitle(m);
   };
 
   function renderSeries() {
@@ -520,7 +528,8 @@ function init() {
       String(m.region || "").toLowerCase() === "turkey" &&
       String(m.original_language || "").toLowerCase() === "turkish" &&
       m.full_video_verified &&
-      Boolean(m.full_video_embed_url);
+      Boolean(m.full_video_embed_url) &&
+      !isUpcomingTitle(m);
     const all = rankRail(movies.filter(isTurkish));
     const list = all.slice(0, 8);
     verifiedGrid.innerHTML = list.length
@@ -567,15 +576,13 @@ function init() {
       recentGrid.innerHTML = recentMovies.map((m) => card(m)).join("");
       wire(recentGrid);
     }
-
   }
 
   function renderNew() {
     if (!newGrid) return;
-    const currentYear = new Date().getFullYear();
     const featuredLatestSlugs = new Set(["bigg-boss-20", "pakistan-idol-season-2-2025-2026", "pakistans-got-talent-2026", "ekaki-ashish-chanchlani", "indias-got-latent-season-2-2026"]);
     const all = [...movies]
-      .filter((m) => Number(m.release_year) >= currentYear - 1)
+      .filter(isNewNonCinedesiMovie)
       .sort((a, b) =>
         Number(featuredLatestSlugs.has(b.slug)) - Number(featuredLatestSlugs.has(a.slug)) ||
         (Number(b._trend_score) || 0) - (Number(a._trend_score) || 0) ||
@@ -583,15 +590,11 @@ function init() {
         String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || "")) ||
         (Number(b.score) || 0) - (Number(a.score) || 0)
       );
-    const list = claimRail(all, 12);
+    const list = all.slice(0, 12);
     newGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") + (all.length > 12 ? `<a class='see-all-card' href='#discover' data-new-see='true'><span>See all new releases</span><strong>→</strong></a>` : "") : `<div class='empty'>New releases are being prepared.</div>`;
     wire(newGrid);
     document.querySelectorAll("[data-new-see],[data-new-all]").forEach((el) => el.onclick = () => showCollection("new"));
   }
-  const isUpcomingTitle = (m) => {
-    const note = String(m.availability_note || "");
-    return /\b(?:premieres|coming|scheduled|arrives)\b/i.test(note) && !/\b(?:premiered|streaming now|available now)\b/i.test(note);
-  };
   function renderComingSoon() {
     const section = q("#coming-soon");
     if (!comingGrid || !section) return;
@@ -639,74 +642,7 @@ function init() {
 
   function renderHero() {
     const preferred = [
-      "bigg-boss-20",
-      "pakistan-idol-season-2-2025-2026",
-      "pakistans-got-talent-2026",
-      "ekaki-ashish-chanchlani",
-      "indias-got-latent-season-2-2026",
-      "tamasha-season-5",
-      "raid-2-2025",
-      "dhurandhar-2025",
-      "son-of-sardaar-2-2025",
-      "war-2-q124852530",
-      "saiyaara-q135393743",
-      "housefull-5-q125918989",
-      "coolie-q127118132",
-      "sikandar-q125861557",
-      "chhaava-q127012906",
-      "dhurandhar-the-revenge-2026",
-      "jolly-llb-3-2025",
-      "de-de-pyaar-de-2-2025",
-      "jaat-2025",
-      "paatal-lok-season-2-2025",
-      "kesari-chapter-2-2025",
-      "criminal-justice-a-family-matter-2025",
-      "black-mirror-season-7-2025",
-      "severance-season-2-2025",
-      "foundation-season-3-2025",
-      "cobra-kai-season-6-2025",
-      "fallout-season-2-2025",
-      "the-boys-season-5-2026",
-      "the-family-man-season-3-2025",
-      "panchayat-season-4-2025",
-      "the-night-agent-season-3-2026",
-      "bridgerton-season-4-2026",
-      "one-piece-live-action-japan-cinedesi",
-      "the-umbrella-academy-series",
-      "lockwood-and-co-series",
-      "mirzapur-series-2018",
-      "mirzapur-the-movie-2026",
-      "dhamaal-4-2026",
-      "the-love-hypothesis-2026",
-      "drawn-together-2026",
-      "the-whisper-man-2026",
-      "best-of-the-best-2026",
-      "a-different-world-2026",
-      "stranger-things-tales-from-85",
-      "monster-the-lizzie-borden-story-2026",
-      "avatar-the-last-airbender-season-2-2026",
-      "enola-holmes-3-2026",
-      "mardaani-3-2026",
-      "bhooth-bangla-2026",
-      "i-will-find-you-2026",
-      "kaisi-teri-khudgharzi-full-movie",
-      "mayi-ri-full-movie",
-      "doctor-bahu-series-2026",
-      "mahnoor-series-2026",
-      "fraud-full-movie",
-      "taqdeer-series-2022",
-      "sar-e-rah-series-2023",
-      "jhooti-series-2020",
-      "habs-series-2022",
-      "mirzapur-the-movie-2026",
-      "awarapan-2-2026-official",
-      "outer-banks-season-5-2026",
-      "the-gentlemen-series",
-      "dhamaal-4-2026",
-      "wednesday-series-2022",
-      "the-umbrella-academy-series",
-      "lockwood-and-co-series",
-      "one-piece-live-action-japan-cinedesi"
+      "bigg-boss-20","pakistan-idol-season-2-2025-2026","pakistans-got-talent-2026","ekaki-ashish-chanchlani","indias-got-latent-season-2-2026","tamasha-season-5","raid-2-2025","dhurandhar-2025","son-of-sardaar-2-2025","war-2-q124852530","saiyaara-q135393743","housefull-5-q125918989","coolie-q127118132","sikandar-q125861557","chhaava-q127012906","dhurandhar-the-revenge-2026","jolly-llb-3-2025","de-de-pyaar-de-2-2025","jaat-2025","paatal-lok-season-2-2025","kesari-chapter-2-2025","criminal-justice-a-family-matter-2025","black-mirror-season-7-2025","severance-season-2-2025","foundation-season-3-2025","cobra-kai-season-6-2025","fallout-season-2-2025","the-boys-season-5-2026","the-family-man-season-3-2025","panchayat-season-4-2025","the-night-agent-season-3-2026","bridgerton-season-4-2026","one-piece-live-action-japan-cinedesi","the-umbrella-academy-series","lockwood-and-co-series","mirzapur-series-2018","mirzapur-the-movie-2026","dhamaal-4-2026","the-love-hypothesis-2026","drawn-together-2026","the-whisper-man-2026","best-of-the-best-2026","a-different-world-2026","stranger-things-tales-from-85","monster-the-lizzie-borden-story-2026","avatar-the-last-airbender-season-2-2026","enola-holmes-3-2026","mardaani-3-2026","bhooth-bangla-2026","i-will-find-you-2026","kaisi-teri-khudgharzi-full-movie","mayi-ri-full-movie","doctor-bahu-series-2026","mahnoor-series-2026","fraud-full-movie","taqdeer-series-2022","sar-e-rah-series-2023","jhooti-series-2020","habs-series-2022","awarapan-2-2026-official","outer-banks-season-5-2026","the-gentlemen-series","wednesday-series-2022"
     ];
     const eligibleHero = (m) => Boolean(m && isHomeDisplayTitle(m) && m.poster_url && (licensedPoster(m) || m._cover_kind === "youtube"));
     const curated = preferred.map((slug) => movies.find((x) => x.slug === slug)).filter(eligibleHero);
@@ -746,10 +682,8 @@ function init() {
         heroList.textContent = saved.includes(m.id) ? "✓ In My List" : "＋ My List";
       };
       const badge = m.full_video_verified ? "WATCH ON CINEDESI" : m.watch_verified ? "LEGAL WATCH VERIFIED" : "OFFICIAL TRAILER";
-      const note = String(m.availability_note || "");
-      const isUpcoming = /\b(?:premieres|coming|scheduled|arrives)\b/i.test(note) && !/\bpremiered\b/i.test(note);
       const isLiveTrending = Number(m._trend_score || 0) > 0;
-      const heroState = isUpcoming ? "UPCOMING" : isLiveTrending ? "TRENDING NOW" : Number(m.release_year || 0) >= new Date().getFullYear() ? "NEW RELEASE" : "FEATURED";
+      const heroState = isLiveTrending ? "TRENDING NOW" : Number(m.release_year || 0) >= new Date().getFullYear() ? "NEW RELEASE" : "FEATURED";
       const eyebrow = q("#hero-eyebrow");
       if (eyebrow) eyebrow.textContent = `${heroState} • ${badge}`;
       const shown = Math.min(heroPool.length, 9);
@@ -759,10 +693,7 @@ function init() {
       if (heroFeature && m.poster_url) {
         const probe = new Image();
         probe.onerror = () => {
-          const candidates = [
-            heroImage.replace(/\/maxresdefault\.jpg(?:\?.*)?$/i, "/hqdefault.jpg"),
-            m.poster_url
-          ].filter((value, index, list) => value && value !== heroImage && list.indexOf(value) === index);
+          const candidates = [heroImage.replace(/\/maxresdefault\.jpg(?:\?.*)?$/i, "/hqdefault.jpg"), m.poster_url].filter((value, index, list) => value && value !== heroImage && list.indexOf(value) === index);
           const tryFallback = (index = 0) => {
             const value = candidates[index];
             if (!value) {
@@ -831,7 +762,7 @@ function init() {
   function render() {
     const term = search.value.trim().toLowerCase(), r = region.value, a = availability.value, s = sort.value, t = contentType.value;
     const south = (v) => ["South", "South Indian", "India / South Indian"].includes(String(v));
-    const list = movies.filter((m) => (activeCollection !== "new" || Number(m.release_year) >= new Date().getFullYear() - 1) && (activeCollection !== "upcoming" || isUpcomingTitle(m)) && (activeCollection !== "binge" || (m.content_type === "series" && m.full_video_verified && m.full_video_embed_url && Number(m.episode_count || 0) >= 5)) && (activeCollection !== "turkish" || (m.content_type === "series" && String(m.region || "").toLowerCase() === "turkey" && String(m.original_language || "").toLowerCase() === "turkish" && m.full_video_verified && Boolean(m.full_video_embed_url))) && (activeCollection !== "hollywood" || isHollywoodMovie(m)) && (activeCollection !== "genre" || genreMatch(m, activeCollectionValue)) && (t === "all" || m.content_type === t) && (r === "All" || m.region === r || r === "South" && south(m.region)) && (a === "all" || a === "watch" && m.watch_verified && m.watch_url || a === "trailer" && m.trailer_verified && m.trailer_url || a === "cinedesi" && m.full_video_verified && m.full_video_embed_url) && searchText(m).includes(term)).sort((x, y) => activeCollection === "top" ? (Number(y._trend_score) || 0) - (Number(x._trend_score) || 0) || (Number(y.score) || 0) - (Number(x.score) || 0) : activeCollection === "upcoming" ? (Number(y.score) || 0) - (Number(x.score) || 0) || String(y.updated_at || "").localeCompare(String(x.updated_at || "")) : s === "title" ? String(x.title).localeCompare(String(y.title)) : s === "newest" ? (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : 0), shown = list.slice(0, visibleLimit);
+    const list = movies.filter((m) => (activeCollection !== "new" || isNewNonCinedesiMovie(m)) && (activeCollection !== "upcoming" || isUpcomingTitle(m)) && (activeCollection !== "binge" || (m.content_type === "series" && isHomeDisplayTitle(m) && m.full_video_verified && m.full_video_embed_url && Number(m.episode_count || 0) >= 5)) && (activeCollection !== "turkish" || (m.content_type === "series" && String(m.region || "").toLowerCase() === "turkey" && String(m.original_language || "").toLowerCase() === "turkish" && m.full_video_verified && Boolean(m.full_video_embed_url) && !isUpcomingTitle(m))) && (activeCollection !== "hollywood" || isHollywoodMovie(m)) && (activeCollection !== "genre" || genreMatch(m, activeCollectionValue)) && (t === "all" || m.content_type === t) && (r === "All" || m.region === r || r === "South" && south(m.region)) && (a === "all" || a === "watch" && m.watch_verified && m.watch_url || a === "trailer" && m.trailer_verified && m.trailer_url || a === "cinedesi" && m.full_video_verified && m.full_video_embed_url) && searchText(m).includes(term)).sort((x, y) => activeCollection === "top" ? (Number(y._trend_score) || 0) - (Number(x._trend_score) || 0) || (Number(y.score) || 0) - (Number(x.score) || 0) : activeCollection === "upcoming" ? (Number(y.score) || 0) - (Number(x.score) || 0) || String(y.updated_at || "").localeCompare(String(x.updated_at || "")) : s === "title" ? String(x.title).localeCompare(String(y.title)) : s === "newest" ? (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : 0), shown = list.slice(0, visibleLimit);
     grid.innerHTML = shown.length ? shown.map((m) => card(m)).join("") : `<div class='empty'>No published titles match these filters yet.</div>`;
     status.textContent = list.length ? `Showing ${shown.length} of ${list.length} matching titles` : "No matching published titles";
     loadMore.hidden = shown.length >= list.length;
@@ -927,8 +858,12 @@ function init() {
       showCollection("binge");
       return;
     }
+    if (key === "new") {
+      showCollection("new");
+      return;
+    }
     availability.value = "all";
-    sort.value = key === "new" ? "newest" : "verified";
+    sort.value = "verified";
     visibleLimit = 30;
     render();
     q("#discover").scrollIntoView({ behavior: "smooth", block: "start" });
