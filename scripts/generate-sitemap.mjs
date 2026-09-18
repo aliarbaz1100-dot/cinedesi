@@ -14,6 +14,7 @@ const STATIC_PAGES = [
   '/licensing.html',
   '/partner.html',
   '/media-kit.html',
+  '/watch-on-cinedesi.html',
   '/disclosure.html',
   '/privacy.html',
   '/terms.html',
