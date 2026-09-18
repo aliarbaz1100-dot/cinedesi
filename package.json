@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/generate-catalog.mjs && node scripts/generate-collections.mjs && node scripts/generate-sitemap.mjs && vite build && node scripts/generate-seo-pages.mjs && node scripts/apply-consent.mjs",
+    "build": "node scripts/generate-catalog.mjs && node scripts/generate-collections.mjs && node scripts/generate-feed.mjs && node scripts/generate-sitemap.mjs && vite build && node scripts/generate-seo-pages.mjs && node scripts/apply-consent.mjs",
     "preview": "vite preview",
     "generate:catalog": "node scripts/generate-catalog.mjs",
     "predev": "node scripts/generate-catalog.mjs && node scripts/generate-collections.mjs",
-    "generate:collections": "node scripts/generate-collections.mjs"
+    "generate:collections": "node scripts/generate-collections.mjs",
+    "generate:feed": "node scripts/generate-feed.mjs"
   },
   "dependencies": {
     "lucide": "^0.469.0"
