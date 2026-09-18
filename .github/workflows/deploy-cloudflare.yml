@@ -31,6 +31,38 @@ jobs:
       - name: Build CineDesi
         run: npm run build
 
+      - name: Smoke-check production build
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            dist/index.html
+            dist/catalog.html
+            dist/about.html
+            dist/contact.html
+            dist/privacy.html
+            dist/robots.txt
+            dist/sitemap.xml
+            dist/_headers
+            dist/consent.js
+          )
+          for file in "${required[@]}"; do
+            test -f "$file" || { echo "Missing required build artifact: $file"; exit 1; }
+          done
+
+          title_count="$(find dist -maxdepth 1 -type f -name 'title-*.html' | wc -l | tr -d ' ')"
+          echo "Generated title pages: $title_count"
+          test "$title_count" -ge 700 || { echo "Too few crawlable title pages"; exit 1; }
+
+          grep -q 'cinedesi-consent-default' dist/index.html
+          grep -q '/title-' dist/sitemap.xml
+          grep -q 'title-jolly-llb-3-2025.html' dist/index.html
+          if grep -q '/movie?slug=' dist/catalog.html; then
+            echo "Legacy query movie URLs found in generated catalog"
+            exit 1
+          fi
+          echo "CineDesi production smoke checks passed."
+
       - name: Verify Cloudflare credentials
         shell: bash
         run: |
