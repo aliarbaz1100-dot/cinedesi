@@ -1,0 +1,73 @@
+name: CineDesi Production Health
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cinedesi-health
+  cancel-in-progress: true
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check public endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          urls=(
+            "https://cinedesi.online/"
+            "https://cinedesi.online/catalog.html"
+            "https://cinedesi.online/bollywood.html"
+            "https://cinedesi.online/title-jolly-llb-3-2025.html"
+            "https://cinedesi.online/robots.txt"
+            "https://cinedesi.online/sitemap.xml"
+            "https://cinedesi.online/cinedesi-icon-192.png"
+            "https://cinedesi.online/.well-known/security.txt"
+          )
+
+          mkdir -p /tmp/cinedesi-health
+          for url in "${urls[@]}"; do
+            echo "Checking $url"
+            curl --fail --silent --show-error --location --retry 3 --retry-delay 2 --max-time 25 \
+              --output /tmp/cinedesi-health/body "$url"
+            test -s /tmp/cinedesi-health/body || { echo "Empty response: $url"; exit 1; }
+          done
+
+      - name: Validate search and brand signals
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          curl --fail --silent --show-error --location --retry 3 --max-time 25 https://cinedesi.online/ > /tmp/home.html
+          curl --fail --silent --show-error --location --retry 3 --max-time 25 https://cinedesi.online/catalog.html > /tmp/catalog.html
+          curl --fail --silent --show-error --location --retry 3 --max-time 25 https://cinedesi.online/sitemap.xml > /tmp/sitemap.xml
+          curl --fail --silent --show-error --location --retry 3 --max-time 25 https://cinedesi.online/robots.txt > /tmp/robots.txt
+          curl --fail --silent --show-error --location --retry 3 --max-time 25 https://cinedesi.online/title-jolly-llb-3-2025.html > /tmp/title.html
+
+          grep -qi 'CINEDESI' /tmp/home.html
+          grep -q 'cinedesi-icon-192.png' /tmp/home.html
+          grep -q 'title-jolly-llb-3-2025.html' /tmp/catalog.html
+          grep -q 'https://cinedesi.online/title-jolly-llb-3-2025.html' /tmp/sitemap.xml
+          grep -q 'Sitemap: https://cinedesi.online/sitemap.xml' /tmp/robots.txt
+          grep -qi '<h1[^>]*>Jolly LLB 3' /tmp/title.html
+          grep -qi 'rel="canonical"' /tmp/title.html
+          grep -qi 'application/ld+json' /tmp/title.html
+
+      - name: Validate security headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --head --retry 3 --max-time 25 https://cinedesi.online/ > /tmp/headers.txt
+          tr -d '\r' < /tmp/headers.txt > /tmp/headers-clean.txt
+          grep -qi '^strict-transport-security:' /tmp/headers-clean.txt
+          grep -qi '^x-content-type-options: nosniff' /tmp/headers-clean.txt
+          grep -qi '^referrer-policy: strict-origin-when-cross-origin' /tmp/headers-clean.txt
+          grep -qi '^content-security-policy:' /tmp/headers-clean.txt
+          echo "CineDesi live health checks passed."
