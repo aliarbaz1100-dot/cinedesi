@@ -49,6 +49,7 @@ jobs:
             dist/_headers
             dist/consent.js
             dist/analytics.js
+            dist/7f3a2c91d8e64b0f9a5c3e2176d4b8f1.txt
           )
           for file in "${required[@]}"; do
             test -f "$file" || { echo "Missing required build artifact: $file"; exit 1; }
@@ -168,3 +169,21 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN_RAW: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID_RAW: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Notify IndexNow
+        shell: bash
+        run: |
+          set -euo pipefail
+          key="7f3a2c91d8e64b0f9a5c3e2176d4b8f1"
+          for attempt in 1 2 3 4 5; do
+            body="$(curl --fail --silent --show-error --location --max-time 20 "https://cinedesi.online/${key}.txt" || true)"
+            if [ "$body" = "$key" ]; then
+              break
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "IndexNow key file was not reachable after deploy."
+              exit 1
+            fi
+            sleep 3
+          done
+          npm run notify:indexnow
