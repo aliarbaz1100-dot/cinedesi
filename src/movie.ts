@@ -155,7 +155,7 @@ async function load() {
     document.head.appendChild(robots);
   }
   const hasIndexableDepth = String(m.editorial || "").trim().length >= 120 || String(m.synopsis || "").trim().length >= 120;
-  robots.content = hasIndexableDepth ? "index,follow" : "noindex,follow";
+  robots.content = pathMatch && hasIndexableDepth ? "index,follow" : "noindex,follow";
   let ogu = document.querySelector('meta[property="og:url"]');
   if (!ogu) {
     ogu = document.createElement("meta");
