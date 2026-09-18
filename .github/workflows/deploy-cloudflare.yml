@@ -31,6 +31,21 @@ jobs:
       - name: Build CineDesi
         run: npm run build
 
+      - name: Smoke-check PWA recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f dist/index.html
+          test -f dist/sw.js
+          grep -q 'cinedesi-pwa-recovery' dist/index.html
+          grep -q 'cinedesi-static-v29' dist/sw.js
+          grep -q '/sw.js?v=29' dist/assets/*.js
+          if grep -q 'Connection unavailable' dist/sw.js; then
+            echo "Broken synthetic offline fallback detected"
+            exit 1
+          fi
+          echo "CineDesi PWA recovery checks passed."
+
       - name: Verify Cloudflare credentials
         shell: bash
         run: |
