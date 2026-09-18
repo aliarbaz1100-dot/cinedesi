@@ -31,3 +31,9 @@ The official CineDesi identity for this project is the **C** brand mark used on 
 CineDesi is under active development. Catalog availability and third-party destinations can change, so source verification and playback quality are continuously reviewed.
 
 Built by **Arbaz Ali**.
+
+## Operations
+
+- Production runbook: [docs/PRODUCTION_RUNBOOK.md](docs/PRODUCTION_RUNBOOK.md)
+- Launch checklist: [docs/LAUNCH_CHECKLIST.md](docs/LAUNCH_CHECKLIST.md)
+- Security policy: [SECURITY.md](SECURITY.md)
