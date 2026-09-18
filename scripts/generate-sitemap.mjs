@@ -8,6 +8,7 @@ const STATIC_PAGES = [
   '/catalog.html',
   '/guides.html',
   '/about.html',
+  '/contact.html',
   '/editorial.html',
   '/rights.html',
   '/licensing.html',
