@@ -52,7 +52,7 @@ jobs:
 
           title_count="$(find dist -maxdepth 1 -type f -name 'title-*.html' | wc -l | tr -d ' ')"
           echo "Generated title pages: $title_count"
-          test "$title_count" -ge 700 || { echo "Too few crawlable title pages"; exit 1; }
+          test "$title_count" -ge 1000 || { echo "Too few functional title pages"; exit 1; }
 
           grep -q 'cinedesi-consent-default' dist/index.html
           grep -q '/title-' dist/sitemap.xml
@@ -61,6 +61,18 @@ jobs:
             echo "Legacy query movie URLs found in generated catalog"
             exit 1
           fi
+
+          python - <<'PY'
+          import pathlib, re
+          catalog = pathlib.Path("dist/catalog.html").read_text(encoding="utf-8")
+          links = set(re.findall(r'href="/(title-[^"]+\.html)"', catalog))
+          missing = [name for name in sorted(links) if not (pathlib.Path("dist") / name).exists()]
+          print(f"Catalog title links checked: {len(links)}")
+          if missing:
+              print("Missing generated title pages:", missing[:20])
+              raise SystemExit(1)
+          PY
+
           echo "CineDesi production smoke checks passed."
 
       - name: Verify Cloudflare credentials
