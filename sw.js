@@ -1,43 +1,59 @@
-const CACHE='cinedesi-shell-v12';
-const SHELL=['./index.html','./src/styles.css','./src/main.ts','./cinedesi-icon.svg','./cinedesi-launch-1170x2532.png'];
+const CACHE = "cinedesi-static-v29";
+const STATIC = [
+  "/cinedesi-icon.svg",
+  "/cinedesi-icon-192.png",
+  "/manifest.webmanifest",
+];
 
-self.addEventListener('install',e=>{
-  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)));
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE).then((cache) => cache.addAll(STATIC)).catch(() => undefined)
+  );
   self.skipWaiting();
 });
 
-self.addEventListener('activate',e=>{
-  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
-  self.clients.claim();
+self.addEventListener("activate", (event) => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(
+      keys
+        .filter((key) => key.startsWith("cinedesi-") && key !== CACHE)
+        .map((key) => caches.delete(key))
+    );
+    await self.clients.claim();
+  })());
 });
 
-self.addEventListener('fetch',e=>{
-  if(e.request.method!=='GET') return;
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+  if (request.method !== "GET") return;
 
-  if(e.request.mode==='navigate'){
-    e.respondWith(
-      fetch(e.request)
-        .then(r=>{
-          if(!r.ok) throw new Error('navigation_failed');
-          const copy=r.clone();
-          caches.open(CACHE).then(c=>c.put(e.request,copy));
-          return r;
-        })
-        .catch(async()=>{
-          return (await caches.match(e.request)) || (await caches.match('./index.html')) || Response.error();
-        })
-    );
-    return;
-  }
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
 
-  e.respondWith(
-    fetch(e.request)
-      .then(r=>{
-        if(!r.ok) throw new Error('asset_failed');
-        const copy=r.clone();
-        caches.open(CACHE).then(c=>c.put(e.request,copy));
-        return r;
-      })
-      .catch(()=>caches.match(e.request))
-  );
+  // Documents/navigation always go directly to the network.
+  // This keeps installed CineDesi apps fresh and avoids redirect-tainted
+  // navigation Responses being served by a service worker.
+  if (request.mode === "navigate" || request.destination === "document") return;
+
+  if (
+    url.pathname.startsWith("/api/") ||
+    url.pathname.includes("/rest/") ||
+    url.pathname === "/sw.js"
+  ) return;
+
+  event.respondWith((async () => {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+
+    try {
+      const response = await fetch(request);
+      if (response && response.ok && !response.redirected && response.type !== "opaque") {
+        caches.open(CACHE).then((cache) => cache.put(request, response.clone())).catch(() => undefined);
+      }
+      return response;
+    } catch {
+      return cached || Response.error();
+    }
+  })());
 });
