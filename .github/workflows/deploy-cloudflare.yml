@@ -40,6 +40,7 @@ jobs:
             dist/catalog.html
             dist/about.html
             dist/contact.html
+            dist/media-kit.html
             dist/privacy.html
             dist/robots.txt
             dist/sitemap.xml
@@ -58,6 +59,7 @@ jobs:
           grep -q 'cinedesi-consent-default' dist/index.html
           grep -q '/title-' dist/sitemap.xml
           grep -q 'title-jolly-llb-3-2025.html' dist/index.html
+          grep -q 'CineDesi Media Kit' dist/media-kit.html
           grep -q '<rss version="2.0"' dist/feed.xml
           grep -q 'CineDesi — Latest Movies & Series Discovery' dist/feed.xml
           if grep -q '/movie?slug=' dist/catalog.html; then
