@@ -12,7 +12,8 @@
     "generate:collections": "node scripts/generate-collections.mjs",
     "generate:feed": "node scripts/generate-feed.mjs",
     "generate:media-kit": "node scripts/generate-media-kit.mjs",
-    "generate:watch-landing": "node scripts/generate-watch-landing.mjs"
+    "generate:watch-landing": "node scripts/generate-watch-landing.mjs",
+    "notify:indexnow": "node scripts/submit-indexnow.mjs"
   },
   "dependencies": {
     "lucide": "^0.469.0"
