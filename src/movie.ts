@@ -20,6 +20,7 @@ movieBack?.addEventListener("click", (event) => {
   }
 }, { capture: true });
 const URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co", KEY = "sb_publishable_ZEAZWO-Q-_rvMsy6krr_nw_JDRmP_kI";
+const movieUrl = (slug) => `/title-${encodeURIComponent(String(slug || ""))}.html`;
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const xml = (s) => String(s ?? "").replace(/[&<>\"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const posterArt = (m) => {
@@ -69,7 +70,11 @@ sdk.fetchPriority = "high";
 sdk.onload = () => load();
 document.head.appendChild(sdk);
 async function load() {
-  const root = document.querySelector("#movie-page"), slug = new URLSearchParams(location.search).get("slug");
+  const root = document.querySelector("#movie-page");
+  const querySlug = new URLSearchParams(location.search).get("slug");
+  const pathMatch = location.pathname.match(/\/title-([^/]+)\.html$/i);
+  const pathSlug = pathMatch ? decodeURIComponent(pathMatch[1]) : "";
+  const slug = querySlug || pathSlug;
   if (!slug) {
     root.innerHTML = `<div class='empty'>Movie not specified. <a href='./'>Return to CineDesi</a></div>`;
     return;
@@ -135,7 +140,7 @@ async function load() {
     document.head.appendChild(ogd);
   }
   ogd.content = m.seo_description || m.synopsis || "";
-  const pageUrl = `https://cinedesi.online/movie?slug=${encodeURIComponent(m.slug)}`;
+  const pageUrl = new URL(movieUrl(m.slug), location.origin).href;
   let canonical = document.querySelector('link[rel="canonical"]');
   if (!canonical) {
     canonical = document.createElement("link");
@@ -277,8 +282,8 @@ async function load() {
   const upNext = related?.[0];
   const moreLikeThis = (related || []).slice(1, 7);
   const recommendationReason = (r) => r?._actor_matches ? "Same cast" : r?._genre_matches ? "Similar genre" : r?.content_type === m.content_type ? "Same format" : "Recommended";
-  const upNextSection = upNext ? `<section class='up-next-section'><div class='up-next-art' style="background-image:linear-gradient(90deg,#08090bee 0%,#08090b99 48%,#08090b22 100%),url('${esc(upNext._thumb)}')"></div><div class='up-next-copy'><small>UP NEXT FOR YOU</small><h2>${esc(upNext.title)}</h2><p>${esc(recommendationReason(upNext))} · ${esc(upNext.genre || "Title")}${upNext.release_year ? ` · ${esc(upNext.release_year)}` : ""}</p><div class='actions'><a class='btn' data-rec-click='up_next' href='/movie?slug=${encodeURIComponent(upNext.slug)}'>▶ Open next</a>${upNext.full_video_verified && upNext.full_video_embed_url ? `<a class='btn secondary' data-rec-click='up_next_watch' href='/movie?slug=${encodeURIComponent(upNext.slug)}#watch'>Watch here</a>` : ""}</div></div></section>` : "";
-  const relatedSection = moreLikeThis.length ? `<section class='engage-section recommendation-section'><div class='engage-head'><div><small>PERSONALIZED DISCOVERY</small><h2>More Like This</h2></div><a class='muted' href='./#discover'>Browse all →</a></div><div class='recommendation-grid'>${moreLikeThis.map((r) => `<a class='recommendation-card' data-rec-click='more_like_this' href='/movie?slug=${encodeURIComponent(r.slug)}'><span class='recommendation-art' style="background-image:url('${esc(r._thumb)}')"></span><span class='recommendation-copy'><small>${esc(recommendationReason(r))}</small><strong>${esc(r.title)}</strong><em>${esc(r.content_type === "series" ? "Series" : r.genre || "Movie")}${r.release_year ? ` · ${esc(r.release_year)}` : ""}</em></span></a>`).join("")}</div></section>` : "";
+  const upNextSection = upNext ? `<section class='up-next-section'><div class='up-next-art' style="background-image:linear-gradient(90deg,#08090bee 0%,#08090b99 48%,#08090b22 100%),url('${esc(upNext._thumb)}')"></div><div class='up-next-copy'><small>UP NEXT FOR YOU</small><h2>${esc(upNext.title)}</h2><p>${esc(recommendationReason(upNext))} · ${esc(upNext.genre || "Title")}${upNext.release_year ? ` · ${esc(upNext.release_year)}` : ""}</p><div class='actions'><a class='btn' data-rec-click='up_next' href='${movieUrl(upNext.slug)}'>▶ Open next</a>${upNext.full_video_verified && upNext.full_video_embed_url ? `<a class='btn secondary' data-rec-click='up_next_watch' href='${movieUrl(upNext.slug)}#watch'>Watch here</a>` : ""}</div></div></section>` : "";
+  const relatedSection = moreLikeThis.length ? `<section class='engage-section recommendation-section'><div class='engage-head'><div><small>PERSONALIZED DISCOVERY</small><h2>More Like This</h2></div><a class='muted' href='./#discover'>Browse all →</a></div><div class='recommendation-grid'>${moreLikeThis.map((r) => `<a class='recommendation-card' data-rec-click='more_like_this' href='${movieUrl(r.slug)}'><span class='recommendation-art' style="background-image:url('${esc(r._thumb)}')"></span><span class='recommendation-copy'><small>${esc(recommendationReason(r))}</small><strong>${esc(r.title)}</strong><em>${esc(r.content_type === "series" ? "Series" : r.genre || "Movie")}${r.release_year ? ` · ${esc(r.release_year)}` : ""}</em></span></a>`).join("")}</div></section>` : "";
   const detailFacts = [
     m.content_type === "series" ? detailSeasonLabel : "",
     m.content_type === "series" && Number(m.episode_count) > 0 ? `${Number(m.episode_count)} Episodes` : "",
