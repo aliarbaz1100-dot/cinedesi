@@ -72,7 +72,7 @@ if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("/sw.js?v=27", {
+      const registration = await navigator.serviceWorker.register("/sw.js?v=28", {
         scope: "/",
         updateViaCache: "none",
       });
