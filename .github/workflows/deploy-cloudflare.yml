@@ -52,6 +52,7 @@ jobs:
             dist/_headers
             dist/consent.js
             dist/analytics.js
+            dist/pwa.js
             dist/sw.js
             dist/7f3a2c91d8e64b0f9a5c3e2176d4b8f1.txt
           )
@@ -70,6 +71,9 @@ jobs:
           grep -q 'response.redirected' dist/sw.js
           grep -q 'navigator.serviceWorker.register("/sw.js?v=28"' dist/assets/*.js || true
           grep -q 'src="/analytics.js"' dist/index.html
+          grep -q 'src="/pwa.js"' dist/index.html
+          grep -q 'src="/pwa.js"' dist/title-jolly-llb-3-2025.html
+          grep -q '/sw.js?v=28' dist/pwa.js
           if grep -R -q 'googletagmanager.com/gtag/js' dist --include='*.html'; then
             echo "Direct Google Analytics loader found in production HTML"
             exit 1
