@@ -46,6 +46,10 @@ for(let i=0;i<urls.length;i+=500){
   });
   const body=await response.text();
   if(!response.ok){
+    if(response.status===403 && /SiteVerificationNotCompleted/i.test(body)){
+      console.warn('IndexNow ownership verification is still propagating; CineDesi will retry on a later run.');
+      process.exit(0);
+    }
     throw new Error(`IndexNow submission failed: HTTP ${response.status} ${body.slice(0,300)}`);
   }
   console.log(`IndexNow accepted ${batch.length} CineDesi URLs (HTTP ${response.status}).`);
