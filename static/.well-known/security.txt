@@ -1,0 +1,5 @@
+Contact: https://cinedesi.online/contact.html
+Policy: https://cinedesi.online/rights.html
+Canonical: https://cinedesi.online/.well-known/security.txt
+Preferred-Languages: en
+Expires: 2027-09-19T00:00:00.000Z
