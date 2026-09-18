@@ -73,7 +73,7 @@ async function main() {
     const urls = [
       ...STATIC_PAGES.map((path) => ({ loc: `${SITE}${path}`, lastmod: today })),
       ...indexableRows.map((row) => ({
-        loc: `${SITE}/movie?slug=${encodeURIComponent(row.slug)}`,
+        loc: `${SITE}/title-${encodeURIComponent(row.slug)}.html`,
         lastmod: String(row.updated_at || today).slice(0, 10)
       }))
     ];
