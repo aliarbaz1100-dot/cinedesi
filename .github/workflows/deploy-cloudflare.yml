@@ -103,3 +103,33 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN_RAW: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID_RAW: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+
+      - name: Verify installed-app recovery live
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for attempt in 1 2 3 4 5; do
+            code="$(curl --silent --show-error --location --max-time 20 --output /tmp/pwa.html --write-out '%{http_code}' 'https://cinedesi.online/?source=pwa' || true)"
+            if [ "$code" = "200" ] && grep -q 'Restoring your app' /tmp/pwa.html; then
+              break
+            fi
+            sleep 3
+          done
+          test "$code" = "200"
+          grep -q 'Restoring your app' /tmp/pwa.html
+
+          sw_code="$(curl --silent --show-error --location --max-time 20 --output /tmp/sw.js --write-out '%{http_code}' 'https://cinedesi.online/sw.js?v=26')"
+          test "$sw_code" = "200"
+          grep -q 'self.clients.claim' /tmp/sw.js
+          if grep -q 'addEventListener("fetch"' /tmp/sw.js; then
+            echo "Live recovery worker must not intercept navigation"
+            exit 1
+          fi
+
+          shell_code="$(curl --silent --show-error --location --max-time 20 --header 'Cookie: cinedesi_pwa_recovered=1' --output /tmp/shell.html --write-out '%{http_code}' 'https://cinedesi.online/?source=pwa')"
+          test "$shell_code" = "200"
+          grep -q 'id="app"' /tmp/shell.html
+
+          echo "CineDesi installed-app recovery is live and serving the original app shell."
