@@ -627,6 +627,8 @@ function init() {
 
   function renderTop() {
     const trendingPriority = [
+      "jolly-llb-3-2025",
+      "welcome-to-the-jungle-2026-official",
       "bigg-boss-20",
       "pakistan-idol-season-2-2025-2026",
       "pakistans-got-talent-2026",
