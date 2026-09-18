@@ -47,6 +47,7 @@ jobs:
             dist/feed.xml
             dist/_headers
             dist/consent.js
+            dist/analytics.js
           )
           for file in "${required[@]}"; do
             test -f "$file" || { echo "Missing required build artifact: $file"; exit 1; }
@@ -57,6 +58,11 @@ jobs:
           test "$title_count" -ge 1000 || { echo "Too few functional title pages"; exit 1; }
 
           grep -q 'cinedesi-consent-default' dist/index.html
+          grep -q 'src="/analytics.js"' dist/index.html
+          if grep -R -q 'googletagmanager.com/gtag/js' dist --include='*.html'; then
+            echo "Direct Google Analytics loader found in production HTML"
+            exit 1
+          fi
           grep -q '/title-' dist/sitemap.xml
           grep -q 'title-jolly-llb-3-2025.html' dist/index.html
           grep -q 'CineDesi Media Kit' dist/media-kit.html
