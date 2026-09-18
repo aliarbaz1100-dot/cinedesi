@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/generate-sitemap.mjs && vite build && node scripts/generate-seo-pages.mjs",
-    "preview": "vite preview"
+    "build": "node scripts/generate-catalog.mjs && node scripts/generate-sitemap.mjs && vite build && node scripts/generate-seo-pages.mjs",
+    "preview": "vite preview",
+    "generate:catalog": "node scripts/generate-catalog.mjs",
+    "predev": "node scripts/generate-catalog.mjs"
   },
   "dependencies": {
     "lucide": "^0.469.0"
