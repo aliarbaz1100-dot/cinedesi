@@ -78,7 +78,11 @@ async function main() {
     ];
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${esc(u.loc)}</loc><lastmod>${esc(u.lastmod)}</lastmod></url>`).join('\n')}\n</urlset>\n`;
-    await Promise.all([\n      writeFile('sitemap.xml', xml, 'utf8'),\n      writeFile('static/sitemap.xml', xml, 'utf8')\n    ]);\n    console.log(`Generated sitemap with ${urls.length} URLs (${indexableRows.length}/${rows.length} published titles indexable) for source and deployed static output.`);
+    await Promise.all([
+      writeFile('sitemap.xml', xml, 'utf8'),
+      writeFile('static/sitemap.xml', xml, 'utf8')
+    ]);
+    console.log(`Generated sitemap with ${urls.length} URLs (${indexableRows.length}/${rows.length} published titles indexable) for source and deployed static output.`);
   } catch (error) {
     console.warn('Sitemap generation skipped; keeping existing sitemap.', error?.message || error);
   }
