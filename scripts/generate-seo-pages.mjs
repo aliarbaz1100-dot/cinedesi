@@ -77,7 +77,7 @@ function injectMeta(template, row) {
   let html = template
     .replace(/<title>[^<]*<\/title>/i, `<title>${esc(title)}</title>`)
     .replace(/<meta\s+name=['"]description['"]\s+content=['"][^'"]*['"]\s*\/?\s*>/i, `<meta name="description" content="${esc(description)}">`)
-    .replace(/<meta\s+name=['"]robots['"]\s+content=['"][^'"]*['"]\s*\/?\s*>/i, '<meta name="robots" content="index,follow">')
+    .replace(/<meta\s+name=['"]robots['"]\s+content=['"][^'"]*['"]\s*\/?\s*>/i, `<meta name="robots" content="${row._indexable ? 'index,follow' : 'noindex,follow'}">`)
     .replace(/<meta\s+property=['"]og:type['"]\s+content=['"][^'"]*['"]\s*\/?\s*>/i, `<meta property="og:type" content="${type}">`);
 
   html = html.replace('</head>', [
@@ -130,17 +130,20 @@ async function main() {
   const template = await readFile('dist/movie.html', 'utf8');
   const rows = await fetchAllPublished();
   let written = 0;
+  let indexable = 0;
 
   for (const row of rows) {
     const slug = clean(row.slug);
     const depth = Math.max(clean(row.synopsis).length, clean(row.editorial).length);
-    if (!/^[a-z0-9][a-z0-9-]{0,180}$/i.test(slug) || depth < 120) continue;
-    const html = injectMeta(template, { ...row, slug });
+    if (!/^[a-z0-9][a-z0-9-]{0,180}$/i.test(slug)) continue;
+    const isIndexable = depth >= 120;
+    const html = injectMeta(template, { ...row, slug, _indexable: isIndexable });
     await writeFile(join('dist', `title-${slug}.html`), html, 'utf8');
     written += 1;
+    if (isIndexable) indexable += 1;
   }
 
-  console.log(`Generated ${written} crawlable CineDesi title pages.`);
+  console.log(`Generated ${written} functional CineDesi title pages; ${indexable} are search-indexable.`);
 }
 
 await main();
