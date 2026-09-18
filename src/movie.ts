@@ -607,9 +607,21 @@ async function load() {
   document.querySelectorAll("[data-rec-click]").forEach((el) => el.addEventListener("click", () => {
     track(String(el.dataset.recClick || "recommendation_click"));
   }));
+  const attributedShareUrl = (source) => {
+    try {
+      const u = new URL(pageUrl, location.origin);
+      u.searchParams.set("utm_source", source);
+      u.searchParams.set("utm_medium", "organic");
+      u.searchParams.set("utm_campaign", "title_share");
+      return u.href;
+    } catch {
+      return pageUrl;
+    }
+  };
+
   document.querySelector("#share")?.addEventListener("click", async () => {
     track("share");
-    const data = { title: document.title, text: m.seo_description || m.synopsis || "", url: pageUrl };
+    const data = { title: document.title, text: m.seo_description || m.synopsis || "", url: attributedShareUrl("native_share") };
     try {
       if (navigator.share) await navigator.share(data);
       else {
@@ -622,7 +634,8 @@ async function load() {
   });
   document.querySelector("#whatsapp-share")?.addEventListener("click", () => {
     track("share_whatsapp");
-    const text = [m.title, "on CineDesi", pageUrl].filter(Boolean).join(" — ");
+    const shareUrl = attributedShareUrl("whatsapp");
+    const text = [m.title, "on CineDesi", shareUrl].filter(Boolean).join(" — ");
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank", "noopener,noreferrer");
   });
