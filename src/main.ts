@@ -69,8 +69,18 @@ if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || 
     setTimeout(() => launchSplash.remove(), reduceMotion ? 0 : 320);
   }, 1050)));
 } else launchSplash?.remove();
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=26").catch(() => {
-}));
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    } catch {}
+    try {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((key) => key.startsWith("cinedesi-")).map((key) => caches.delete(key)));
+    } catch {}
+  }, { once: true });
+}
 let deferredInstall = null;
 const installBar = document.querySelector("#install-banner"), installButton = document.querySelector("#install-app"), installClose = document.querySelector("#install-close"), installCopy = document.querySelector("#install-copy");
 const isStandalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
