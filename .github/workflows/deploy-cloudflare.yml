@@ -31,6 +31,20 @@ jobs:
       - name: Build CineDesi
         run: npm run build
 
+      - name: Smoke-check PWA emergency recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f dist/index.html
+          test -f dist/sw.js
+          grep -q 'cinedesi-installed-recovery' dist/index.html
+          grep -q 'Purpose: release existing installed apps from stale/broken cache state' dist/sw.js
+          if grep -q 'addEventListener("fetch"' dist/sw.js; then
+            echo "Emergency recovery worker must not intercept fetches"
+            exit 1
+          fi
+          echo "CineDesi emergency PWA recovery checks passed."
+
       - name: Verify Cloudflare credentials
         shell: bash
         run: |
