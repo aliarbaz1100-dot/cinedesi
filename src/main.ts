@@ -153,10 +153,9 @@ const scoreLabel = (score) => {
 const heroPosterUrl = (value) => String(value || "").replace(/\/hqdefault\.jpg(?:\?.*)?$/i, "/maxresdefault.jpg");
 function init() {
   const desktopFastPath = window.matchMedia("(min-width: 900px)").matches;
-  const scheduleDesktopWork = (fn) => {
-    if (!desktopFastPath) return fn();
-    if ("requestIdleCallback" in window) window.requestIdleCallback(fn, { timeout: 650 });
-    else setTimeout(fn, 120);
+  const scheduleBackgroundWork = (fn, timeout = 650) => {
+    if ("requestIdleCallback" in window) window.requestIdleCallback(fn, { timeout });
+    else setTimeout(fn, desktopFastPath ? 120 : 180);
   };
   if ("scrollRestoration" in history) history.scrollRestoration = "auto";
   const db = supabase.createClient(URL, KEY);
@@ -222,7 +221,7 @@ function init() {
     let error = null;
     let start = 0;
     while (true) {
-      const pageSize = start === 0 ? 160 : 1000;
+      const pageSize = start === 0 ? (desktopFastPath ? 140 : 80) : 1000;
       const batch = await db.from("movies").select(selectColumns).eq("status", "published").order("rights_checked_at", { ascending: false }).range(start, start + pageSize - 1);
       if (batch.error) {
         error = batch.error;
@@ -257,47 +256,35 @@ function init() {
     statRegions.textContent = String(new Set(movies.map((m) => m.region).filter(Boolean)).size);
     updateSchema();
     paintPrimaryRails();
-    if (desktopFastPath) {
-      renderPersonalized();
-      renderComingSoon();
-      renderBingeSeries();
-      const deferredSections = [
-        [document.querySelector("#verified"), renderVerified],
-        [document.querySelector("#series"), renderSeries],
-        [document.querySelector("#genres"), renderGenres],
-        [document.querySelector("#regions"), renderRegions],
-        [document.querySelector("#discover"), render],
-        [document.querySelector("#watchlist"), renderWatchlist]
-      ].filter(([node]) => node);
-      const rendered = new WeakSet();
-      const paintSection = (node, fn) => {
-        if (!node || rendered.has(node)) return;
-        rendered.add(node);
-        fn();
-      };
-      if ("IntersectionObserver" in window) {
-        const observer = new IntersectionObserver((entries) => {
-          for (const entry of entries) {
-            if (!entry.isIntersecting) continue;
-            const pair = deferredSections.find(([node]) => node === entry.target);
-            if (pair) paintSection(pair[0], pair[1]);
-            observer.unobserve(entry.target);
-          }
-        }, { rootMargin: "1000px 0px", threshold: 0.01 });
-        deferredSections.forEach(([node]) => observer.observe(node));
-      } else {
-        deferredSections.forEach(([node, fn]) => scheduleDesktopWork(() => paintSection(node, fn)));
-      }
+    renderPersonalized();
+    renderComingSoon();
+    renderBingeSeries();
+    const deferredSections = [
+      [document.querySelector("#verified"), renderVerified],
+      [document.querySelector("#series"), renderSeries],
+      [document.querySelector("#genres"), renderGenres],
+      [document.querySelector("#regions"), renderRegions],
+      [document.querySelector("#discover"), render],
+      [document.querySelector("#watchlist"), renderWatchlist]
+    ].filter(([node]) => node);
+    const rendered = new WeakSet();
+    const paintSection = (node, fn) => {
+      if (!node || rendered.has(node)) return;
+      rendered.add(node);
+      fn();
+    };
+    if ("IntersectionObserver" in window) {
+      const observer = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const pair = deferredSections.find(([node]) => node === entry.target);
+          if (pair) paintSection(pair[0], pair[1]);
+          observer.unobserve(entry.target);
+        }
+      }, { rootMargin: desktopFastPath ? "1000px 0px" : "650px 0px", threshold: 0.01 });
+      deferredSections.forEach(([node]) => observer.observe(node));
     } else {
-      render();
-      renderPersonalized();
-      renderComingSoon();
-      renderBingeSeries();
-      renderVerified();
-      renderSeries();
-      renderGenres();
-      renderRegions();
-      renderWatchlist();
+      deferredSections.forEach(([node, fn], index) => scheduleBackgroundWork(() => paintSection(node, fn), 700 + index * 120));
     }
     count.textContent = String(saved.length);
   }
@@ -802,22 +789,17 @@ function init() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && modal.classList.contains("on")) closeModal();
   });
-  let desktopSearchTimer = 0;
+  let searchRenderTimer = 0;
   search.oninput = () => {
     activeCollection = "all";
     activeCollectionValue = "";
     discoverTitle.textContent = "Search results";
     visibleLimit = 30;
-    if (!desktopFastPath) {
+    window.clearTimeout(searchRenderTimer);
+    searchRenderTimer = window.setTimeout(() => {
       render();
       renderSuggestions();
-      return;
-    }
-    window.clearTimeout(desktopSearchTimer);
-    desktopSearchTimer = window.setTimeout(() => {
-      render();
-      renderSuggestions();
-    }, 90);
+    }, desktopFastPath ? 90 : 140);
   };
   search.onfocus = renderSuggestions;
   search.onkeydown = (e) => {
