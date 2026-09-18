@@ -1,43 +1,43 @@
-const CACHE='cinedesi-shell-v12';
-const SHELL=['./index.html','./src/styles.css','./src/main.ts','./cinedesi-icon.svg','./cinedesi-launch-1170x2532.png'];
+// CineDesi emergency recovery worker.
+// Purpose: release existing installed apps from stale/broken cache state.
+// It intentionally has no fetch handler.
 
-self.addEventListener('install',e=>{
-  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)));
+self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-self.addEventListener('activate',e=>{
-  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
-  self.clients.claim();
-});
+self.addEventListener("activate", (event) => {
+  event.waitUntil((async () => {
+    try {
+      const keys = await caches.keys();
+      await Promise.all(
+        keys
+          .filter((key) => key.startsWith("cinedesi-"))
+          .map((key) => caches.delete(key))
+      );
+    } catch {}
 
-self.addEventListener('fetch',e=>{
-  if(e.request.method!=='GET') return;
+    try { await self.clients.claim(); } catch {}
 
-  if(e.request.mode==='navigate'){
-    e.respondWith(
-      fetch(e.request)
-        .then(r=>{
-          if(!r.ok) throw new Error('navigation_failed');
-          const copy=r.clone();
-          caches.open(CACHE).then(c=>c.put(e.request,copy));
-          return r;
-        })
-        .catch(async()=>{
-          return (await caches.match(e.request)) || (await caches.match('./index.html')) || Response.error();
-        })
-    );
-    return;
-  }
+    try {
+      const windows = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
 
-  e.respondWith(
-    fetch(e.request)
-      .then(r=>{
-        if(!r.ok) throw new Error('asset_failed');
-        const copy=r.clone();
-        caches.open(CACHE).then(c=>c.put(e.request,copy));
-        return r;
-      })
-      .catch(()=>caches.match(e.request))
-  );
+      for (const client of windows) {
+        try {
+          const url = new URL(client.url);
+          if (url.origin !== self.location.origin) continue;
+          if (url.searchParams.get("pwa_recovered") === "1") continue;
+          url.pathname = "/";
+          url.search = "?source=pwa&pwa_recovered=1";
+          url.hash = "";
+          await client.navigate(url.href);
+        } catch {}
+      }
+    } catch {}
+
+    try { await self.registration.unregister(); } catch {}
+  })());
 });
