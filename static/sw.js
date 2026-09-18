@@ -1,51 +1,62 @@
-const CACHE = "cinedesi-shell-v26";
+const CACHE = "cinedesi-shell-v27";
 const SHELL = [
-  "./index.html",
-  "./cinedesi-icon.svg",
-  "./cinedesi-icon-192.png",
-  "./manifest.webmanifest",
+  "/cinedesi-icon.svg",
+  "/cinedesi-icon-192.png",
+  "/manifest.webmanifest",
 ];
-self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE).then((cache) => cache.addAll(SHELL)).catch(() => undefined)
+  );
   self.skipWaiting();
 });
-self.addEventListener("activate", (e) => {
-  e.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)),
-        ),
-      ),
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((key) => key.startsWith("cinedesi-") && key !== CACHE)
+          .map((key) => caches.delete(key))
+      )
+    )
   );
   self.clients.claim();
 });
-self.addEventListener("fetch", (e) => {
-  if (e.request.method !== "GET") return;
-  const requestUrl = new URL(e.request.url);
-  if (requestUrl.origin !== self.location.origin) return;
-  if (e.request.mode === "navigate") {
-    e.respondWith(
-      fetch(e.request)
-        .then((r) => {
-          if (!r.ok) throw new Error("navigation_failed");
-          const copy = r.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copy));
-          return r;
-        })
-        .catch(async () => (await caches.match(e.request)) || (await caches.match("./index.html")) || Response.error()),
-    );
-    return;
-  }
-  e.respondWith(
-    fetch(e.request)
-      .then((r) => {
-        if (!r.ok) throw new Error("asset_failed");
-        const copy = r.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy));
-        return r;
-      })
-      .catch(() => caches.match(e.request)),
+
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+  if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  // Never intercept document navigations. Let the browser/Cloudflare follow
+  // redirects normally so mobile Safari/Chrome never receives a redirected
+  // Response object from the service worker.
+  if (request.mode === "navigate" || request.destination === "document") return;
+
+  // Avoid caching dynamic API/data responses.
+  if (
+    url.pathname.startsWith("/api/") ||
+    url.pathname.includes("/rest/") ||
+    url.pathname === "/sw.js"
+  ) return;
+
+  event.respondWith(
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+
+      return fetch(request).then((response) => {
+        if (!response || !response.ok || response.type === "opaque" || response.redirected) {
+          return response;
+        }
+
+        const copy = response.clone();
+        caches.open(CACHE).then((cache) => cache.put(request, copy)).catch(() => undefined);
+        return response;
+      });
+    })
   );
 });
