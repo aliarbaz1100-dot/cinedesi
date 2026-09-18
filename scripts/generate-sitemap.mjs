@@ -13,6 +13,7 @@ const STATIC_PAGES = [
   '/rights.html',
   '/licensing.html',
   '/partner.html',
+  '/media-kit.html',
   '/disclosure.html',
   '/privacy.html',
   '/terms.html',
