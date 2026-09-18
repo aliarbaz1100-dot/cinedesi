@@ -42,7 +42,7 @@ async function fetchAllPublished() {
   const pageSize = 1000;
   for (let offset = 0; ; offset += pageSize) {
     const endpoint = new URL(`${SUPABASE_URL}/rest/v1/movies`);
-    endpoint.searchParams.set('select', 'slug,title,release_year,genre,region,content_type,seo_title,seo_description,synopsis,editorial,poster_url,original_language');
+    endpoint.searchParams.set('select', 'slug,title,release_year,genre,region,content_type,seo_title,seo_description,synopsis,editorial,poster_url,original_language,updated_at');
     endpoint.searchParams.set('status', 'eq.published');
     endpoint.searchParams.set('order', 'updated_at.desc');
     endpoint.searchParams.set('limit', String(pageSize));
@@ -90,17 +90,30 @@ function injectMeta(template, row) {
     `<meta name="twitter:title" content="${esc(title)}">`,
     `<meta name="twitter:description" content="${esc(description)}">`,
     `<meta name="twitter:image" content="${esc(image)}">`,
-    `<script type="application/ld+json">${JSON.stringify({
+    `<script id="movie-schema" type="application/ld+json">${JSON.stringify({
       '@context': 'https://schema.org',
       '@type': schemaType,
+      '@id': `${pageUrl}#title`,
       name: row.title,
       url: pageUrl,
+      mainEntityOfPage: pageUrl,
       description,
       image,
       dateCreated: row.release_year ? String(row.release_year) : undefined,
+      dateModified: row.updated_at ? String(row.updated_at) : undefined,
       genre: row.genre || undefined,
       inLanguage: row.original_language || undefined,
-      isPartOf: { '@type': 'WebSite', name: 'CineDesi', url: `${SITE}/` }
+      publisher: { '@id': `${SITE}/#organization` },
+      isPartOf: { '@id': `${SITE}/#website` }
+    })}</script>`,
+    `<script id="breadcrumb-schema" type="application/ld+json">${JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'CineDesi', item: `${SITE}/` },
+        { '@type': 'ListItem', position: 2, name: 'Catalog', item: `${SITE}/catalog.html` },
+        { '@type': 'ListItem', position: 3, name: row.title, item: pageUrl }
+      ]
     })}</script>`,
     '</head>'
   ].join(''));
