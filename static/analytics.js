@@ -6,7 +6,19 @@
   window.dataLayer = window.dataLayer || [];
   window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
 
+  const isQaTraffic = () => {
+    try {
+      if (location.hostname !== "cinedesi.online" && location.hostname !== "www.cinedesi.online") return true;
+      const params = new URLSearchParams(location.search);
+      const qaKeys = ["audit", "launch-audit", "qa", "test", "replacement", "r50"];
+      return qaKeys.some((key) => params.has(key));
+    } catch {
+      return false;
+    }
+  };
+
   const allowed = () => {
+    if (isQaTraffic()) return false;
     try { return localStorage.getItem(CONSENT_KEY) === "analytics"; }
     catch { return false; }
   };
