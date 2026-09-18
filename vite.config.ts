@@ -26,6 +26,7 @@ export default defineConfig({
                 guides: 'guides.html',
                 licensing: 'licensing.html',
                 mediaKit: 'media-kit.html',
+                watchOnCinedesi: 'watch-on-cinedesi.html',
                 partner: 'partner.html',
                 privacy: 'privacy.html',
                 rights: 'rights.html',
