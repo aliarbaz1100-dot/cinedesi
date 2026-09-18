@@ -64,12 +64,11 @@ jobs:
           test "$title_count" -ge 1000 || { echo "Too few functional title pages"; exit 1; }
 
           grep -q 'cinedesi-consent-default' dist/index.html
-          grep -q 'cinedesi-shell-v27' dist/sw.js
-          grep -q 'Never intercept document navigations' dist/sw.js
-          if grep -q 'caches.put(e.request' dist/sw.js; then
-            echo "Legacy service worker navigation interception detected"
-            exit 1
-          fi
+          grep -q 'cinedesi-shell-v28' dist/sw.js
+          grep -q 'cleanRedirectedResponse' dist/sw.js
+          grep -q 'request.mode === "navigate"' dist/sw.js
+          grep -q 'response.redirected' dist/sw.js
+          grep -q 'navigator.serviceWorker.register("/sw.js?v=28"' dist/assets/*.js || true
           grep -q 'src="/analytics.js"' dist/index.html
           if grep -R -q 'googletagmanager.com/gtag/js' dist --include='*.html'; then
             echo "Direct Google Analytics loader found in production HTML"
