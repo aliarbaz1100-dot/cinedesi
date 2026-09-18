@@ -25,6 +25,7 @@ export default defineConfig({
                 editorial: 'editorial.html',
                 guides: 'guides.html',
                 licensing: 'licensing.html',
+                mediaKit: 'media-kit.html',
                 partner: 'partner.html',
                 privacy: 'privacy.html',
                 rights: 'rights.html',
