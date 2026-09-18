@@ -32,3 +32,9 @@
 
 /*.webp
   Cache-Control: public, max-age=604800
+
+/movie.html
+  X-Robots-Tag: noindex, follow
+
+/unsubscribe.html
+  X-Robots-Tag: noindex, follow
