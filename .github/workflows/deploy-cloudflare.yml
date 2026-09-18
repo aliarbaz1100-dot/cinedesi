@@ -75,6 +75,14 @@ jobs:
 
           echo "CineDesi production smoke checks passed."
 
+      - name: Archive production build
+        uses: actions/upload-artifact@v4
+        with:
+          name: cinedesi-production-${{ github.sha }}
+          path: dist
+          retention-days: 14
+          if-no-files-found: error
+
       - name: Verify Cloudflare credentials
         shell: bash
         run: |
