@@ -21,7 +21,7 @@ const rememberHomeReturn = (link) => {
   } catch {}
 };
 document.addEventListener("click", (event) => {
-  const link = event.target?.closest?.("a[href*='movie?slug=']");
+  const link = event.target?.closest?.("a[href*='title-'],a[href*='movie?slug=']");
   if (link) rememberHomeReturn(link);
 }, { capture: true });
 window.addEventListener("pageshow", (event) => {
@@ -128,6 +128,7 @@ const apiFetch = (path, options = {}) => fetch(`${URL}/rest/v1/${path}`, {
   ...options,
   headers: { ...apiHeaders, ...(options.headers || {}) }
 });
+const movieUrl = (slug) => `/title-${encodeURIComponent(String(slug || ""))}.html`;
 queueMicrotask(() => init());
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const xml = (s) => String(s ?? "").replace(/[&<>\"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -200,7 +201,7 @@ function init() {
   function updateSchema() {
     const node = document.querySelector("#catalog-schema");
     if (!node) return;
-    node.textContent = JSON.stringify({ "@context": "https://schema.org", "@type": "ItemList", numberOfItems: movies.length, itemListElement: movies.slice(0, 100).map((m, i) => ({ "@type": "ListItem", position: i + 1, url: `https://cinedesi.online/movie?slug=${encodeURIComponent(m.slug)}`, name: m.title })) });
+    node.textContent = JSON.stringify({ "@context": "https://schema.org", "@type": "ItemList", numberOfItems: movies.length, itemListElement: movies.slice(0, 100).map((m, i) => ({ "@type": "ListItem", position: i + 1, url: new URL(movieUrl(m.slug), location.origin).href, name: m.title })) });
   }
   const claimRail = (items, limit) => {
     const list = items.filter((m) => !homeRailClaims.has(m.id)).slice(0, limit);
@@ -331,7 +332,7 @@ function init() {
     const upcoming = typeof isUpcomingTitle === "function" && isUpcomingTitle(m);
     const availabilityBadge = upcoming ? "<span class='badge'>Coming soon</span>" : m.full_video_verified && m.full_video_embed_url ? "<span class='badge watch-now'>Watch here</span>" : m.watch_verified && m.watch_url ? "<span class='badge'>Legal watch</span>" : m.trailer_verified ? "<span class='badge'>Official trailer</span>" : "<span class='badge'>Editorial</span>";
     const ribbon = upcoming ? "<span class='poster-ribbon new'>Upcoming</span>" : m.full_video_verified && m.full_video_embed_url ? "<span class='poster-ribbon'>\u25B6 Watch here</span>" : Number(m.release_year) >= 2025 ? "<span class='poster-ribbon new'>New</span>" : "";
-    return `<article class='card' data-id='${m.id}'><a class='poster-link' href='/movie?slug=${encodeURIComponent(m.slug)}' aria-label='Open ${esc(m.title)}'><div class='poster'>${image}<span class='poster-region'>${esc(m.region)}</span>${ribbon}</div></a><div class='info'><div class='card-title-row'><h3>${esc(m.title)}</h3>${scoreLabel(m.score) ? `<strong class='match-score'>${esc(scoreLabel(m.score))}</strong>` : ""}</div><p class='muted'>${esc(m.content_type === "series" ? "Series" : m.genre || "Film")} \u2022 ${esc(m.release_year || "")}${m.original_language ? ` \u2022 ${esc(m.original_language)}` : ""}</p><div class='badges'>${availabilityBadge}${m.rights_status === "official_link" || m.rights_status === "cleared" ? "<span class='badge verified-badge'>\u2713 Source checked</span>" : ""}</div><div class='card-actions streaming-actions'><a class='btn play-mini' href='/movie?slug=${encodeURIComponent(m.slug)}'>\u25B6 Details</a><button class='circle-action' data-save='${m.id}' aria-label='${saved.includes(m.id) ? "Remove from My List" : "Add to My List"}'>${saved.includes(m.id) ? "\u2713" : "\uFF0B"}</button><button class='circle-action info-action' data-open='${m.id}' aria-label='More information'>i</button></div></div></article>`;
+    return `<article class='card' data-id='${m.id}'><a class='poster-link' href='${movieUrl(m.slug)}' aria-label='Open ${esc(m.title)}'><div class='poster'>${image}<span class='poster-region'>${esc(m.region)}</span>${ribbon}</div></a><div class='info'><div class='card-title-row'><h3>${esc(m.title)}</h3>${scoreLabel(m.score) ? `<strong class='match-score'>${esc(scoreLabel(m.score))}</strong>` : ""}</div><p class='muted'>${esc(m.content_type === "series" ? "Series" : m.genre || "Film")} \u2022 ${esc(m.release_year || "")}${m.original_language ? ` \u2022 ${esc(m.original_language)}` : ""}</p><div class='badges'>${availabilityBadge}${m.rights_status === "official_link" || m.rights_status === "cleared" ? "<span class='badge verified-badge'>\u2713 Source checked</span>" : ""}</div><div class='card-actions streaming-actions'><a class='btn play-mini' href='${movieUrl(m.slug)}'>\u25B6 Details</a><button class='circle-action' data-save='${m.id}' aria-label='${saved.includes(m.id) ? "Remove from My List" : "Add to My List"}'>${saved.includes(m.id) ? "\u2713" : "\uFF0B"}</button><button class='circle-action info-action' data-open='${m.id}' aria-label='More information'>i</button></div></div></article>`;
   }
   function enhanceRails(root) {
     const rails = [
@@ -367,7 +368,7 @@ function init() {
     });
   }
   function wire(root) {
-    root.querySelectorAll("a[href*='movie?slug=']").forEach((link) => {
+    root.querySelectorAll("a[href*='title-'],a[href*='movie?slug=']").forEach((link) => {
       if (link.dataset.returnReady === "1") return;
       link.dataset.returnReady = "1";
       link.addEventListener("click", () => rememberHomeReturn(link), { capture: true });
@@ -580,7 +581,7 @@ function init() {
       continueSection.hidden = continueMovies.length === 0;
       const continueBySlug = new Map(continueItems.map((x) => [x.slug, x]));
       continueGrid.innerHTML = continueMovies.map((m) => {
-        const url = `/movie?slug=${encodeURIComponent(m.slug)}`;
+        const url = movieUrl(m.slug);
         const resume = continueBySlug.get(m.slug);
         const episodeNumber = Number(resume?.episode_number);
         let html = card(m).replaceAll(url, url + "#watch");
@@ -694,7 +695,7 @@ function init() {
     let heroIndex = 0;
     const paintHero = () => {
       const m = heroPool[heroIndex % heroPool.length];
-      const url = `/movie?slug=${encodeURIComponent(m.slug)}`;
+      const url = movieUrl(m.slug);
       heroTitle.textContent = m.title;
       heroMeta.textContent = `${m.release_year || "Featured"} • ${m.content_type === "series" ? seriesSeasonLabel(m) : (m.genre || "Movie")}${m.original_language ? ` • ${m.original_language}` : ""}`;
       heroLead.textContent = String(m.synopsis || m.editorial || "Open this verified CineDesi title for official trailers and legal viewing information.").slice(0, 190);
@@ -776,7 +777,7 @@ function init() {
       return;
     }
     const matched = movies.filter((m) => searchText(m).includes(term)).sort((a, b) => rankMatch(a, term) - rankMatch(b, term) || String(a.title).localeCompare(String(b.title))), exact = matched.slice(0, 8), seed = exact[0], related = movies.filter((m) => !exact.some((x) => x.id === m.id) && (seed ? m.region === seed.region || genreMatch(m, String(seed.genre || "").split(/[ ,/]/)[0]) : true)).slice(0, 8);
-    const resultCard = (m) => `<a class='search-result-card' role='option' href='/movie?slug=${encodeURIComponent(m.slug)}'><div class='search-thumb' ${m.poster_url ? `style="background-image:url('${esc(m.poster_url)}')"` : ""}></div><div><strong>${esc(m.title)}</strong><span>${esc(m.region || "")} ${m.release_year ? `\u2022 ${esc(m.release_year)}` : ""}${m.genre ? ` \u2022 ${esc(m.genre)}` : ""}</span>${m.full_video_verified ? `<em>\u25B6 Watch here</em>` : ""}</div></a>`;
+    const resultCard = (m) => `<a class='search-result-card' role='option' href='${movieUrl(m.slug)}'><div class='search-thumb' ${m.poster_url ? `style="background-image:url('${esc(m.poster_url)}')"` : ""}></div><div><strong>${esc(m.title)}</strong><span>${esc(m.region || "")} ${m.release_year ? `\u2022 ${esc(m.release_year)}` : ""}${m.genre ? ` \u2022 ${esc(m.genre)}` : ""}</span>${m.full_video_verified ? `<em>\u25B6 Watch here</em>` : ""}</div></a>`;
     suggestions.innerHTML = `<div class='search-panel-head'><strong>${exact.length ? "Search results" : "No exact result"}</strong><span>${matched.length} found</span></div>${exact.length ? `<div class='search-result-grid'>${exact.map(resultCard).join("")}</div>` : `<div class='suggestion-empty'>Try another title, genre or region.</div>`}${matched.length ? `<button id='search-all' class='search-see-all' type='button'>See all ${matched.length} results \u2192</button>` : ""}<div class='search-panel-head more'><strong>You may also like</strong></div><div class='search-related-rail'>${related.map(resultCard).join("")}</div>`;
     q("#search-all")?.addEventListener("click", () => {
       suggestions.classList.remove("on");
@@ -802,9 +803,9 @@ function init() {
   function openMovie(id) {
     const m = movies.find((x) => x.id === id);
     if (!m) return;
-    const trailer = m.trailer_verified && m.trailer_url ? `<a class='btn' target='_blank' rel='noopener' href='${esc(m.trailer_url)}'>Watch official trailer</a>` : `<a class='btn secondary' href='/movie?slug=${encodeURIComponent(m.slug)}'>Discover title</a>`;
+    const trailer = m.trailer_verified && m.trailer_url ? `<a class='btn' target='_blank' rel='noopener' href='${esc(m.trailer_url)}'>Watch official trailer</a>` : `<a class='btn secondary' href='${movieUrl(m.slug)}'>Discover title</a>`;
     const watch = m.watch_verified && m.watch_url ? `<a class='btn secondary' target='_blank' rel='noopener' href='${esc(m.watch_url)}'>Open legal watch destination</a>` : ``;
-    modal.innerHTML = `<div class='box'><div class='modal-top'><div><small>${esc(m.region)}</small><h2>${esc(m.title)}</h2></div><button class='close' id='close-modal'>\xD7</button></div><div class='modal-meta'><span>${esc(m.genre || "Film")}</span><span>${esc(m.release_year || "")}</span>${m.score ? `<span>CineDesi score ${esc(m.score)}</span>` : ""}</div><div class='badges'>${m.editorial ? "<span class='badge'>CineDesi editorial</span>" : ""}<span class='badge'>Rights checked</span>${m.trailer_verified ? "<span class='badge'>Official trailer</span>" : ""}${m.watch_verified ? "<span class='badge'>Legal watch</span>" : ""}</div><p class='modal-summary'>${esc(m.editorial || m.synopsis || "CineDesi editorial coming soon.")}</p><div class='actions'>${trailer}${watch}${m.full_video_verified && m.full_video_embed_url ? `<a class='btn' href='/movie?slug=${encodeURIComponent(m.slug)}#watch'>Watch on CineDesi</a>` : ""}<a class='btn secondary' href='/movie?slug=${encodeURIComponent(m.slug)}'>Open full movie page</a><button class='ghost' id='modal-save'>${saved.includes(id) ? "Remove from watchlist" : "Save to watchlist"}</button></div><div class='source-card'><strong>Source transparency</strong><br>Metadata: ${esc(m.source_name || "Verified source")}${m.source_license ? ` \u2022 ${esc(m.source_license)}` : ""}${m.trailer_source ? `<br>Trailer source: ${esc(m.trailer_source)}` : ""}<br>Poster: ${licensedPoster(m) ? esc(m.poster_license) : m._cover_kind === "youtube" ? `Official video thumbnail supplied by ${esc(m.full_video_source || m.trailer_source || "YouTube")}; linked to the verified upload.` : "CineDesi dark original fallback; no third-party poster reused."}</div></div>`;
+    modal.innerHTML = `<div class='box'><div class='modal-top'><div><small>${esc(m.region)}</small><h2>${esc(m.title)}</h2></div><button class='close' id='close-modal'>\xD7</button></div><div class='modal-meta'><span>${esc(m.genre || "Film")}</span><span>${esc(m.release_year || "")}</span>${m.score ? `<span>CineDesi score ${esc(m.score)}</span>` : ""}</div><div class='badges'>${m.editorial ? "<span class='badge'>CineDesi editorial</span>" : ""}<span class='badge'>Rights checked</span>${m.trailer_verified ? "<span class='badge'>Official trailer</span>" : ""}${m.watch_verified ? "<span class='badge'>Legal watch</span>" : ""}</div><p class='modal-summary'>${esc(m.editorial || m.synopsis || "CineDesi editorial coming soon.")}</p><div class='actions'>${trailer}${watch}${m.full_video_verified && m.full_video_embed_url ? `<a class='btn' href='${movieUrl(m.slug)}#watch'>Watch on CineDesi</a>` : ""}<a class='btn secondary' href='${movieUrl(m.slug)}'>Open full movie page</a><button class='ghost' id='modal-save'>${saved.includes(id) ? "Remove from watchlist" : "Save to watchlist"}</button></div><div class='source-card'><strong>Source transparency</strong><br>Metadata: ${esc(m.source_name || "Verified source")}${m.source_license ? ` \u2022 ${esc(m.source_license)}` : ""}${m.trailer_source ? `<br>Trailer source: ${esc(m.trailer_source)}` : ""}<br>Poster: ${licensedPoster(m) ? esc(m.poster_license) : m._cover_kind === "youtube" ? `Official video thumbnail supplied by ${esc(m.full_video_source || m.trailer_source || "YouTube")}; linked to the verified upload.` : "CineDesi dark original fallback; no third-party poster reused."}</div></div>`;
     modal.classList.add("on");
     modal.setAttribute("aria-hidden", "false");
     document.body.classList.add("modal-open");
