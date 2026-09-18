@@ -2,46 +2,6 @@
 <html lang="en">
   <head>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-J9HJVSKXVD"></script>
-    <script id="cinedesi-one-time-installed-repair">
-      (() => {
-        const standalone =
-          window.matchMedia("(display-mode: standalone)").matches ||
-          window.navigator.standalone === true;
-        if (!standalone || !("serviceWorker" in navigator)) return;
-
-        const params = new URLSearchParams(location.search);
-        if (params.get("pwa_repaired") === "1") return;
-
-        const key = "cinedesi-pwa-repair-2026-09-19-v1";
-        try {
-          if (localStorage.getItem(key) === "1") return;
-        } catch {}
-
-        (async () => {
-          try {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(registrations.map((registration) => registration.unregister()));
-          } catch {}
-
-          try {
-            const keys = await caches.keys();
-            await Promise.all(
-              keys
-                .filter((cacheKey) => cacheKey.startsWith("cinedesi-"))
-                .map((cacheKey) => caches.delete(cacheKey))
-            );
-          } catch {}
-
-          try { localStorage.setItem(key, "1"); } catch {}
-
-          const fresh = new URL(location.href);
-          fresh.pathname = "/";
-          fresh.search = "?source=pwa&pwa_repaired=1";
-          fresh.hash = "";
-          location.replace(fresh.href);
-        })();
-      })();
-    </script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag() { dataLayer.push(arguments); }
