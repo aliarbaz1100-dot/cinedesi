@@ -173,7 +173,7 @@ function init() {
       if (!response.ok) console.warn("CineDesi analytics event failed", response.status);
     } catch {}
   };
-  void track("page_view");
+  scheduleBackgroundWork(() => { void track("page_view"); }, 900);
   let movies = [];
   let visibleLimit = 30;
   let activeCollection = "all";
@@ -258,6 +258,12 @@ function init() {
       }
       if (rows.length < pageSize) break;
       start += pageSize;
+      if (!desktopFastPath && start > 0) {
+        await new Promise((resolve) => {
+          if ("requestIdleCallback" in window) window.requestIdleCallback(() => resolve(), { timeout: 1800 });
+          else setTimeout(resolve, 700);
+        });
+      }
     }
     if (error && !data.length && hadCachedPaint) {
       status.textContent = "Showing your saved CineDesi home while the live catalog reconnects.";
