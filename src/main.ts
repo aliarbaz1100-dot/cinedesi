@@ -117,12 +117,18 @@ const skeletonMarkup = Array.from({ length: 6 }, () => `<article class="card ske
 });
 const URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co";
 const KEY = "sb_publishable_ZEAZWO-Q-_rvMsy6krr_nw_JDRmP_kI";
-const sdk = document.createElement("script");
-sdk.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/dist/umd/supabase.min.js";
-sdk.crossOrigin = "anonymous";
-sdk.fetchPriority = "high";
-sdk.onload = () => init();
-document.head.appendChild(sdk);
+const apiHeaders = {
+  apikey: KEY,
+  Authorization: `Bearer ${KEY}`,
+  "Content-Type": "application/json",
+  "Accept-Profile": "public",
+  "Content-Profile": "public"
+};
+const apiFetch = (path, options = {}) => fetch(`${URL}/rest/v1/${path}`, {
+  ...options,
+  headers: { ...apiHeaders, ...(options.headers || {}) }
+});
+queueMicrotask(() => init());
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const xml = (s) => String(s ?? "").replace(/[&<>\"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const posterArt = (m) => {
@@ -158,10 +164,14 @@ function init() {
     else setTimeout(fn, desktopFastPath ? 120 : 180);
   };
   if ("scrollRestoration" in history) history.scrollRestoration = "auto";
-  const db = supabase.createClient(URL, KEY);
   const track = async (event, slug = null) => {
-    const { error } = await db.rpc("track_cinedesi_event", { p_event_type: event, p_movie_slug: slug });
-    if (error) console.warn("CineDesi analytics event failed", error.message);
+    try {
+      const response = await apiFetch("rpc/track_cinedesi_event", {
+        method: "POST",
+        body: JSON.stringify({ p_event_type: event, p_movie_slug: slug })
+      });
+      if (!response.ok) console.warn("CineDesi analytics event failed", response.status);
+    } catch {}
   };
   void track("page_view");
   let movies = [];
@@ -222,12 +232,25 @@ function init() {
     let start = 0;
     while (true) {
       const pageSize = start === 0 ? (desktopFastPath ? 140 : 80) : 1000;
-      const batch = await db.from("movies").select(selectColumns).eq("status", "published").order("rights_checked_at", { ascending: false }).range(start, start + pageSize - 1);
-      if (batch.error) {
-        error = batch.error;
+      const query = new URLSearchParams({
+        select: selectColumns,
+        status: "eq.published",
+        order: "rights_checked_at.desc",
+        offset: String(start),
+        limit: String(pageSize)
+      });
+      let rows = [];
+      try {
+        const response = await apiFetch(`movies?${query.toString()}`, { method: "GET" });
+        if (!response.ok) {
+          error = new Error(`Catalog request failed: ${response.status}`);
+          break;
+        }
+        rows = await response.json();
+      } catch (requestError) {
+        error = requestError;
         break;
       }
-      const rows = batch.data || [];
       data.push(...rows);
       if (start === 0 && !hadCachedPaint && rows.length) {
         movies = hydrateMovies(rows);
@@ -241,7 +264,14 @@ function init() {
       return;
     }
     movies = hydrateMovies(data);
-    const { data: trendingRows } = await db.rpc("get_cinedesi_trending", { p_days: 7, p_limit: 100 });
+    let trendingRows = [];
+    try {
+      const trendingResponse = await apiFetch("rpc/get_cinedesi_trending", {
+        method: "POST",
+        body: JSON.stringify({ p_days: 7, p_limit: 100 })
+      });
+      if (trendingResponse.ok) trendingRows = await trendingResponse.json();
+    } catch {}
     const trendMap = new Map((trendingRows || []).map((row) => [row.movie_slug, Number(row.trend_score) || 0]));
     movies = movies.map((m) => ({ ...m, _trend_score: trendMap.get(m.slug) || 0 }));
     try {
@@ -904,12 +934,23 @@ function init() {
       newsletterMsg.classList.add("error");
       return;
     }
-    const { error } = await db.from("subscribers").insert({ email, consent: true });
-    if (error?.code === "23505") {
+    let subscribeResponse;
+    let subscribeError = null;
+    try {
+      subscribeResponse = await apiFetch("subscribers", {
+        method: "POST",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify({ email, consent: true })
+      });
+      if (!subscribeResponse.ok) subscribeError = await subscribeResponse.json().catch(() => ({}));
+    } catch {
+      subscribeError = {};
+    }
+    if (subscribeError?.code === "23505") {
       newsletterMsg.textContent = "You are already subscribed.";
       return;
     }
-    if (error) {
+    if (!subscribeResponse?.ok) {
       newsletterMsg.textContent = "Subscription could not be saved. Please try again.";
       newsletterMsg.classList.add("error");
       return;
