@@ -1,12 +1,23 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J9HJVSKXVD"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag() { dataLayer.push(arguments); }
       gtag("js", new Date());
       gtag("config", "G-J9HJVSKXVD");
+      const loadCineDesiAnalytics = () => {
+        if (document.querySelector('script[data-cinedesi-ga]')) return;
+        const script = document.createElement("script");
+        script.async = true;
+        script.dataset.cinedesiGa = "1";
+        script.src = "https://www.googletagmanager.com/gtag/js?id=G-J9HJVSKXVD";
+        document.head.appendChild(script);
+      };
+      window.addEventListener("load", () => {
+        if ("requestIdleCallback" in window) window.requestIdleCallback(loadCineDesiAnalytics, { timeout: 2500 });
+        else setTimeout(loadCineDesiAnalytics, 1200);
+      }, { once: true });
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
@@ -30,6 +41,7 @@
     <link rel="icon" type="image/svg+xml" href="/cinedesi-icon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/cinedesi-apple-touch.png" />
     <link rel="preconnect" href="https://ewtgkjcmnwjoqfldrtuw.supabase.co" crossorigin />
+    <link rel="preconnect" href="https://i.ytimg.com" />
     <link rel="dns-prefetch" href="https://i.ytimg.com" />
     <link rel="preload" as="image" href="https://i.ytimg.com/vi/eSgJ8PfSUSk/maxresdefault.jpg" fetchpriority="high" />
     <meta property="og:url" content="https://cinedesi.online/" />
