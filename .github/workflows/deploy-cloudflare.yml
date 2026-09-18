@@ -52,6 +52,7 @@ jobs:
             dist/_headers
             dist/consent.js
             dist/analytics.js
+            dist/sw.js
             dist/7f3a2c91d8e64b0f9a5c3e2176d4b8f1.txt
           )
           for file in "${required[@]}"; do
@@ -63,6 +64,12 @@ jobs:
           test "$title_count" -ge 1000 || { echo "Too few functional title pages"; exit 1; }
 
           grep -q 'cinedesi-consent-default' dist/index.html
+          grep -q 'cinedesi-shell-v27' dist/sw.js
+          grep -q 'Never intercept document navigations' dist/sw.js
+          if grep -q 'caches.put(e.request' dist/sw.js; then
+            echo "Legacy service worker navigation interception detected"
+            exit 1
+          fi
           grep -q 'src="/analytics.js"' dist/index.html
           if grep -R -q 'googletagmanager.com/gtag/js' dist --include='*.html'; then
             echo "Direct Google Analytics loader found in production HTML"
