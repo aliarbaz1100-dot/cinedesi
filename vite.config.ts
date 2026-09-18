@@ -13,6 +13,7 @@ export default defineConfig({
                 about: 'about.html',
                 admin: 'admin.html',
                 copyright: 'copyright.html',
+                contact: 'contact.html',
                 disclosure: 'disclosure.html',
                 editorial: 'editorial.html',
                 guides: 'guides.html',
