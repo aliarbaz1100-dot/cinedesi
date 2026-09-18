@@ -11,6 +11,7 @@
 - Keeps rights, editorial and commercial decisions separate.
 - Provides dedicated rights-holder, licensing and partnership routes.
 - Uses a fast static frontend with Cloudflare Workers, GitHub and Supabase.
+- Publishes crawlable title pages with unique metadata while keeping the live catalog database unchanged.
 
 ## Trust and policies
 
