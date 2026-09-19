@@ -5,13 +5,6 @@
     padding-bottom: calc(98px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
-  html.cd-qa-mode .home-body .catalog-header {
-    padding-top: max(9px, env(safe-area-inset-top, 0px)) !important;
-    background: #080809 !important;
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
-  }
-
   html.cd-qa-mode .home-body .mobile-bottom-nav {
     width: calc(100% - 20px) !important;
     max-width: 450px !important;
@@ -61,53 +54,11 @@
   html.cd-qa-mode .home-body .section-head h2 {
     text-wrap: balance;
   }
-  /* The featured title must not be clipped by mobile display zoom or long names. */
-  html.cd-qa-mode .home-body .streaming-hero {
-    min-height: 520px !important; /* Safari 12 fallback before modern viewport units */
-    min-height: min(635px, 76svh) !important;
-    padding: 235px 16px 26px !important;
-    padding: max(210px, 31svh) 16px 26px !important;
-    display: flex !important;
-    align-items: flex-end !important;
-    overflow: hidden !important;
-  }
-  html.cd-qa-mode .home-body .hero-content {
-    position: relative;
-    z-index: 3;
-    width: 100% !important;
-    min-width: 0;
-    overflow: visible;
-  }
+  /* The featured display deliberately inherits EXACT live CineDesi hero geometry,
+     typography, image crop, menu and button arrangement. Only non-visual safety
+     is added here; never re-skin the first viewport in the demo. */
   html.cd-qa-mode .home-body .hero-content h1 {
-    display: block !important;
-    max-width: 100% !important;
-    margin: 8px 0 !important;
-    font-size: 30px !important; /* Safari 12 fallback */
-    font-size: clamp(1.9rem, 8.4vw, 2.65rem) !important;
-    line-height: 1.05 !important;
-    letter-spacing: -.04em !important;
     overflow-wrap: break-word;
-    text-wrap: balance;
-  }
-  html.cd-qa-mode .home-body .hero-actions {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr;
-    width: 100%;
-    gap: 8px;
-    flex-wrap: nowrap !important;
-  }
-  html.cd-qa-mode .home-body .hero-actions .btn {
-    min-width: 0;
-    min-height: 45px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding-inline: 8px !important;
-    white-space: nowrap;
-    font-size: .78rem !important;
-  }
-  html.cd-qa-mode .home-body .hero-actions .hero-info-btn {
-    display: none !important;
   }
   html.cd-qa-mode .home-body #continue-grid .qa-resume-meta {
     padding: 6px 2px 0;
@@ -163,11 +114,8 @@
 /* iPhone 6 / iOS 12 lacks :has(), flex-gap, clamp(), svh, and some dynamic viewport units. */
 @media screen and (max-width: 420px) {
   html.cd-qa-legacy .home-body .catalog-header { min-height: 56px !important; }
-  html.cd-qa-legacy .home-body .streaming-hero { min-height: 530px !important; padding: 230px 14px 28px !important; }
-  html.cd-qa-legacy .home-body .hero-content h1 { font-size: 29px !important; line-height: 1.08 !important; }
-  html.cd-qa-legacy .home-body .hero-actions { display: flex !important; }
-  html.cd-qa-legacy .home-body .hero-actions > * { flex: 1 1 0; margin-right: 6px !important; }
-  html.cd-qa-legacy .home-body .hero-actions > *:last-child { margin-right: 0 !important; }
+  html.cd-qa-legacy .home-body .streaming-hero { min-height: 500px !important; padding: 230px 16px 28px !important; }
+  html.cd-qa-legacy .home-body .hero-content h1 { font-size: 35px !important; line-height: .96 !important; }
   html.cd-qa-legacy .home-body .mobile-bottom-nav { width: 95% !important; bottom: 8px !important; }
   html.cd-qa-legacy .home-body .grid.rail { -webkit-overflow-scrolling: touch; }
   html.cd-qa-legacy .movie-page { width: 100% !important; max-width: 100% !important; overflow-x: hidden !important; padding-bottom: 84px !important; }
