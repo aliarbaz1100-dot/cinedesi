@@ -83,71 +83,80 @@
   <body class="home-body">
     <div id="app-splash" class="app-splash" aria-hidden="true"><div class="splash-brand"><div class="splash-logo">CINE<span>DESI</span></div><div class="splash-line"></div><p>Powered by <strong>Arbaz Ali</strong></p></div></div>
     <script id="qa-splash-controller">(function(){
+  // Review-app only: the installed PWA must animate in its own WebView,
+  // not merely in the desktop /app-preview illustration.
+  var html=document.documentElement;
+  if(!html.classList.contains("cd-qa-mode")||window.top!==window)return;
   var splash=document.getElementById("app-splash");
-  if(!splash)return;
-  if(!document.documentElement.classList.contains("cd-qa-standalone")){
-    // A returning title page should show the existing catalog immediately.
-    // Do not wait for catalog JS / API requests to remove a hidden splash node.
-    if(document.documentElement.classList.contains("cd-qa-mode"))splash.remove();
-    return;
-  }
-  // One real launch only: never replay on page visibility, movie back or tab change.
-  // The native iOS static launch image cannot animate until WebKit starts rendering.
-  var dismissed=false;
-  function close(){
-    if(dismissed)return;
-    dismissed=true;
-    splash.classList.add("splash-exit");
-    window.setTimeout(function(){if(splash.parentNode)splash.parentNode.removeChild(splash);},330);
-  }
-  window.setTimeout(close,1950);
-  // Exit if the catalog is unavailable, never leave users trapped behind a logo.
-  window.setTimeout(close,4400);
-  // On iOS a home-screen app commonly resumes its existing WebKit document
-  // when the icon is tapped. No page load occurs, so a cold-launch-only
-  // animation would never appear. Replay *only* on a genuine long background
-  // resume of the home screen, never on movie/back or ordinary tab switching.
-  var hiddenAt=0, lastShown=Date.now(), navigationCooldownUntil=0;
-  var appMode=(navigator.standalone===true)||
-    (window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches);
-  // A BFCache restore is navigation back, never a new launch.
-  window.addEventListener("pageshow",function(e){
-    if(e.persisted){hiddenAt=0;navigationCooldownUntil=Date.now()+6000;}
-  });
-  // Opening a title must not become a false logo replay on older iOS.
-  document.addEventListener("click",function(e){
-    var a=e.target.closest?e.target.closest("a[href]"):null;
-    if(a&&(String(a.href||"").indexOf("/movie?")>=0||String(a.href||"").indexOf("/movie.html?")>=0))navigationCooldownUntil=Date.now()+15000;
-  },true);
-  document.addEventListener("visibilitychange",function(){
-    if(!appMode||!document.documentElement.classList.contains("cd-qa-mode"))return;
-    if(document.hidden){hiddenAt=Date.now();return;}
-    if(!hiddenAt||Date.now()-hiddenAt<3500||Date.now()-lastShown<3500||Date.now()<navigationCooldownUntil)return;
-    hiddenAt=0;
-    if(location.pathname!=="/"||document.querySelector("video:fullscreen"))return;
-    var internal=0;
-    try{internal=Number(sessionStorage.getItem("cinedesi-qa-internal-nav")||0);}catch(e){}
-    if(internal>0&&Date.now()-internal<90000)return;
-    var current=document.getElementById("app-splash");
-    if(current)return;
-    var resumed=document.createElement("div");
-    resumed.id="app-splash";
-    resumed.className="app-splash";
-    resumed.setAttribute("aria-hidden","true");
-    resumed.innerHTML='<div class="splash-brand"><div class="splash-logo">CINE<span>DESI</span></div><div class="splash-line"></div><p>Powered by <strong>Arbaz Ali</strong></p></div>';
-    document.documentElement.classList.add("cd-qa-standalone");
-    document.body.insertBefore(resumed,document.body.firstChild);
-    lastShown=Date.now();
+  var cold=html.classList.contains("cd-qa-standalone");
+  var appMode=navigator.standalone===true||
+    !!(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||
+    /[?&](?:source=pwa|install-launch=1)(?:&|$)/.test(location.search);
+  var backgroundAt=0, lastShown=cold?Date.now():0, cooldownUntil=Date.now()+2500, closing=false;
+  if(!cold&&splash){splash.remove();splash=null;}
+  function finish(node){
+    if(!node||closing)return;
+    closing=true;
+    node.classList.add("splash-exit");
     window.setTimeout(function(){
-      resumed.classList.add("splash-exit");
-      window.setTimeout(function(){
-        if(resumed.parentNode)resumed.parentNode.removeChild(resumed);
-        // The persistent page is not newly launched; keep the class limited
-        // to the visible overlay's lifetime on warm resume.
-        document.documentElement.classList.remove("cd-qa-standalone");
-      },330);
-    },1650);
+      if(node.parentNode)node.parentNode.removeChild(node);
+      if(!document.getElementById("app-splash"))html.classList.remove("cd-qa-standalone");
+      closing=false;
+    },370);
+  }
+  if(cold&&splash){
+    window.setTimeout(function(){finish(splash);},2250);
+    window.setTimeout(function(){finish(splash);},6000);
+  }
+  function isInternalNavigation(){
+    if(/[?&](?:returnY|returnSection|returnOffset)=/.test(location.search))return true;
+    var last=0,stop=0;
+    try{
+      last=Number(sessionStorage.getItem("cinedesi-qa-internal-nav")||0);
+      stop=Number(sessionStorage.getItem("cinedesi-qa-launch-suppress-until")||0);
+    }catch(e){}
+    return (last>0&&Date.now()-last<90000)||stop>Date.now();
+  }
+  function markBackground(){
+    if(!appMode||location.pathname!=="/")return;
+    backgroundAt=Date.now();
+  }
+  function resume(){
+    if(!appMode||!backgroundAt||document.hidden||location.pathname!=="/")return;
+    var now=Date.now(),away=now-backgroundAt;
+    backgroundAt=0;
+    if(away<2600||now-lastShown<4800||now<cooldownUntil||isInternalNavigation())return;
+    if(document.getElementById("app-splash"))return;
+    var node=document.createElement("div");
+    node.id="app-splash";
+    node.className="app-splash";
+    node.setAttribute("aria-hidden","true");
+    node.innerHTML='<div class="splash-brand"><div class="splash-logo">CINE<span>DESI</span></div><div class="splash-line"></div><p>Powered by <strong>Arbaz Ali</strong></p></div>';
+    html.classList.add("cd-qa-standalone");
+    document.body.insertBefore(node,document.body.firstChild);
+    splash=node;
+    lastShown=now;
+    window.setTimeout(function(){finish(node);},1900);
+    window.setTimeout(function(){finish(node);},4500);
+  }
+  document.addEventListener("visibilitychange",function(){
+    if(document.hidden)markBackground();
+    else resume();
   });
+  // Some iOS Home Screen shortcuts resume a suspended WebView with focus or
+  // page-show rather than a full reload; support those without route refresh.
+  window.addEventListener("blur",markBackground);
+  window.addEventListener("focus",resume);
+  window.addEventListener("pagehide",markBackground);
+  window.addEventListener("pageshow",function(e){
+    if(e.persisted){backgroundAt=0;cooldownUntil=Date.now()+6500;return;}
+    resume();
+  });
+  document.addEventListener("click",function(e){
+    var link=e.target.closest?e.target.closest("a[href]"):null;
+    if(link&&(String(link.href||"").indexOf("/movie?")>=0||String(link.href||"").indexOf("/movie.html?")>=0))
+      cooldownUntil=Date.now()+15000;
+  },true);
 })();</script>
     <div id="app">
       <header class="catalog-header">
