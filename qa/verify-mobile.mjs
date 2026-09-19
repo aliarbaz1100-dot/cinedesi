@@ -123,7 +123,7 @@ try {
       splashVisible: (() => { const el=document.querySelector("#app-splash"); return !!el && getComputedStyle(el).display !== "none"; })(),
       savedNav: Number(sessionStorage.getItem("cinedesi-qa-internal-nav") || 0)
     }));
-    assert.ok(returnState.savedNav > 0 && !returnState.freshLaunch && !returnState.splashVisible, device.name + " movie-return app must not display a launch logo");
+    assert.ok(returnState.savedNav === 0 && !returnState.freshLaunch && !returnState.splashVisible, device.name + " movie-return app must not display a launch logo");
     await page.waitForTimeout(350);
     assert.equal(await page.locator("#app-splash").count(), 0, device.name + " movie-return splash should be removed without ever appearing");
     // Explicit return params also protect late returns when the timestamp expires.
@@ -132,7 +132,17 @@ try {
     await page.goto(base + "/?qa=1&source=pwa&returnY=0", { waitUntil: "domcontentloaded", timeout: 30000 });
     assert.equal(await page.evaluate(() => document.documentElement.classList.contains("cd-qa-standalone")), false, device.name + " returnY must suppress launch");
     console.log("PASS", device.name, "movie to home navigation does not show a false splash");
-    const preview = await page.goto(base + "/app-preview", { waitUntil: "domcontentloaded", timeout: 30000 });
+    if (device.name.startsWith("iphone")) {
+      // Installed shortcuts created from the OLD /app-preview route should
+      // enter the actual app, not stay on the desktop preview illustration.
+      await page.goto(base + "/app-preview", { waitUntil: "domcontentloaded", timeout: 30000 });
+      await page.waitForURL(/\/\?qa=1&source=pwa&install-launch=1/, { timeout: 6000 });
+      await page.locator("#app-splash").waitFor({ state: "visible", timeout: 1700 });
+      assert.equal(await page.locator("#intro").count(), 0, device.name + " installed shortcut must open REAL app");
+      await page.locator("#app-splash").waitFor({ state: "detached", timeout: 6000 });
+      console.log("PASS", device.name, "old installed /app-preview shortcut opens real CineDesi animation");
+    }
+    const preview = await page.goto(base + "/app-preview?inspect=1", { waitUntil: "domcontentloaded", timeout: 30000 });
     assert.equal(preview?.status(), 200);
     await page.locator("#replay").click();
     assert.ok(await page.locator("#intro").isVisible(), device.name + " replay control failed");
