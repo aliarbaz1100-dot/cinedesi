@@ -604,6 +604,24 @@ function init() {
         } else {
           html = html.replace("▶ Details", "▶ Resume");
         }
+        const qaPreview = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
+        if (qaPreview) {
+          const rawSeconds = Number(resume?.position_seconds);
+          const rawDuration = Number(resume?.duration_seconds);
+          const validTime = Number.isFinite(rawSeconds) && Number.isFinite(rawDuration) && rawSeconds >= 3 && rawDuration > rawSeconds;
+          const percent = validTime ? Math.max(1, Math.min(99, Math.round(100 * rawSeconds / rawDuration))) : 0;
+          const minutes = validTime ? Math.floor(rawSeconds / 60) : 0;
+          const seconds = validTime ? Math.floor(rawSeconds % 60) : 0;
+          const watched = validTime ? `${minutes}:${String(seconds).padStart(2, "0")} watched` : "";
+          const label = m.content_type === "series"
+            ? (Number.isInteger(episodeNumber) && episodeNumber > 0 ? `Continue · Episode ${episodeNumber}` : "Continue series")
+            : "Continue movie";
+          const progress = validTime
+            ? `<div class='qa-resume-track' role='progressbar' aria-label='${esc(label)}' aria-valuemin='0' aria-valuemax='100' aria-valuenow='${percent}'><i style='width:${percent}%'></i></div>`
+            : "";
+          const detail = `<div class='qa-resume-meta'><span>${esc(label)}</span><small>${esc(watched)}</small>${progress}</div>`;
+          html = html.replace("</article>", detail + "</article>");
+        }
         return html;
       }).join("");
       wire(continueGrid);
