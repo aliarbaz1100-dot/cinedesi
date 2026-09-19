@@ -48,47 +48,60 @@
   }catch(e){}
 })();</script>
     <style id="qa-launch-style">
-      /* This matches the /app-preview intro, but ONLY in the installed app. */
+      /* Icon-only QA intro. Gate keyframes until WebKit can actually paint:
+         otherwise iOS consumes animation while showing its native snapshot. */
       html.cd-qa-mode:not(.cd-qa-standalone) .app-splash{display:none!important}
       html.cd-qa-standalone{background:#050505!important}
       html.cd-qa-standalone .app-splash{
         display:flex!important;position:fixed!important;inset:0!important;z-index:2147483000!important;
         flex-direction:column!important;align-items:center!important;justify-content:center!important;
         overflow:hidden!important;background:radial-gradient(circle at 50% 42%,#211316,#050505 58%)!important;
-        opacity:1!important;visibility:visible!important;pointer-events:auto;
+        opacity:1!important;visibility:visible!important;pointer-events:none!important;
       }
       html.cd-qa-standalone .app-splash .splash-brand{
         position:relative;display:flex!important;flex-direction:column!important;align-items:center!important;
-        justify-content:center!important;transform:none!important;min-height:0!important;
-        padding:20px;text-align:center!important;animation:none!important;
+        justify-content:center!important;min-height:0!important;padding:20px;text-align:center!important;
+        animation:none!important;transform:none!important;
       }
       html.cd-qa-standalone .app-splash .splash-logo{
-        font:950 36px/1 Arial,sans-serif!important;letter-spacing:-2.4px!important;
-        color:#fff!important;white-space:nowrap!important;
-        animation:qa-icon-brand-in .8s .1s both!important;
+        font:950 36px/1 Arial,sans-serif!important;letter-spacing:-2.4px!important;color:#fff!important;white-space:nowrap!important;
+        opacity:0!important;transform:scale(.88);filter:blur(3px);animation:none!important;
       }
       html.cd-qa-standalone .app-splash .splash-logo span{color:#e50914!important}
       html.cd-qa-standalone .app-splash .splash-line{
-        display:block!important;height:2px!important;width:38px!important;margin:17px 0!important;
-        background:#e50914!important;animation:qa-icon-line-in .7s .3s both!important;
+        display:block!important;height:2px!important;width:0!important;margin:17px 0!important;
+        background:#e50914!important;opacity:0!important;animation:none!important;
       }
       html.cd-qa-standalone .app-splash .splash-brand p{
         display:block!important;margin:0!important;color:#bbb!important;
         font:700 10px/1.4 Arial,sans-serif!important;letter-spacing:2px!important;text-transform:uppercase!important;
-        animation:qa-icon-caption-in .7s .5s both!important;
+        opacity:0!important;animation:none!important;
       }
       html.cd-qa-standalone .app-splash .splash-brand strong{color:#eee!important}
+      html.cd-qa-standalone .app-splash.qa-intro-play .splash-logo{
+        animation:qa-icon-brand-in .64s .02s cubic-bezier(.2,.75,.18,1) both!important;
+      }
+      html.cd-qa-standalone .app-splash.qa-intro-play .splash-line{
+        animation:qa-icon-line-in .56s .23s both!important;
+      }
+      html.cd-qa-standalone .app-splash.qa-intro-play .splash-brand p{
+        animation:qa-icon-caption-in .56s .39s both!important;
+      }
       html.cd-qa-standalone .app-splash.splash-exit{
         opacity:0!important;visibility:hidden!important;pointer-events:none!important;
-        transition:opacity .5s ease,visibility .5s ease!important;
+        transition:opacity .35s ease,visibility .35s ease!important;
       }
       @keyframes qa-icon-brand-in{from{opacity:0;transform:scale(.88);filter:blur(3px)}to{opacity:1;transform:scale(1);filter:blur(0)}}
       @keyframes qa-icon-line-in{from{width:0;opacity:0}to{width:38px;opacity:1}}
       @keyframes qa-icon-caption-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
       @media(prefers-reduced-motion:reduce){
-        html.cd-qa-standalone .app-splash .splash-logo,
-        html.cd-qa-standalone .app-splash .splash-line,
-        html.cd-qa-standalone .app-splash .splash-brand p{animation:none!important}
+        html.cd-qa-standalone .app-splash .splash-logo{filter:none!important}
+        html.cd-qa-standalone .app-splash.qa-intro-play .splash-logo,
+        html.cd-qa-standalone .app-splash.qa-intro-play .splash-line,
+        html.cd-qa-standalone .app-splash.qa-intro-play .splash-brand p{
+          animation:none!important;opacity:1!important;transform:none!important;
+        }
+        html.cd-qa-standalone .app-splash.qa-intro-play .splash-line{width:38px!important}
       }
     </style>
     <style id="pwa-splash-critical">
@@ -114,82 +127,76 @@
   <body class="home-body">
     <div id="app-splash" class="app-splash" aria-hidden="true"><div class="splash-brand"><div class="splash-logo">CINE<span>DESI</span></div><div class="splash-line"></div><p>Powered by <strong>Arbaz Ali</strong></p></div></div>
     <script id="qa-splash-controller">(function(){
-  var root=document.documentElement;
-  var splash=document.getElementById("app-splash");
-  if(!splash)return;
-  // No overlay on the browser, /app-preview iframe, movie return, or live site.
-  if(!root.classList.contains("cd-qa-standalone")){splash.remove();return}
-  var installed=navigator.standalone===true||
+  var root=document.documentElement,overlay=document.getElementById("app-splash");
+  if(!overlay)return;
+  var installed=(navigator.standalone===true)||
     !!(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches);
-  if(!installed){splash.remove();root.classList.remove("cd-qa-standalone");return}
-  var shownAt=0,hiddenAt=0,removal=0,release=0,pending=true;
-  function remove(node){
-    if(!node||node!==splash)return;
-    window.clearTimeout(removal);window.clearTimeout(release);
+  if(!installed||!root.classList.contains("cd-qa-standalone")){
+    overlay.remove();return;
+  }
+  var pending=true,hiddenSince=0,lastPlayed=0,token=0;
+  function dismiss(node){
+    if(node!==overlay)return;
     node.classList.add("splash-exit");
-    release=window.setTimeout(function(){
-      if(node.parentNode)node.parentNode.removeChild(node);
-      if(splash===node)splash=null;
-      root.classList.remove("cd-qa-standalone");
-    },510);
-  }
-  function show(node){
-    if(!pending||!node||node!==splash||document.hidden)return;
-    pending=false;shownAt=Date.now();
-    // The installed iOS Home Screen snapshot can consume CSS keyframes while
-    // its webview is hidden. A new subtree starts the EXACT preview animation
-    // only after the actual web page receives visible rendering frames.
-    node.classList.remove("splash-exit");
-    var oldBrand=node.querySelector(".splash-brand");
-    if(oldBrand&&oldBrand.parentNode){
-      oldBrand.parentNode.replaceChild(oldBrand.cloneNode(true),oldBrand);
-    }
-    node.style.opacity="";
-    removal=window.setTimeout(function(){remove(node)},2200);
-  }
-  function schedule(node,delay){
     window.setTimeout(function(){
-      if(!node||node!==splash||document.hidden)return;
-      requestAnimationFrame(function(){requestAnimationFrame(function(){show(node)})});
-      // iOS Home Screen may postpone requestAnimationFrame while opening.
-      // The timer starts the animation once the page is visible.
-      window.setTimeout(function(){if(pending&&node===splash&&!document.hidden)show(node)},170);
-    },delay);
+      if(node.parentNode)node.parentNode.removeChild(node);
+      if(node===overlay)overlay=null;
+      root.classList.remove("cd-qa-standalone");
+    },370);
+  }
+  function animate(node){
+    if(!pending||!node||node!==overlay||document.hidden)return;
+    pending=false;
+    lastPlayed=Date.now();
+    node.classList.add("qa-intro-play");
+    // UX: crossfade straight into the real Home page; no extra static logo hold.
+    window.setTimeout(function(){dismiss(node)},1250);
+  }
+  function paintWhenVisible(node){
+    if(!node||node!==overlay||document.hidden)return;
+    var run=++token,started=false;
+    function go(){
+      if(started||run!==token||document.hidden||node!==overlay)return;
+      started=true;animate(node);
+    }
+    requestAnimationFrame(function(){requestAnimationFrame(go)});
+    window.setTimeout(go,85); // iOS first visible frame can postpone RAF.
   }
   function internalReturn(){
     if(/[?&](?:returnY|returnSection|returnOffset)=/.test(location.search))return true;
-    var at=0;
-    try{at=Number(sessionStorage.getItem("cinedesi-qa-internal-nav")||0)}catch(e){}
-    return at>0&&Date.now()-at<90000;
+    var marked=0;
+    try{marked=Number(sessionStorage.getItem("cinedesi-qa-internal-nav")||0)}catch(e){}
+    return marked>0&&Date.now()-marked<90000;
   }
-  // Both events matter: cold launch can restore a suspended iOS WebView
-  // without a new page navigation. Do not replay on film back/forward.
-  function resume(){
-    if(!installed||document.hidden||!hiddenAt)return;
-    var away=Date.now()-hiddenAt;hiddenAt=0;
-    if(pending&&splash){schedule(splash,250);return}
-    if(away<2000||Date.now()-shownAt<4200||internalReturn()||splash)return;
+  function reenter(){
+    if(!installed||document.hidden||!hiddenSince)return;
+    var away=Date.now()-hiddenSince;hiddenSince=0;
+    if(pending&&overlay){paintWhenVisible(overlay);return;}
+    if(away<2400||Date.now()-lastPlayed<3300||internalReturn()||overlay)return;
     pending=true;
-    var node=document.createElement("div");node.id="app-splash";node.className="app-splash";
-    node.setAttribute("aria-hidden","true");
+    var node=document.createElement("div");
+    node.id="app-splash";node.className="app-splash";node.setAttribute("aria-hidden","true");
     node.innerHTML='<div class="splash-brand"><div class="splash-logo">CINE<span>DESI</span></div><div class="splash-line"></div><p>Powered by <strong>Arbaz Ali</strong></p></div>';
     root.classList.add("cd-qa-standalone");
-    document.body.insertBefore(node,document.body.firstChild);splash=node;
-    node.style.opacity="0";
-    schedule(node,250);
+    document.body.insertBefore(node,document.body.firstChild);
+    overlay=node;
+    paintWhenVisible(node);
   }
-  document.addEventListener("visibilitychange",function(){if(document.hidden)hiddenAt=Date.now();else resume()});
-  window.addEventListener("pagehide",function(){hiddenAt=Date.now()});
-  window.addEventListener("pageshow",function(e){if(e.persisted){hiddenAt=0;return}resume()});
-  window.addEventListener("focus",resume);
-  splash.style.opacity="0";
-  function start(){if(!pending||!splash||document.hidden)return;schedule(splash,360)}
-  window.addEventListener("pageshow",start,{once:true});
-  if(document.readyState==="complete")start();
-  else window.addEventListener("load",start,{once:true});
-  // If iOS never signals readiness, do not trap users on a black screen.
-  window.setTimeout(function(){if(pending&&splash){splash.style.opacity="";show(splash)}},2500);
-  window.setTimeout(function(){if(splash&&shownAt===0)remove(splash)},6000);
+  document.addEventListener("visibilitychange",function(){
+    if(document.hidden){hiddenSince=Date.now();++token}
+    else reenter();
+  });
+  window.addEventListener("pageshow",function(event){
+    if(event.persisted){hiddenSince=0;return;} // Movie back is not app launch.
+    if(pending&&overlay)paintWhenVisible(overlay);
+    else reenter();
+  });
+  window.addEventListener("focus",reenter);
+  // DOM is already here: don't delay the intro until analytics or catalog loads.
+  if(!document.hidden)paintWhenVisible(overlay);
+  // Only an emergency timeout, never wait on an unavailable third-party API.
+  window.setTimeout(function(){if(pending&&overlay){if(!document.hidden)animate(overlay);else dismiss(overlay)}},1600);
+  window.setTimeout(function(){if(overlay) dismiss(overlay)},3600);
 })();</script>
     <div id="app">
       <header class="catalog-header">
