@@ -165,7 +165,9 @@ function init() {
     else setTimeout(fn, desktopFastPath ? 120 : 180);
   };
   if ("scrollRestoration" in history) history.scrollRestoration = "auto";
+  const qaDomain = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
   const track = async (event, slug = null) => {
+    if (qaDomain) return;
     try {
       const response = await apiFetch("rpc/track_cinedesi_event", {
         method: "POST",
@@ -968,6 +970,10 @@ function init() {
   });
   newsletter.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (qaDomain) {
+      newsletterMsg.textContent = "Subscriptions are disabled in the QA preview.";
+      return;
+    }
     const form = new FormData(newsletter), email = String(form.get("email") || "").trim().toLowerCase(), consent = form.get("consent") === "on";
     newsletterMsg.textContent = "";
     newsletterMsg.className = "form-msg";
