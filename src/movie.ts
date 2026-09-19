@@ -33,7 +33,7 @@ movieBack?.addEventListener("click", (event) => {
     location.replace("./");
   }
 }, { capture: true });
-const URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co", KEY = "sb_publishable_ZEAZWO-Q-_rvMsy6krr_nw_JDRmP_kI";
+const SUPABASE_URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co", KEY = "sb_publishable_ZEAZWO-Q-_rvMsy6krr_nw_JDRmP_kI";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const xml = (s) => String(s ?? "").replace(/[&<>\"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const posterArt = (m) => {
@@ -106,7 +106,7 @@ async function load() {
     root.innerHTML = `<div class='empty'>Movie not specified. <a href='./'>Return to CineDesi</a></div>`;
     return;
   }
-  const db = supabase.createClient(URL, KEY);
+  const db = supabase.createClient(SUPABASE_URL, KEY);
   const qaDomain = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
   const track = async (event) => {
     if (qaDomain) return;
