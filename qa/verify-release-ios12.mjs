@@ -51,11 +51,13 @@ try {
   page.on("pageerror",err=>errors.push(err.message));
   const resp=await page.goto(address+"/?source=pwa",{waitUntil:"domcontentloaded",timeout:30000});
   assert.equal(resp?.status(),200);
+  await page.waitForFunction(()=>document.documentElement.getAttribute("data-qa-intro-started")==="1",null,{timeout:3000});
+  const introPlayed=await page.evaluate(()=>document.documentElement.getAttribute("data-qa-intro-started")==="1");
   await page.waitForFunction(()=>document.querySelector("#new-grid .card"),null,{timeout:20000});
   const state=await page.evaluate(()=>({
     host:location.hostname,
     class:document.documentElement.classList.contains("cd-qa-mode"),
-    installed:document.documentElement.classList.contains("cd-qa-standalone"),
+    installed:navigator.standalone===true,
     source:document.querySelector("#new-grid .card")?.dataset.id,
     newIds:Array.from(document.querySelectorAll("#new-grid .card[data-id]")).map(el=>Number(el.dataset.id)),
     topIds:Array.from(document.querySelectorAll("#top-grid .card[data-id]")).map(el=>Number(el.dataset.id)),
@@ -63,7 +65,7 @@ try {
     diagnostic:!!document.getElementById("qa-launch-check-panel")
   }));
   assert.equal(state.host,"cinedesi.online");
-  assert.ok(state.class&&state.installed&&state.shimmed,"Live origin should use approved UI and Safari 12 shims");
+  assert.ok(state.class&&state.installed&&state.shimmed&&introPlayed,"Live origin should use approved UI, real standalone intro, and Safari 12 shims");
   assert.deepEqual(new Set(state.newIds),new Set([92001,92002]),"Only non-Watch movies in New & Trending");
   assert.ok(state.topIds.length&&state.topIds.every(id=>id===92003),"Other rails only Watch on CineDesi");
   assert.equal(state.diagnostic,false,"Private QA debug controls must stay out of production");
