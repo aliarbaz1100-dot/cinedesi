@@ -1,0 +1,45 @@
+name: Verify CineDesi PWA and movie navigation
+
+on:
+  push:
+    branches: [fix/pwa-navigation-stability-20260919]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Check built entrypoints and installed-app shell
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const read = (file) => fs.readFileSync(file, 'utf8');
+          for (const file of ['dist/index.html','dist/movie.html','dist/sw.js','dist/manifest.webmanifest']) {
+            assert.ok(fs.existsSync(file), 'Missing built file: ' + file);
+          }
+          const home = read('dist/index.html');
+          const movie = read('dist/movie.html');
+          const sw = read('dist/sw.js');
+          const jsAssets = [...home.matchAll(/<script[^>]+src=["']([^"']+)["']/g)].map(m => m[1]);
+          assert.ok(jsAssets.some(p => p.includes('/assets/')), 'Homepage bundle missing');
+          assert.ok(movie.includes('/assets/'), 'Movie page bundle missing');
+          assert.ok(jsAssets.every(p => !p.endsWith('.ts')), 'Unbuilt TypeScript in deployed homepage');
+          assert.ok(sw.includes('cinedesi-shell-v27'), 'Stale service worker deployed');
+          assert.ok(sw.includes('movie.html'), 'Movie route missing from PWA shell');
+          assert.ok(home.includes('setTimeout(function()'), 'Splash failsafe missing');
+          assert.ok(read('src/main.ts').includes('/movie.html?slug='), 'Movie route not migrated');
+          assert.ok(!read('src/main.ts').includes('setTimeout(showInstall, 4200)'), 'Auto install banner still enabled');
+          console.log('PASS: build entrypoints, movie route, PWA shell, splash, and install popup');
+          JS
