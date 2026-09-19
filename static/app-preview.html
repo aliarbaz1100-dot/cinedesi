@@ -5,7 +5,7 @@
 <script id="qa-installed-shortcut-route">(function(){
   try {
     var standalone=(navigator.standalone===true)||(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches);
-    if(standalone && window.top===window){
+    if(standalone && window.top===window && !/[?&]inspect=1(?:&|$)/.test(location.search)){
       // Older home-screen shortcuts may point to /app-preview, the desktop
       // review page. Take them to the ACTUAL QA app instead of showing its
       // decorative embedded animation (which never runs on the installed icon).
