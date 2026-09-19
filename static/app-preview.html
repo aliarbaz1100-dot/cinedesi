@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive"><meta name="theme-color" content="#08090b">
+<title>CineDesi QA · Review the mobile app</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#080809;color:#fff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 30% 0,rgba(229,9,20,.08),transparent 40%),#080809}
+a{text-decoration:none;color:inherit}button{font:inherit;cursor:pointer}
+header{padding:16px max(20px,5vw);border-bottom:1px solid #242426;display:flex;justify-content:space-between;align-items:center;gap:12px;background:#080809}
+.logo{font-weight:900;letter-spacing:-1px;font-size:24px}.logo span,.red{color:#e50914}
+.tag{font-size:10px;letter-spacing:1px;color:#ccc;border:1px solid #444;padding:7px 10px;border-radius:100px}
+main{max-width:1140px;margin:auto;padding:34px 18px 70px;display:grid;grid-template-columns:420px minmax(0,1fr);gap:34px;align-items:start}
+.phone-shell{position:relative;width:375px;max-width:100%;height:720px;margin:0 auto;border:8px solid #242427;border-radius:38px;overflow:hidden;background:#050505;box-shadow:0 35px 85px #000a}
+.phone-screen{position:absolute;inset:8px 0 0}.phone-screen iframe{display:block;width:100%;height:100%;border:0;background:#050505}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:6;background:#242427;border-radius:0 0 16px 16px;width:120px;height:17px;pointer-events:none}
+.intro{position:absolute;inset:0;z-index:7;background:radial-gradient(circle at 50% 42%,#211316,#050505 58%);display:flex;flex-direction:column;align-items:center;justify-content:center;animation:intro-out .5s 2.2s forwards}
+.intro strong{font-size:36px;font-weight:950;letter-spacing:-2.4px;animation:brand-in .8s .1s both}.intro strong span{color:#e50914}
+.intro i{display:block;height:2px;width:38px;background:#e50914;margin:17px 0;animation:line-in .7s .3s both}
+.intro small{font-size:10px;color:#bbb;letter-spacing:2px;text-transform:uppercase;animation:caption-in .7s .5s both}
+@keyframes brand-in{from{opacity:0;transform:scale(.88);filter:blur(3px)}to{opacity:1;transform:none;filter:none}}
+@keyframes line-in{from{width:0;opacity:0}to{width:38px;opacity:1}}
+@keyframes caption-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes intro-out{to{opacity:0;visibility:hidden;pointer-events:none}}
+h1{font-size:clamp(30px,4.2vw,50px);line-height:1.08;letter-spacing:-1.4px;margin:6px 0 14px}
+.kicker{color:#fa6570;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
+.lead{font-size:15px;line-height:1.65;color:#c2c2c9;max-width:550px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin:23px 0}
+.button{display:inline-flex;justify-content:center;align-items:center;min-height:46px;padding:12px 17px;border-radius:8px;border:1px solid #48484f;background:#222226;font-size:13px;font-weight:750;white-space:nowrap}
+.button.primary{background:#f4f4f7;border-color:#f4f4f7;color:#09090a}.button:focus-visible{outline:3px solid #e50914;outline-offset:3px}
+.panel{border:1px solid #29292e;background:#121214;padding:17px 18px;border-radius:12px;margin-top:22px}
+.panel h2{font-size:16px;margin:0 0 8px}.panel p{margin:4px 0;color:#bbb;font-size:13px;line-height:1.55}
+.foot{color:#92929a;font-size:12px;margin-top:20px;line-height:1.5}
+@media(max-width:790px){main{display:flex;flex-direction:column;align-items:stretch;gap:30px;padding-top:25px}article{order:-1}h1{font-size:32px}.phone-shell{height:650px;border-radius:30px}.lead{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.intro,.intro *{animation:none}.intro{display:none}}
+</style></head>
+<body><header><div class="logo">CINE<span>DESI</span></div><div class="tag">PRIVATE QA · NOT LIVE</div></header>
+<main>
+<section aria-label="CineDesi mobile test app">
+<div class="phone-shell"><div class="notch"></div>
+<div class="phone-screen"><iframe title="Interactive CineDesi QA website — real test catalog" src="/?qa=1&preview=1" loading="eager"></iframe></div>
+<div class="intro" id="intro" aria-hidden="true"><strong>CINE<span>DESI</span></strong><i></i><small>Powered by Arbaz Ali</small></div>
+</div>
+</section>
+<article>
+<div class="kicker">Mobile app review</div><h1>Everything in its place. Every screen ready to inspect.</h1>
+<p class="lead">Explore the actual QA movie catalog in the phone preview. Open any title to review its details, player, episodes, and Continue Watching. The short branded intro here is a visual replay; the installed QA app has its own opening animation.</p>
+<div class="actions"><a class="button primary" href="/?qa=1&source=pwa" id="install">Open QA app to install →</a><button class="button" id="replay" type="button">Replay opening animation</button></div>
+<div class="panel"><h2>Install and check on your phone</h2>
+<p><b>iPhone:</b> open the QA app link in Safari, tap Share → Add to Home Screen, then open the new <b>CineDesi QA</b> icon.</p>
+<p><b>Android:</b> open in Chrome, tap the browser menu → Install app or Add to Home screen.</p>
+<p>The test app uses a separate address and will not replace CineDesi on cinedesi.online.</p></div>
+<p class="foot">Preview uses the genuine published catalog. Third-party embedded videos only play where their rights holders and your device allow. This review does not publish design changes to the main CineDesi site.</p>
+</article>
+</main>
+<script>
+document.getElementById("replay").addEventListener("click",function(){var old=document.getElementById("intro"),next=old.cloneNode(true);old.parentNode.replaceChild(next,old)});
+</script>
+</body></html>
