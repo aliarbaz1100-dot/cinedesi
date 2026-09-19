@@ -37,6 +37,23 @@ jobs:
           Path("dist/sitemap.xml").unlink(missing_ok=True)
           print("QA-only noindex tags and crawler rules applied; production source remains unchanged.")
           PY
+      - name: Build distinct installable QA app and live mobile preview
+        run: |
+          node --check scripts/prepare-qa-app.mjs
+          node scripts/prepare-qa-app.mjs
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const manifest=JSON.parse(fs.readFileSync('dist/manifest.webmanifest','utf8'));
+          const home=fs.readFileSync('dist/index.html','utf8');
+          const preview=fs.readFileSync('dist/app-preview.html','utf8');
+          assert.equal(manifest.short_name,'CineDesi QA','Preview must have its own app label');
+          assert.ok(manifest.start_url.includes('qa=1'),'Preview install must open its own homepage');
+          assert.ok(home.includes('apple-mobile-web-app-title" content="CineDesi QA"'),'iOS test app label not separate');
+          assert.ok(home.includes('noindex,nofollow,noarchive'),'Noindex lost');
+          assert.ok(preview.includes('Live CineDesi QA home screen') && preview.includes('Add to Home Screen'),'Mobile app preview missing');
+          console.log('PASS QA test app has separate install name, preview UI and working app entrypoint');
+          JS
       - name: Deploy distinct QA Worker (never production cinedesi)
         env:
           CLOUDFLARE_API_TOKEN_RAW: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -74,6 +91,7 @@ jobs:
             ("/manifest.webmanifest","json","start_url"),
             ("/sw.js","javascript","cinedesi-shell-v28"),
             ("/robots.txt","text/plain","Disallow: /"),
+            ("/app-preview.html","text/html","Live CineDesi QA home screen"),
           ]
           for path,content_type,marker in checks:
               err=None
@@ -86,7 +104,7 @@ jobs:
                           assert content_type in mime, f"{path}: unexpected MIME {mime}"
                           assert "attachment" not in disposition, f"{path}: downloaded rather than rendered"
                           assert marker in body, f"{path}: expected content missing"
-                          if path.endswith("/") or path.startswith("/movie.html"):
+                          if path.endswith("/") or path.startswith("/movie.html") or path.startswith("/app-preview.html"):
                               assert "noindex,nofollow,noarchive" in body, f"{path}: QA noindex missing"
                           print("PASS",path,response.status,mime)
                           err=None
