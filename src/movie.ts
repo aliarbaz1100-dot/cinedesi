@@ -397,9 +397,13 @@ async function load() {
     }
   };
 
-  const markEpisodeActive = (el) => {
+  const markEpisodeActive = (el, scrollToPlayer = true) => {
     document.querySelectorAll("[data-episode]").forEach((item) => item.classList.toggle("active", item === el));
-    document.querySelector("#watch")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Next/Previous and saved-episode jumps must not trigger a smooth-scroll
+    // animation that can cancel the following touch on compact iOS screens.
+    if (scrollToPlayer) {
+      document.querySelector("#watch")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   const reverseYoutubePlaylistOrder = playlistGenerated && reverseYoutubeSourceOrder;
@@ -703,7 +707,7 @@ async function load() {
 
   document.querySelector("#trailer-link")?.addEventListener("click", () => track("trailer_click"));
   document.querySelector("#watch-link")?.addEventListener("click", () => track("watch_click"));
-  document.querySelectorAll("[data-episode]").forEach((el) => el.addEventListener("click", () => {
+  document.querySelectorAll("[data-episode]").forEach((el) => el.addEventListener("click", (event) => {
     const videoId = String(el.dataset.videoId || "");
     const playlistId = String(el.dataset.playlistId || "");
     const playlistKind = String(el.dataset.playlistKind || "");
@@ -727,7 +731,7 @@ async function load() {
       return;
     }
 
-    markEpisodeActive(el);
+    markEpisodeActive(el, event.isTrusted);
     track("episode_play");
   }));
   document.querySelectorAll("[data-track-watch]").forEach((el) => el.addEventListener("click", () => {
