@@ -97,7 +97,18 @@ jobs:
             ['/movie?slug=qa-smoke','text/html','movie-page'],
             ['/qa-compat.js','javascript','cd-qa-mode']
           ]) {
-            const response=await fetch(base+path,{headers:{'Cache-Control':'no-cache'}});
+            let response;
+            let lastError;
+            for(let attempt=0;attempt<5;attempt++){
+              try {
+                response=await fetch(base+path,{headers:{'Cache-Control':'no-cache'},signal:AbortSignal.timeout(15000)});
+                break;
+              } catch(error) {
+                lastError=error;
+                if(attempt<4)await new Promise(resolve=>setTimeout(resolve,700*(attempt+1)));
+              }
+            }
+            if(!response)throw Error('QA route '+path+' unreachable after five attempts: '+String(lastError));
             assert.equal(response.status,200,path+' returned '+response.status);
             assert.ok(response.headers.get('content-type')?.includes(kind),path+' content type '+response.headers.get('content-type'));
             assert.ok(response.headers.get('x-robots-tag')?.includes('noindex'),path+' must not be indexed');
