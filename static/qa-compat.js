@@ -86,6 +86,8 @@
       'splash-node=' + String(!!element),
       'logo-animation=' + String(style ? style.animationName : 'none'),
       'service-worker-controlled=' + String(!!(navigator.serviceWorker && navigator.serviceWorker.controller)),
+      'reduce-motion=' + String(!!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)),
+      'intro-timing=' + (function(){try{return sessionStorage.getItem('cinedesi-qa-intro-timing')||'not-started'}catch(e){return 'unavailable'}})(),
       'events=' + qaEvents.join(', '),
       'early-launch=' + (function(){try{return sessionStorage.getItem('cinedesi-qa-last-launch-check')||'none'}catch(e){return 'unavailable'}})()
     ].join('\n');
