@@ -35,13 +35,13 @@ try {
   for (const device of devices) {
     const { name, ...browserDevice } = device;
     const context = await browser.newContext(browserDevice);
-    if (device.name.startsWith("iphone")) {
-      // The emulation is Chromium with Safari-12 UA and iPhone 6 geometry,
-      // not actual iOS 12/WebKit hardware. This test cannot certify hardware playback.
-      await context.addInitScript(() => {
-        Object.defineProperty(navigator, "standalone", { configurable: true, get: () => true });
-      });
-    }
+    // The browser test emulates an already INSTALLED PWA, rather than a
+    // Safari/Chrome website. Android supports display-mode: standalone; the
+    // iPhone shim emulates the corresponding iOS navigator.standalone signal.
+    // Neither emulation is a physical iPhone or Android installation.
+    await context.addInitScript(() => {
+      Object.defineProperty(navigator, "standalone", { configurable: true, get: () => true });
+    });
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -65,9 +65,9 @@ try {
       return { red: getComputedStyle(logo).color, animation: getComputedStyle(brand).animationName };
     });
     assert.match(launchArt.red, /229,\s*9,\s*20/, device.name + " launch logo must have CineDesi red");
-    assert.match(launchArt.animation, /qa-brand-in/, device.name + " launch branding must animate");
+    assert.match(launchArt.animation, /qa-icon-brand-in/, device.name + " launch branding must animate");
     console.log("PASS", device.name, "first-frame branded launch", Date.now() - start, "ms");
-    await overlay.waitFor({ state: "detached", timeout: 6100 });
+    await overlay.waitFor({ state: "detached", timeout: 7200 });
     await page.locator("#home").waitFor({ state: "visible", timeout: 7000 });
     const top = await page.evaluate(() => {
       const header = document.querySelector(".catalog-header");
@@ -158,10 +158,23 @@ try {
       const bookmarkPage = await bookmarkContext.newPage();
       await bookmarkPage.goto(base + "/app-preview", { waitUntil: "domcontentloaded", timeout: 30000 });
       await bookmarkPage.waitForURL(url => url.pathname === "/" && url.searchParams.get("install-launch") === "1", { timeout: 8000 });
-      await bookmarkPage.locator("#app-splash").waitFor({ state: "visible", timeout: 2000 });
-      assert.equal(await bookmarkPage.locator("#intro").count(), 0, "Safari bookmark shortcut must display the REAL QA app, not decorative mock preview");
-      console.log("PASS", device.name, "old non-standalone iOS bookmark shortcut redirects into real app and animated logo");
+      await bookmarkPage.waitForFunction(() => document.querySelector("#app-splash") === null, null, { timeout: 4500 });
+      assert.equal(await bookmarkPage.locator("#intro").count(), 0, "Browser shortcut must open real QA app, not decorative mock preview");
+      assert.equal(await bookmarkPage.evaluate(() => document.documentElement.classList.contains("cd-qa-standalone")), false, "Safari browser shortcut must NOT show the installed-icon-only animation");
+      console.log("PASS", device.name, "old browser bookmark shortcut redirects to real app without triggering installed-only intro");
       await bookmarkContext.close();
+    }
+    if (device.name === "iphone-modern") {
+      const ordinary = await browser.newContext(browserDevice);
+      const browserTab = await ordinary.newPage();
+      await browserTab.goto(base + "/?qa=1&source=pwa", { waitUntil: "domcontentloaded", timeout: 30000 });
+      const browserState = await browserTab.evaluate(() => ({
+        installed: document.documentElement.classList.contains("cd-qa-standalone"),
+        splash: !!document.querySelector("#app-splash")
+      }));
+      assert.deepEqual(browserState, { installed: false, splash: false }, "QA browser must never play the app-icon-only animation");
+      console.log("PASS", device.name, "installed-only animation is absent from ordinary Safari/Chrome browser");
+      await ordinary.close();
     }
     const preview = await page.goto(base + "/app-preview?inspect=1", { waitUntil: "domcontentloaded", timeout: 30000 });
     assert.equal(preview?.status(), 200);
