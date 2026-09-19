@@ -21,6 +21,21 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="CineDesi" />
+    <script id="qa-launch-detect">(function(){try{var qa=/(^|[.-])qa([.-]|$)/i.test(location.hostname)||new URLSearchParams(location.search).get("qa")==="1";var installed=window.matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;if(qa&&installed)document.documentElement.classList.add("cd-qa-standalone");}catch(e){}})();</script>
+    <style id="qa-launch-style">
+      html.cd-qa-standalone{background:#050506!important}
+      html.cd-qa-standalone .app-splash{display:flex!important;position:fixed;inset:0;z-index:99999;overflow:hidden;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#1c1013 0%,#08090b 38%,#020203 100%);transition:opacity .32s ease,visibility .32s ease}
+      html.cd-qa-standalone .app-splash .splash-brand{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;transform:translateY(4px);animation:qa-brand-in .9s cubic-bezier(.17,.8,.2,1) both}
+      html.cd-qa-standalone .app-splash .splash-logo{font-size:clamp(2rem,11vw,3.35rem);letter-spacing:-.065em;white-space:nowrap;animation:qa-logo-in .9s cubic-bezier(.22,.76,.2,1) both}
+      html.cd-qa-standalone .app-splash .splash-line{height:2px;background:#e50914;animation:qa-line-in .75s .3s cubic-bezier(.2,.85,.2,1) both}
+      html.cd-qa-standalone .app-splash .splash-brand p{color:#a7a8ad;animation:qa-caption-in .6s .43s ease both}
+      html.cd-qa-standalone .app-splash .splash-exit{opacity:0;visibility:hidden;pointer-events:none}
+      @keyframes qa-brand-in{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+      @keyframes qa-logo-in{from{opacity:0;letter-spacing:.06em;filter:blur(4px)}to{opacity:1;letter-spacing:-.065em;filter:blur(0)}}
+      @keyframes qa-line-in{from{width:0;opacity:.4}to{width:38px;opacity:1}}
+      @keyframes qa-caption-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+      @media(prefers-reduced-motion:reduce){html.cd-qa-standalone .app-splash *{animation:none!important}}
+    </style>
     <style id="pwa-splash-critical">
       .app-splash{display:none}
       @media (display-mode:standalone){html,body{background:#08090b}.app-splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 44%,#19191d 0,#08090b 40%,#020203 100%)}.splash-brand{text-align:center}.splash-logo{color:#fff;font:950 clamp(2rem,10vw,3.25rem)/1 Arial,sans-serif;letter-spacing:-.065em}.splash-logo span{color:#e50914}.splash-line{width:38px;height:2px;margin:18px auto 13px;background:#e50914}.splash-brand p{margin:0;color:#858991;font:700 .72rem/1.4 Arial,sans-serif;letter-spacing:.15em;text-transform:uppercase}.splash-brand strong{color:#ddd}}
