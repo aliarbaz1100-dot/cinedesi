@@ -30,6 +30,14 @@ for (const device of cases) {
       supportsPip:el.querySelector("#official-player")?.getAttribute("allow"),
     }));
     assert.ok(before.iframe && before.supportsPip?.includes("picture-in-picture"),device.name+" official embed/PiP permission missing");
+    console.log("QA PLAYER SIZE",device.name,JSON.stringify(before),await page.evaluate(()=>{
+      const stage=document.querySelector("#player-stage");
+      const section=document.querySelector("#watch");
+      return {viewport:window.innerWidth,cssMobile:matchMedia("(max-width:760px)").matches,
+        stageStyle:getComputedStyle(stage).width,stageMargin:getComputedStyle(stage).marginLeft,
+        sectionWidth:section?.getBoundingClientRect().width,sectionPadding:getComputedStyle(section).padding,
+        documentWidth:document.documentElement.scrollWidth};
+    }));
     assert.ok(before.width>=device.width*(device.mobile?.91:.50),device.name+" player too narrow: "+JSON.stringify(before));
     assert.ok(before.playerHeight>=140,device.name+" player unexpectedly short: "+JSON.stringify(before));
     await page.locator("#player-wide").click({timeout:12000});
