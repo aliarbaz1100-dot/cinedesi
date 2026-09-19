@@ -22,14 +22,24 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="CineDesi" />
-    <script id="qa-launch-detect">(function(){try{var qa=/(^|[.-])qa([.-]|$)/i.test(location.hostname)||new URLSearchParams(location.search).get("qa")==="1";var installed=window.matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;if(qa&&installed)document.documentElement.classList.add("cd-qa-standalone");}catch(e){}})();</script>
+    <script id="qa-launch-detect">(function(){
+  try {
+    var qa=/(^|[.-])qa([.-]|$)/i.test(location.hostname)||/[?&]qa=1(?:&|$)/.test(location.search);
+    var home=location.pathname==="/"||location.pathname==="/index.html";
+    var small=Math.min(screen.width||window.innerWidth,window.innerWidth||screen.width)<621;
+    var topLevel=window.top===window;
+    var installed=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+    var qaLaunch=qa&&home&&small&&topLevel&&(installed||/[?&](?:source=pwa|app-install=1)(?:&|$)/.test(location.search)||/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+    if(qaLaunch) document.documentElement.classList.add("cd-qa-standalone");
+  } catch(e) {}
+})();</script>
     <style id="qa-launch-style">
       html.cd-qa-standalone{background:#050506!important}
       html.cd-qa-standalone .app-splash{display:flex!important;position:fixed;inset:0;z-index:99999;overflow:hidden;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#1c1013 0%,#08090b 38%,#020203 100%);transition:opacity .32s ease,visibility .32s ease}
       html.cd-qa-standalone .app-splash .splash-brand{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;transform:translateY(4px);animation:qa-brand-in .9s cubic-bezier(.17,.8,.2,1) both}
       html.cd-qa-standalone .app-splash .splash-logo{font:950 35px/1 Arial,sans-serif;font-size:35px;font-size:clamp(2rem,11vw,3.35rem);letter-spacing:-.065em;white-space:nowrap;animation:qa-logo-in .9s cubic-bezier(.22,.76,.2,1) both}
       html.cd-qa-standalone .app-splash .splash-line{height:2px;background:#e50914;animation:qa-line-in .75s .3s cubic-bezier(.2,.85,.2,1) both}
-      html.cd-qa-standalone .app-splash .splash-brand p{color:#a7a8ad;animation:qa-caption-in .6s .43s ease both}
+      html.cd-qa-standalone .app-splash .splash-brand p{margin:0;color:#a7a8ad;font:700 11px/1.5 Arial,sans-serif;letter-spacing:.12em;text-align:center;text-transform:uppercase;animation:qa-caption-in .6s .43s ease both}\n      html.cd-qa-standalone .app-splash .splash-brand{text-align:center}\n      html.cd-qa-standalone .app-splash .splash-logo{color:#fff}\n      html.cd-qa-standalone .app-splash .splash-logo span{color:#e50914}\n      html.cd-qa-standalone .app-splash .splash-brand strong{color:#fff}\n      html.cd-qa-standalone .app-splash .splash-line{width:38px;margin:18px auto 13px}
       html.cd-qa-standalone .app-splash.splash-exit{opacity:0;visibility:hidden;pointer-events:none}
       @keyframes qa-brand-in{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
       @keyframes qa-logo-in{from{opacity:0;letter-spacing:.06em;filter:blur(4px)}to{opacity:1;letter-spacing:-.065em;filter:blur(0)}}
@@ -59,7 +69,31 @@
   </head>
   <body class="home-body">
     <div id="app-splash" class="app-splash" aria-hidden="true"><div class="splash-brand"><div class="splash-logo">CINE<span>DESI</span></div><div class="splash-line"></div><p>Powered by <strong>Arbaz Ali</strong></p></div></div>
-    <script>/* Independent startup failsafe even when the main bundle fails to load. */ setTimeout(function(){var splash=document.getElementById("app-splash");if(splash){splash.classList.add("splash-exit");splash.remove();}},5000);</script>
+    <script id="qa-splash-controller">(function(){
+  var splash=document.getElementById("app-splash");
+  if(!splash)return;
+  var qa=document.documentElement.classList.contains("cd-qa-standalone");
+  if(!qa)return;
+  var template=splash.cloneNode(true), shownAt=Date.now(), hiddenAt=0, closeTimer=null;
+  function dismiss(){
+    if(!splash)return;
+    splash.classList.add("splash-exit");
+    window.setTimeout(function(){if(splash&&splash.parentNode)splash.parentNode.removeChild(splash);},350);
+  }
+  function finishAfter(ms){window.clearTimeout(closeTimer);closeTimer=window.setTimeout(dismiss,ms);}
+  finishAfter(2200);
+  document.addEventListener("visibilitychange",function(){
+    if(document.hidden){hiddenAt=Date.now();return;}
+    if(!hiddenAt||Date.now()-hiddenAt<3500||location.pathname!=="/")return;
+    if(Date.now()-shownAt<3500)return;
+    if(document.getElementById("app-splash"))return;
+    splash=template.cloneNode(true);
+    document.body.insertBefore(splash,document.body.firstChild);
+    shownAt=Date.now();hiddenAt=0;
+    finishAfter(1900);
+  });
+  window.setTimeout(function(){var current=document.getElementById("app-splash");if(current){current.classList.add("splash-exit");window.setTimeout(function(){if(current.parentNode)current.parentNode.removeChild(current);},350);}},5200);
+})();</script>
     <div id="app">
       <header class="catalog-header">
         <a class="logo" href="./">CINE<span>DESI</span></a>
