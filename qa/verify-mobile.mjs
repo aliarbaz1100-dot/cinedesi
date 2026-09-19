@@ -56,7 +56,7 @@ try {
       const brand = document.querySelector("#app-splash .splash-brand");
       return { red: getComputedStyle(logo).color, animation: getComputedStyle(brand).animationName };
     });
-    assert.match(launchArt.red, /229,\\s*9,\\s*20/, device.name + " launch logo must have CineDesi red");
+    assert.match(launchArt.red, /229,\s*9,\s*20/, device.name + " launch logo must have CineDesi red");
     assert.match(launchArt.animation, /qa-brand-in/, device.name + " launch branding must animate");
     console.log("PASS", device.name, "first-frame branded launch", Date.now() - start, "ms");
     await overlay.waitFor({ state: "detached", timeout: 6100 });
