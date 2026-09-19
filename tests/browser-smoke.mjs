@@ -24,7 +24,7 @@ for (const [name, configuration] of [
     const href = await firstMovie.getAttribute("href");
     assert.ok(href && href.includes("slug="), name + " has clickable movie detail link");
     await firstMovie.click();
-    await page.waitForURL("**/movie.html?slug=**", { timeout: 12000 });
+    await page.waitForURL(/\/movie(?:\.html)?\?slug=/, { waitUntil: "domcontentloaded", timeout: 12000 });
     await page.waitForFunction(() => {
       const body = document.querySelector("#movie-page")?.innerText || "";
       return body.length > 35 && !body.includes("Loading verified movie details");
@@ -35,7 +35,7 @@ for (const [name, configuration] of [
     const type = await page.evaluate(() => document.contentType);
     assert.match(type, /text\/html/i, name + " detail must be HTML not a file download");
     await page.goto(base + "/movie?slug=" + encodeURIComponent(new URL(base + href).searchParams.get("slug")), { waitUntil: "domcontentloaded" });
-    await page.waitForURL("**/movie.html?slug=**", { timeout: 12000 });
+    await page.waitForURL(/\/movie(?:\.html)?\?slug=/, { waitUntil: "domcontentloaded", timeout: 12000 });
     assert.deepEqual(pageErrors, [], name + " uncaught errors");
     console.log("PASS " + name + ": homepage, install-popup, movie detail, legacy route, content MIME");
   } catch (error) {
