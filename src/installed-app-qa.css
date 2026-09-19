@@ -61,6 +61,82 @@
   html.cd-installed .home-body .section-head h2 {
     text-wrap: balance;
   }
+  /* The featured title must not be clipped by mobile display zoom or long names. */
+  html.cd-installed .home-body .streaming-hero {
+    min-height: min(635px, 76svh) !important;
+    padding: max(210px, 31svh) 16px 26px !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    overflow: hidden !important;
+  }
+  html.cd-installed .home-body .hero-content {
+    position: relative;
+    z-index: 3;
+    width: 100% !important;
+    min-width: 0;
+    overflow: visible;
+  }
+  html.cd-installed .home-body .hero-content h1 {
+    display: block !important;
+    max-width: 100% !important;
+    margin: 8px 0 !important;
+    font-size: clamp(1.9rem, 8.4vw, 2.65rem) !important;
+    line-height: 1.05 !important;
+    letter-spacing: -.04em !important;
+    overflow-wrap: break-word;
+    text-wrap: balance;
+  }
+  html.cd-installed .home-body .hero-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    gap: 8px;
+    flex-wrap: nowrap !important;
+  }
+  html.cd-installed .home-body .hero-actions .btn {
+    min-width: 0;
+    min-height: 45px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-inline: 8px !important;
+    white-space: nowrap;
+    font-size: .78rem !important;
+  }
+  html.cd-installed .home-body .hero-actions .hero-info-btn {
+    display: none !important;
+  }
+  html.cd-installed .home-body #continue-grid .qa-resume-meta {
+    padding: 6px 2px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: #f5f5f6;
+    font-size: 11px;
+    line-height: 1.25;
+    font-weight: 700;
+  }
+  html.cd-installed .home-body #continue-grid .qa-resume-meta small {
+    display: block !important;
+    color: #a5a6ab;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+  html.cd-installed .home-body #continue-grid .qa-resume-track {
+    display: block;
+    width: 100%;
+    height: 3px;
+    border-radius: 3px;
+    overflow: hidden;
+    background: #45454a;
+  }
+  html.cd-installed .home-body #continue-grid .qa-resume-track i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #e50914;
+  }
 
   html.cd-installed .home-body .catalog-header.search-mode .search-shell {
     padding-top: max(10px, env(safe-area-inset-top, 0px)) !important;
