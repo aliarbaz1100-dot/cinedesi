@@ -24,9 +24,11 @@ for(const device of [
     const appHeader=await frame.locator(".catalog-header").evaluate(el=>getComputedStyle(el).position);
     assert.equal(appHeader,"sticky",device.name+" premium app header should stay visible");
     const appNav=await frame.locator(".mobile-bottom-nav").evaluate(el=>({
-      radius:getComputedStyle(el).borderRadius,width:Math.round(el.getBoundingClientRect().width)
+      radius:getComputedStyle(el).borderRadius,
+      width:Math.round(el.getBoundingClientRect().width),
+      viewport:window.innerWidth
     }));
-    assert.ok(appNav.width>=device.width-2,device.name+" app nav should span full mobile width: "+appNav.width);
+    assert.ok(appNav.width>=appNav.viewport-2,device.name+" app nav should span its own embedded mobile viewport: "+JSON.stringify(appNav));
     await page.locator("#screen-episodes").click();
     assert.equal(await page.locator("#screen-episodes").getAttribute("aria-pressed"),"true",device.name+" movie-screen tab should be active");
     const episodes=page.frameLocator("iframe[title='Live CineDesi QA movie and episodes']");
