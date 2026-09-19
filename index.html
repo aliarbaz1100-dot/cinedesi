@@ -83,79 +83,127 @@
   <body class="home-body">
     <div id="app-splash" class="app-splash" aria-hidden="true"><div class="splash-brand"><div class="splash-logo">CINE<span>DESI</span></div><div class="splash-line"></div><p>Powered by <strong>Arbaz Ali</strong></p></div></div>
     <script id="qa-splash-controller">(function(){
-  // Review-app only: the installed PWA must animate in its own WebView,
-  // not merely in the desktop /app-preview illustration.
-  var html=document.documentElement;
-  if(!html.classList.contains("cd-qa-mode")||window.top!==window)return;
-  var splash=document.getElementById("app-splash");
-  var cold=html.classList.contains("cd-qa-standalone");
-  var appMode=navigator.standalone===true||
+  var root=document.documentElement;
+  if(!root.classList.contains("cd-qa-mode")||window.top!==window)return;
+  var app=navigator.standalone===true||
     !!(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||
     /[?&](?:source=pwa|install-launch=1)(?:&|$)/.test(location.search);
-  var backgroundAt=0, lastShown=cold?Date.now():0, cooldownUntil=Date.now()+2500, closing=false;
-  if(!cold&&splash){splash.remove();splash=null;}
-  function finish(node){
-    if(!node||closing)return;
-    closing=true;
-    node.classList.add("splash-exit");
-    window.setTimeout(function(){
-      if(node.parentNode)node.parentNode.removeChild(node);
-      if(!document.getElementById("app-splash"))html.classList.remove("cd-qa-standalone");
-      closing=false;
-    },370);
-  }
-  if(cold&&splash){
-    window.setTimeout(function(){finish(splash);},2250);
-    window.setTimeout(function(){finish(splash);},6000);
-  }
-  function isInternalNavigation(){
+  var node=document.getElementById("app-splash");
+  var cold=!!(node&&root.classList.contains("cd-qa-standalone"));
+  var lastShown=0,hiddenAt=0,holdUntil=Date.now()+1500;
+  var playTimer=0,hideTimer=0,exitTimer=0,frameToken=0;
+  if(!cold&&node){node.remove();node=null;}
+  function blocked(){
+    if(location.pathname!=="/"&&location.pathname!=="/index.html")return true;
     if(/[?&](?:returnY|returnSection|returnOffset)=/.test(location.search))return true;
-    var last=0,stop=0;
+    var marked=0,until=0;
     try{
-      last=Number(sessionStorage.getItem("cinedesi-qa-internal-nav")||0);
-      stop=Number(sessionStorage.getItem("cinedesi-qa-launch-suppress-until")||0);
+      marked=Number(sessionStorage.getItem("cinedesi-qa-internal-nav")||0);
+      until=Number(sessionStorage.getItem("cinedesi-qa-launch-suppress-until")||0);
     }catch(e){}
-    return (last>0&&Date.now()-last<90000)||stop>Date.now();
+    return (marked>0&&Date.now()-marked<90000)||until>Date.now()||Date.now()<holdUntil;
   }
-  function markBackground(){
-    if(!appMode||location.pathname!=="/")return;
-    backgroundAt=Date.now();
+  function finish(current){
+    if(!current||current!==node)return;
+    window.clearTimeout(hideTimer);
+    current.classList.add("splash-exit");
+    window.clearTimeout(exitTimer);
+    exitTimer=window.setTimeout(function(){
+      if(current.parentNode)current.parentNode.removeChild(current);
+      if(node===current)node=null;
+      if(!document.getElementById("app-splash"))root.classList.remove("cd-qa-standalone");
+    },400);
   }
-  function resume(){
-    if(!appMode||!backgroundAt||document.hidden||location.pathname!=="/")return;
-    var now=Date.now(),away=now-backgroundAt;
-    backgroundAt=0;
-    if(away<2600||now-lastShown<4800||now<cooldownUntil||isInternalNavigation())return;
-    if(document.getElementById("app-splash"))return;
-    var node=document.createElement("div");
+  function create(){
+    if(node)return node;
+    node=document.createElement("div");
     node.id="app-splash";
     node.className="app-splash";
     node.setAttribute("aria-hidden","true");
     node.innerHTML='<div class="splash-brand"><div class="splash-logo">CINE<span>DESI</span></div><div class="splash-line"></div><p>Powered by <strong>Arbaz Ali</strong></p></div>';
-    html.classList.add("cd-qa-standalone");
     document.body.insertBefore(node,document.body.firstChild);
-    splash=node;
-    lastShown=now;
-    window.setTimeout(function(){finish(node);},1900);
-    window.setTimeout(function(){finish(node);},4500);
+    return node;
+  }
+  function animate(current){
+    if(!current||current!==node||document.hidden)return;
+    root.classList.add("cd-qa-standalone");
+    current.classList.remove("splash-exit");
+    // Reset all CSS keyframes after WebKit actually resumes drawing the page.
+    current.style.animation="none";
+    var brand=current.querySelector(".splash-brand");
+    if(brand)brand.style.animation="none";
+    void current.offsetHeight;
+    current.style.animation="";
+    if(brand)brand.style.animation="";
+    lastShown=Date.now();
+    window.clearTimeout(hideTimer);
+    hideTimer=window.setTimeout(function(){finish(current);},2300);
+    window.setTimeout(function(){finish(current);},6500);
+  }
+  function visibleFrames(current,delay){
+    window.clearTimeout(playTimer);
+    var token=++frameToken;
+    playTimer=window.setTimeout(function(){
+      if(token!==frameToken||!current||current!==node||document.hidden)return;
+      requestAnimationFrame(function(){requestAnimationFrame(function(){
+        if(token===frameToken)animate(current);
+      });});
+    },delay);
+  }
+  // iOS first paints its own static Home Screen snapshot BEFORE showing HTML.
+  // Starting and ending the web animation during that snapshot is why the
+  // desktop preview works but users never see the animated installed app.
+  // Start the visible animation after page-show + rendering frames instead.
+  if(cold&&node){
+    // Keep the overlay while the native snapshot is up; avoid a frozen logo.
+    node.style.opacity="0";
+    var firstRun=false;
+    function startCold(){
+      if(firstRun||!node||document.hidden)return;
+      firstRun=true;
+      node.style.opacity="";
+      visibleFrames(node,app?700:120);
+    }
+    window.addEventListener("pageshow",startCold,{once:true});
+    if(document.readyState==="complete")window.setTimeout(startCold,350);
+    else window.addEventListener("load",function(){window.setTimeout(startCold,350);},{once:true});
+    // Never trap an app behind the overlay if iOS omits page-show.
+    window.setTimeout(function(){if(!firstRun)startCold();},2500);
+  }
+  function recordHidden(){
+    if(!app)return;
+    hiddenAt=Date.now();
+    ++frameToken;
+    window.clearTimeout(playTimer);
+  }
+  function tryResume(){
+    if(!app||document.hidden||!hiddenAt)return;
+    var duration=Date.now()-hiddenAt;
+    hiddenAt=0;
+    if(duration<2600||Date.now()-lastShown<4500||blocked())return;
+    if(node)return;
+    var resumed=create();
+    root.classList.add("cd-qa-standalone");
+    resumed.style.opacity="0";
+    visibleFrames(resumed,380);
+    window.setTimeout(function(){
+      if(resumed===node&&resumed.style.opacity==="0")resumed.style.opacity="";
+    },300);
   }
   document.addEventListener("visibilitychange",function(){
-    if(document.hidden)markBackground();
-    else resume();
+    if(document.hidden)recordHidden();
+    else tryResume();
   });
-  // Some iOS Home Screen shortcuts resume a suspended WebView with focus or
-  // page-show rather than a full reload; support those without route refresh.
-  window.addEventListener("blur",markBackground);
-  window.addEventListener("focus",resume);
-  window.addEventListener("pagehide",markBackground);
-  window.addEventListener("pageshow",function(e){
-    if(e.persisted){backgroundAt=0;cooldownUntil=Date.now()+6500;return;}
-    resume();
+  window.addEventListener("blur",function(){if(document.hidden)recordHidden();});
+  window.addEventListener("focus",tryResume);
+  window.addEventListener("pageshow",function(event){
+    if(event.persisted){hiddenAt=0;holdUntil=Date.now()+6500;return;}
+    tryResume();
   });
-  document.addEventListener("click",function(e){
-    var link=e.target.closest?e.target.closest("a[href]"):null;
+  document.addEventListener("click",function(event){
+    var link=event.target.closest?event.target.closest("a[href]"):null;
     if(link&&(String(link.href||"").indexOf("/movie?")>=0||String(link.href||"").indexOf("/movie.html?")>=0))
-      cooldownUntil=Date.now()+15000;
+      holdUntil=Date.now()+15000;
   },true);
 })();</script>
     <div id="app">
