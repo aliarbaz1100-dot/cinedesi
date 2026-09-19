@@ -28,7 +28,7 @@ for (const [name, configuration] of [
     await page.waitForFunction(() => {
       const body = document.querySelector("#movie-page")?.innerText || "";
       return body.length > 35 && !body.includes("Loading verified movie details");
-    }, { timeout: 45000 });
+    }, null, { timeout: 45000 });
     const detail = await page.locator("#movie-page").innerText();
     assert.doesNotMatch(detail, /could not be found|could not load movie details|unable to open this title/i, name + " movie details");
     assert.match(await page.locator("body").innerText(), /CineDesi/i);
