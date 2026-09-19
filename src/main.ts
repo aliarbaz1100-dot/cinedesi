@@ -171,6 +171,9 @@ function init() {
   };
   if ("scrollRestoration" in history) history.scrollRestoration = "auto";
   const qaDomain = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
+  const lowPowerQa = qaDomain && (/iPhone OS (?:9|10|11|12)_/i.test(navigator.userAgent) ||
+    (Number(navigator.deviceMemory) > 0 && Number(navigator.deviceMemory) <= 2) ||
+    navigator.connection?.saveData === true);
   const track = async (event, slug = null) => {
     if (qaDomain) return;
     try {
@@ -239,7 +242,9 @@ function init() {
     let error = null;
     let start = 0;
     while (true) {
-      const pageSize = start === 0 ? (desktopFastPath ? 140 : 80) : 1000;
+      // First rail paints immediately; small batches keep Safari 12 responsive
+      // while the remaining real catalog loads without dropping any title.
+      const pageSize = start === 0 ? (desktopFastPath ? 140 : 80) : lowPowerQa ? 250 : 1000;
       const query = new URLSearchParams({
         select: selectColumns,
         status: "eq.published",
@@ -266,6 +271,7 @@ function init() {
       }
       if (rows.length < pageSize) break;
       start += pageSize;
+      if (lowPowerQa) await new Promise((resolve) => setTimeout(resolve, 0));
     }
     if (error && !data.length) {
       if (status) {
@@ -729,9 +735,12 @@ function init() {
       image.src = heroPosterUrl(videoThumb(m) || m.poster_url);
     };
     preloadHero(heroPool[0], "high");
-    const warmNextHeroes = () => heroPool.slice(1, 4).forEach((m) => preloadHero(m));
-    if ("requestIdleCallback" in window) window.requestIdleCallback(warmNextHeroes, { timeout: 1200 });
-    else setTimeout(warmNextHeroes, 600);
+    // Older phones must not decode three extra full-screen hero images on launch.
+    if (!lowPowerQa) {
+      const warmNextHeroes = () => heroPool.slice(1, 4).forEach((m) => preloadHero(m));
+      if ("requestIdleCallback" in window) window.requestIdleCallback(warmNextHeroes, { timeout: 1200 });
+      else setTimeout(warmNextHeroes, 600);
+    }
     let heroIndex = 0;
     const paintHero = () => {
       const m = heroPool[heroIndex % heroPool.length];
