@@ -68,7 +68,7 @@ if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || 
   requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => {
     launchSplash.classList.add("splash-exit");
     setTimeout(() => launchSplash.remove(), reduceMotion ? 0 : 320);
-  }, 1050)));
+  }, document.documentElement.classList.contains("cd-qa-standalone") ? 1650 : 1050)));
 } else launchSplash?.remove();
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=28").catch(() => {
 }));
