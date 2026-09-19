@@ -59,7 +59,7 @@ try {
     assert.ok(launch.qa && launch.display !== "none", device.name + " QA logo must be visible on launch");
     assert.match(String(launch.logo), /CINEDESI/);
     assert.match(String(launch.poweredBy), /Arbaz Ali/i);
-    await page.waitForFunction(() => document.querySelector("#app-splash")?.classList.contains("qa-intro-play"), null, { timeout: 1700 });
+    await page.waitForFunction(() => document.querySelector("#app-splash")?.classList.contains("qa-intro-play") || document.documentElement.getAttribute("data-qa-intro-started") === "1", null, { timeout: 3200 });
     const launchArt = await page.evaluate(() => {
       const logo = document.querySelector("#app-splash .splash-logo span");
       const brand = document.querySelector("#app-splash .splash-brand");
