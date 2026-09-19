@@ -289,16 +289,17 @@ async function load() {
     const seasonEpisode = title.match(/S\d+E(\d+)/i);
     return numbered ? `Episode ${numbered[1]}` : seasonEpisode ? `Episode ${seasonEpisode[1]}` : `Episode ${position + 1}`;
   };
-  const episodeMeta = (title) => {
-    const date = title.match(/\b\d{1,2}\s+(?:AUG|SEP)\s+2026\b/i)?.[0] || "Season 5";
-    return `${/elimination/i.test(title) ? "Elimination Special" : "Official full episode"} · ${date}`;
+  const episodeMeta = (title, episodeSeason = seasonNumber) => {
+    const date = title.match(/\b\d{1,2}\s+(?:AUG|SEP)\s+2026\b/i)?.[0];
+    const seasonLabel = Number(episodeSeason) > 0 ? `Season ${Number(episodeSeason)}` : "Series";
+    return `${/elimination/i.test(title) ? "Elimination Special" : "Official full episode"} · ${date || seasonLabel}`;
   };
   const playlistGenerated = episodeItems.length && !episodeItems[0]?.id && Boolean(episodeItems[0]?.playlist_id);
   const episodeList = episodeItems.length ? `<div class='episode-browser'><div class='episode-browser-head'><div><small>${seasonNumber ? `SEASON ${esc(seasonNumber)}` : "EPISODES"}</small><h3>${episodeItems.length} official episodes</h3></div><span class='muted'>${m.slug === "tamasha-season-5" ? "Launch + Episodes 2–33" : `${episodeItems.length} episodes`}</span></div><div class='episode-grid'>${episodeItems.map((episode, i) => {
     const isPlaylistEpisode = Boolean(episode.playlist_id);
     const thumb = episode.id ? `https://i.ytimg.com/vi/${esc(episode.id)}/mqdefault.jpg` : esc(m.poster_url || posterArt(m));
     const disabled = episode.playlist_kind === "dailymotion" ? " data-dm-playlist='1'" : "";
-    return `<button type='button' class='episode-card${i === 0 ? " active" : ""}' data-episode='${i}' data-video-id='${esc(episode.id || "")}' data-playlist-index='${Number(episode.playlist_index ?? -1)}' data-playlist-id='${esc(episode.playlist_id || "")}' data-playlist-kind='${esc(episode.playlist_kind || "")}'${disabled}><span class='episode-thumb'><img src='${thumb}' alt='' loading='lazy' decoding='async'><b>${i + 1}</b></span><span class='episode-copy'><strong>${esc(episodeLabel(episode.title, i))}</strong><small>${isPlaylistEpisode ? (episode.playlist_kind === "dailymotion" ? "Official playlist episode · use player queue" : "Official playlist episode") : esc(episodeMeta(episode.title))}</small></span><span class='episode-play'>▶</span></button>`;
+    return `<button type='button' class='episode-card${i === 0 ? " active" : ""}' data-episode='${i}' data-video-id='${esc(episode.id || "")}' data-playlist-index='${Number(episode.playlist_index ?? -1)}' data-playlist-id='${esc(episode.playlist_id || "")}' data-playlist-kind='${esc(episode.playlist_kind || "")}'${disabled}><span class='episode-thumb'><img src='${thumb}' alt='' loading='lazy' decoding='async'><b>${i + 1}</b></span><span class='episode-copy'><strong>${esc(episodeLabel(episode.title, i))}</strong><small>${isPlaylistEpisode ? (episode.playlist_kind === "dailymotion" ? "Official playlist episode · use player queue" : "Official playlist episode") : esc(episodeMeta(episode.title, episode.season_number || seasonNumber))}</small></span><span class='episode-play'>▶</span></button>`;
   }).join("")}</div>${playlistGenerated && dmPlaylistId ? `<p class='muted episode-note'>Episodes are listed below. This ARY Digital/Dailymotion source exposes episode selection through the player’s playlist/queue control.</p>` : (m.availability_note ? `<p class='muted episode-note'>${esc(m.availability_note)}</p>` : "")}</div>` : "";
   const individualEpisode = episodeItems.length && episodeItems[0]?.id;
   const playlistPlayerUrl = playlistGenerated && ytPlaylistId
