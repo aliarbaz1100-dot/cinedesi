@@ -90,6 +90,10 @@ try {
     assert.equal(movie?.status(), 200);
     const episodes = page.locator(".qa-netflix-episode-list");
     await episodes.waitFor({ state: "visible", timeout: 25000 });
+    const oversizedHeader = episodes.locator(":scope > .episode-browser-head");
+    assert.equal(await oversizedHeader.count(), 1, name + " QA episode header markup should remain structurally stable");
+    assert.equal(await oversizedHeader.isVisible(), false, name + " oversized SEASON / official episodes header must stay hidden");
+    assert.ok(await episodes.locator(".qa-episode-toolbar").isVisible(), name + " working episode navigation must remain visible");
     assert.ok(await episodes.locator("[data-episode]").count() >= 2);
     const firstEpisodeMeta = await episodes.locator("[data-episode='0'] .episode-copy small").textContent();
     assert.match(String(firstEpisodeMeta), /Season 20/, name + " Bigg Boss 20 must NOT show Season 5 metadata");
