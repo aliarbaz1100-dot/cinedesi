@@ -145,9 +145,16 @@
     var token=++frameToken;
     playTimer=window.setTimeout(function(){
       if(token!==frameToken||!current||current!==node||document.hidden)return;
-      requestAnimationFrame(function(){requestAnimationFrame(function(){
-        if(token===frameToken)animate(current);
-      });});
+      var began=false;
+      function begin(){
+        if(began||token!==frameToken||current!==node||document.hidden)return;
+        began=true;
+        animate(current);
+      }
+      // When restoring an iOS Home Screen WebView, RAF may not resume until
+      // after a first visible frame. A timer fallback must start the animation.
+      requestAnimationFrame(function(){requestAnimationFrame(begin);});
+      window.setTimeout(begin,180);
     },delay);
   }
   // iOS first paints its own static Home Screen snapshot BEFORE showing HTML.
@@ -169,6 +176,8 @@
     else window.addEventListener("load",function(){window.setTimeout(startCold,350);},{once:true});
     // Never trap an app behind the overlay if iOS omits page-show.
     window.setTimeout(function(){if(!firstRun)startCold();},2500);
+    // Failsafe is independent of RAF and iOS visibility events.
+    window.setTimeout(function(){if(node)finish(node);},5700);
   }
   function recordHidden(){
     if(!app)return;
