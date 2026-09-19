@@ -25,7 +25,8 @@ const devices = [
 let total = 0;
 try {
   for (const device of devices) {
-    const context = await browser.newContext(device);
+    const { name, ...browserDevice } = device;
+    const context = await browser.newContext(browserDevice);
     if (device.name.startsWith("iphone")) {
       // The emulation is Chromium with Safari-12 UA and iPhone 6 geometry,
       // not actual iOS 12/WebKit hardware. This test cannot certify hardware playback.
@@ -82,12 +83,12 @@ try {
     const search = page.locator("#bottom-search");
     await search.waitFor({ state: "visible", timeout: 9000 });
     await search.click();
-    await page.waitForFunction(() => document.querySelector(".catalog-header")?.classList.contains("search-mode"), { timeout: 3000 });
+    await page.waitForFunction(() => document.querySelector(".catalog-header")?.classList.contains("search-mode"), null, { timeout: 3000 });
     assert.ok(await page.locator("#search").isVisible(), device.name + " search must open");
     await page.locator("#search-close").click();
     const newTab = page.locator(".mobile-bottom-nav a[href='#new-releases']");
     await newTab.click();
-    await page.waitForFunction(() => location.hash === "#new-releases", { timeout: 3000 });
+    await page.waitForFunction(() => location.hash === "#new-releases", null, { timeout: 3000 });
     assert.ok(await newTab.getAttribute("aria-current") === "page", device.name + " New tab not selected");
     console.log("PASS", device.name, "search and real New Releases navigation");
     const preview = await page.goto(base + "/app-preview", { waitUntil: "domcontentloaded", timeout: 30000 });
