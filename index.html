@@ -65,35 +65,35 @@
       }
       html.cd-qa-standalone .app-splash .splash-logo{
         font:950 36px/1 Arial,sans-serif!important;letter-spacing:-2.4px!important;color:#fff!important;white-space:nowrap!important;
-        opacity:0!important;transform:scale(.88);filter:blur(3px);animation:none!important;
+        opacity:1!important;transform:scale(1);filter:none!important;animation:none!important;
       }
       html.cd-qa-standalone .app-splash .splash-logo span{color:#e50914!important}
       html.cd-qa-standalone .app-splash .splash-line{
-        display:block!important;height:2px!important;width:0!important;margin:17px 0!important;
-        background:#e50914!important;opacity:0!important;animation:none!important;
+        display:block!important;height:2px!important;width:38px!important;margin:17px 0!important;
+        background:#e50914!important;opacity:1!important;animation:none!important;
       }
       html.cd-qa-standalone .app-splash .splash-brand p{
         display:block!important;margin:0!important;color:#bbb!important;
         font:700 10px/1.4 Arial,sans-serif!important;letter-spacing:2px!important;text-transform:uppercase!important;
-        opacity:0!important;animation:none!important;
+        opacity:1!important;animation:none!important;
       }
       html.cd-qa-standalone .app-splash .splash-brand strong{color:#eee!important}
       html.cd-qa-standalone .app-splash.qa-intro-play .splash-logo{
-        animation:qa-icon-brand-in 1.16s .02s cubic-bezier(.17,.79,.16,1) both!important;
+        animation:qa-icon-brand-in .72s 0s cubic-bezier(.17,.79,.16,1) both!important;
       }
       html.cd-qa-standalone .app-splash.qa-intro-play .splash-line{
-        animation:qa-icon-line-in .68s .51s cubic-bezier(.18,.8,.18,1) both!important;
+        animation:qa-icon-line-in .46s .10s cubic-bezier(.18,.8,.18,1) both!important;
       }
       html.cd-qa-standalone .app-splash.qa-intro-play .splash-brand p{
-        animation:qa-icon-caption-in .65s .74s ease-out both!important;
+        animation:qa-icon-caption-in .45s .18s ease-out both!important;
       }
       html.cd-qa-standalone .app-splash.splash-exit{
         opacity:0!important;visibility:hidden!important;pointer-events:none!important;
-        transition:opacity .35s ease,visibility .35s ease!important;
+        transition:opacity .24s ease,visibility .24s ease!important;
       }
-      @keyframes qa-icon-brand-in{0%{opacity:0;transform:scale(.46) translateY(7px);filter:blur(6px)}35%{opacity:1;filter:blur(0)}68%{opacity:1;transform:scale(1.075) translateY(0);filter:blur(0)}100%{opacity:1;transform:scale(1) translateY(0);filter:blur(0)}}
-      @keyframes qa-icon-line-in{from{width:0;opacity:0}to{width:38px;opacity:1}}
-      @keyframes qa-icon-caption-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+      @keyframes qa-icon-brand-in{0%{opacity:1;transform:scale(.93) translateY(3px)}60%{transform:scale(1.025) translateY(0)}100%{opacity:1;transform:scale(1) translateY(0)}}
+      @keyframes qa-icon-line-in{from{width:26px;opacity:.8}to{width:38px;opacity:1}}
+      @keyframes qa-icon-caption-in{from{opacity:.85;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
       @media(prefers-reduced-motion:reduce){
         html.cd-qa-standalone .app-splash .splash-logo{filter:none!important}
         html.cd-qa-standalone .app-splash.qa-intro-play .splash-logo,
@@ -142,7 +142,7 @@
       if(node.parentNode)node.parentNode.removeChild(node);
       if(node===overlay)overlay=null;
       root.classList.remove("cd-qa-standalone");
-    },370);
+    },260);
   }
   function animate(node){
     if(!pending||!node||node!==overlay||document.hidden)return;
@@ -157,7 +157,7 @@
     try{sessionStorage.setItem("cinedesi-qa-intro-timing","visible-start="+Math.round(performance.now())+", route="+location.pathname)}catch(e){}
     // Allow the visible logo motion and credit to complete, then crossfade
     // directly into the already-rendering Home screen (no static logo hold).
-    window.setTimeout(function(){dismiss(node)},1650);
+    window.setTimeout(function(){dismiss(node)},950);
   }
   function paintWhenVisible(node,delay){
     if(!node||node!==overlay||document.hidden)return;
@@ -166,17 +166,16 @@
       if(started||run!==token||document.hidden||node!==overlay)return;
       started=true;animate(node);
     }
-    // The physical iPhone recording showed that the earlier logo animation
-    // was finished before iOS uncovered its native, non-animated startup view.
-    // Start keyframes later on iOS so the motion occurs in the visible WebView.
+    // The native iOS launch snapshot is outside web control. As soon as the
+    // WebView is paintable, show the brand instead of adding a 1.2s black hold.
     window.setTimeout(function(){
       requestAnimationFrame(function(){requestAnimationFrame(go)});
-      window.setTimeout(go,110); // RAF fallback for older Safari.
+      window.setTimeout(go,40); // RAF fallback for older Safari.
     },delay);
   }
   var appleHome=/iPhone|iPad|iPod/i.test(navigator.userAgent);
-  var coldPaintDelay=appleHome?1200:180;
-  var warmPaintDelay=appleHome?1050:160;
+  var coldPaintDelay=0;
+  var warmPaintDelay=0;
   function internalReturn(){
     if(/[?&](?:returnY|returnSection|returnOffset)=/.test(location.search))return true;
     var marked=0;
@@ -211,10 +210,10 @@
   // after pageshow/focus when possible, with a fallback for older Safari.
   if(!document.hidden)window.setTimeout(function(){
     if(pending&&overlay)paintWhenVisible(overlay,coldPaintDelay);
-  },120);
+  },0);
   // Only an emergency timeout, never wait on an unavailable third-party API.
-  window.setTimeout(function(){if(pending&&overlay){if(!document.hidden)animate(overlay);else dismiss(overlay)}},2500);
-  window.setTimeout(function(){if(overlay) dismiss(overlay)},4200);
+  window.setTimeout(function(){if(pending&&overlay){if(!document.hidden)animate(overlay);else dismiss(overlay)}},1400);
+  window.setTimeout(function(){if(overlay) dismiss(overlay)},2600);
 })();</script>
     <div id="app">
       <header class="catalog-header">
