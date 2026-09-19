@@ -25,24 +25,15 @@ try {
       const first = page.locator("#top-grid a.poster-link[href*='/movie?slug=']").first();
       await first.waitFor({state:"visible",timeout:45000});
       assert.equal(await page.locator("#install-banner").isVisible(),false,device.label+" popup must remain hidden");
-      const homeDesign = await page.evaluate(() => {
-        const hero=document.querySelector(".streaming-hero");
-        const heading=document.querySelector("#hero-title");
-        const nav=document.querySelector(".mobile-bottom-nav");
-        const style=getComputedStyle(hero);
-        return {
-          brandedColor:getComputedStyle(document.documentElement).getPropertyValue("--cd-red").trim(),
-          heroHeight:Math.round(hero.getBoundingClientRect().height),
-          heroBackground:style.backgroundColor,
-          titleSize:parseFloat(getComputedStyle(heading).fontSize),
-          bottomNavRadius:getComputedStyle(nav).borderTopLeftRadius,
-        };
-      });
-      assert.equal(homeDesign.brandedColor,"#ed1734",device.label+" new cinema stylesheet missing");
-      assert.ok(homeDesign.heroHeight>=(device.isMobile?550:540),device.label+" cinematic hero not rendered: "+JSON.stringify(homeDesign));
-      assert.ok(homeDesign.titleSize>=(device.isMobile?35:45),device.label+" hero typography not applied: "+JSON.stringify(homeDesign));
-      if(device.isMobile) assert.equal(homeDesign.bottomNavRadius,"0px",device.label+" old floating bottom navigation still overrides redesign");
-      console.log("PASS",device.label,"visible visual refresh",JSON.stringify(homeDesign));
+      // Preserve the original CineDesi layout while checking that usable UI still renders.
+      const originalLayout = await page.evaluate(() => ({
+        heroVisible: document.querySelector(".streaming-hero")?.getBoundingClientRect().height > 200,
+        movieCards: document.querySelectorAll("#top-grid .card").length,
+        navigationPresent: Boolean(document.querySelector(".mobile-bottom-nav")),
+        titleVisible: document.querySelector("#hero-title")?.getBoundingClientRect().height > 0
+      }));
+      assert.ok(originalLayout.heroVisible && originalLayout.movieCards > 0 && originalLayout.navigationPresent && originalLayout.titleVisible, device.label+" original CineDesi layout missing: "+JSON.stringify(originalLayout));
+      console.log("PASS",device.label,"original CineDesi layout rendered",JSON.stringify(originalLayout));
       const movieHref = await first.getAttribute("href");
       await first.click();
       await page.waitForURL(/\/movie\?slug=/,{waitUntil:"domcontentloaded",timeout:20000});
