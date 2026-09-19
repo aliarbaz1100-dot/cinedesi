@@ -61,11 +61,28 @@ try {
     assert.ok(sizes.titleWidth > 100 && sizes.heroWidth > 300 && sizes.navWidth > 230, name + " homepage UI clipped");
     await page.screenshot({ path: "qa-review-screenshots/" + name + "-home.png", animations: "disabled" });
     console.log("PASS", name, "homepage, nav and title fit iPhone viewport");
+    if (name === "webkit-modern-iphone") {
+      // Use the real featured Play link and movie Back button: the app must
+      // return to its previous home, without behaving like a fresh installation.
+      await page.waitForFunction(() => document.querySelector("#hero-play")?.getAttribute("href")?.includes("/movie?slug="), null, { timeout: 15000 });
+      await page.locator("#hero-play").click();
+      await page.waitForURL(url => url.pathname === "/movie", { timeout: 12000 });
+      await page.locator("#movie-back").click();
+      await page.waitForURL(url => url.pathname === "/", { timeout: 15000 });
+      const state = await page.evaluate(() => ({
+        launched: document.documentElement.classList.contains("cd-qa-standalone"),
+        logo: !!document.querySelector("#app-splash")
+      }));
+      assert.ok(!state.launched && !state.logo, name + " returning from a real movie reopened the launch logo");
+      console.log("PASS", name, "real Home → Play movie → Back to Home does not relaunch app");
+    }
     const movie = await page.goto(base + "/movie?slug=bigg-boss-20", { waitUntil: "domcontentloaded", timeout: 30000 });
     assert.equal(movie?.status(), 200);
     const episodes = page.locator(".qa-netflix-episode-list");
     await episodes.waitFor({ state: "visible", timeout: 25000 });
     assert.ok(await episodes.locator("[data-episode]").count() >= 2);
+    const firstEpisodeMeta = await episodes.locator("[data-episode='0'] .episode-copy small").textContent();
+    assert.match(String(firstEpisodeMeta), /Season 20/, name + " Bigg Boss 20 must NOT show Season 5 metadata");
     const columns = await episodes.evaluate(el => {
       const rail = el.querySelector(".episode-grid");
       const cards = Array.from(el.querySelectorAll(".episode-card"));
