@@ -2,7 +2,10 @@
 (function () {
   var qa = /(^|[.-])qa([.-]|$)/i.test(location.hostname) ||
            /[?&]qa=1(?:&|$)/.test(location.search);
-  if (!qa) return;
+  var release = location.hostname === 'cinedesi.online' || /\\.cinedesi\\.online$/i.test(location.hostname);
+  if (!qa && !release) return;
+  // Shared, approved layout and Safari 12 shims apply on the live domain too.
+  // Only the diagnostic tools and QA-only analytics restrictions remain private.
   document.documentElement.classList.add('cd-qa-mode');
   var oldSafari = /(?:iPhone|iPad|iPod)/i.test(navigator.userAgent) &&
                   /OS 12[_\d]*/i.test(navigator.userAgent);
@@ -42,6 +45,7 @@
     };
     window.cancelIdleCallback = function (id) { clearTimeout(id); };
   }
+  if (!qa) return; // Never expose the QA debug panel in the live app.
   // Hidden, read-only launch diagnostic for the REAL installed QA icon.
   // It does not alter navigation, styling, production, or user data.
   // Hold the CineDesi header logo for two seconds to reveal the report.
