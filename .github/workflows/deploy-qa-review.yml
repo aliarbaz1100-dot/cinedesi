@@ -1,0 +1,107 @@
+name: Deploy CineDesi isolated mobile QA review
+
+on:
+  push:
+    branches:
+      - qa/installed-mobile-tabs-20260919
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cinedesi-isolated-qa-review
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout QA branch only
+        uses: actions/checkout@v4
+        with:
+          ref: qa/installed-mobile-tabs-20260919
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build iPhone 6 compatibility QA
+        env:
+          CINEDESI_QA_LEGACY: '1'
+        run: npm run build
+      - name: Verify review assets and isolate from production
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          for (const path of ['dist/index.html','dist/movie.html','dist/app-preview.html','dist/qa-compat.js','dist/sw.js']) {
+            assert.ok(fs.existsSync(path), 'QA asset missing: '+path);
+          }
+          const config=JSON.parse(fs.readFileSync('qa/wrangler-review.jsonc','utf8'));
+          assert.equal(config.name,'cinedesi-qa-launch-review-20260919');
+          assert.equal(config.assets.directory,'./dist');
+          assert.equal(config.assets.binding,'ASSETS');
+          assert.ok(config.assets.run_worker_first,'Review worker must apply noindex across HTML');
+          assert.ok(fs.readFileSync('dist/index.html','utf8').includes('qa-compat.js'));
+          assert.ok(fs.readFileSync('dist/app-preview.html','utf8').includes('Interactive CineDesi QA'));
+          const src=fs.readFileSync('src/main.ts','utf8');
+          assert.ok(src.includes('qa-resume-meta')&&src.includes('cd-qa-standalone'));
+          const movie=fs.readFileSync('src/movie.ts','utf8');
+          assert.ok(movie.includes('qaCapturePosition')&&movie.includes('qaOnYoutubeState'));
+          const worker=fs.readFileSync('qa/worker.js','utf8');
+          assert.ok(worker.includes('noindex, nofollow'));
+          console.log('PASS: isolated QA assets, compatibility build, launch, genuine progress logic and noindex');
+          JS
+      - name: Set Cloudflare credentials without publishing secret values
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN_RAW: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID_RAW: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          python - <<'PY'
+          import os,re
+          raw=os.environ.get('CLOUDFLARE_API_TOKEN_RAW','').strip()
+          match=re.search(r'Bearer\s+([A-Za-z0-9._-]+)',raw,re.I)
+          if match:
+              token=match.group(1)
+          else:
+              token=next((line.strip().strip('"').strip("'") for line in raw.splitlines() if line.strip()),'')
+              token=re.split(r'\s+-H\s+|\s+curl\s+',token,maxsplit=1)[0].strip()
+              if token.lower().startswith('bearer '):token=token[7:].strip()
+          account_raw=os.environ.get('CLOUDFLARE_ACCOUNT_ID_RAW','')
+          account_match=re.search(r'\b([a-fA-F0-9]{32})\b',account_raw)
+          account=account_match.group(1) if account_match else account_raw.strip().strip('"').strip("'")
+          if not token or not re.fullmatch(r'[a-fA-F0-9]{32}',account):
+              raise SystemExit('QA deploy requires valid existing Cloudflare secrets')
+          print('::add-mask::'+token)
+          print('::add-mask::'+account)
+          with open(os.environ['GITHUB_ENV'],'a') as file:
+              file.write('CLOUDFLARE_API_TOKEN='+token+'\n')
+              file.write('CLOUDFLARE_ACCOUNT_ID='+account+'\n')
+          PY
+      - name: Deploy separate review Worker only
+        run: npx --yes wrangler@4 deploy --config qa/wrangler-review.jsonc
+      - name: Test public review app without publishing production changes
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          const base='https://cinedesi-qa-launch-review-20260919.aliarbaz1100-93b.workers.dev';
+          for (const [path,kind,text] of [
+            ['/','text/html','CineDesi'],
+            ['/app-preview','text/html','Interactive CineDesi QA'],
+            ['/manifest.webmanifest','application/manifest+json','CineDesi QA'],
+            ['/movie?slug=qa-smoke','text/html','movie-page'],
+            ['/qa-compat.js','javascript','cd-qa-mode']
+          ]) {
+            const response=await fetch(base+path,{headers:{'Cache-Control':'no-cache'}});
+            assert.equal(response.status,200,path+' returned '+response.status);
+            assert.ok(response.headers.get('content-type')?.includes(kind),path+' content type '+response.headers.get('content-type'));
+            assert.ok(response.headers.get('x-robots-tag')?.includes('noindex'),path+' must not be indexed');
+            assert.ok((await response.text()).includes(text),path+' missing expected QA content');
+            console.log('PASS QA HTTP '+path+' 200');
+          }
+          JS
