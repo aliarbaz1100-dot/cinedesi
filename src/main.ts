@@ -983,7 +983,7 @@ function init() {
   });
   // QA-only installed app tabs: use real catalog sections, not mock screens.
   // Browser visitors and the existing desktop experience keep their navigation.
-  const installedApp = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const installedApp = (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true) && (/(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1");
   const mobileTabs = q(".mobile-bottom-nav");
   if (installedApp && mobileTabs) {
     document.documentElement.classList.add("cd-installed");
