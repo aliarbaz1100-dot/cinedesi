@@ -69,6 +69,17 @@ try {
     console.log("PASS", device.name, "first-frame branded launch", Date.now() - start, "ms");
     await overlay.waitFor({ state: "detached", timeout: 7200 });
     await page.locator("#home").waitFor({ state: "visible", timeout: 7000 });
+    // The same hidden diagnostic can be opened on the REAL QA Home Screen
+    // without modifying the app UI, making iOS icon-route failures diagnosable.
+    await page.locator(".catalog-header a.logo").dispatchEvent("touchstart");
+    await page.locator("#qa-launch-check-panel").waitFor({ state: "visible", timeout: 2700 });
+    const report = await page.locator("#qa-launch-check-text").innerText();
+    assert.match(report, /early-launch=mode=installed/, device.name + " launch-mode diagnosis missing");
+    assert.match(report, /navigator.standalone=true/, device.name + " installed launch report missing");
+    await page.locator(".catalog-header a.logo").dispatchEvent("touchend");
+    await page.getByRole("button", { name: "Back to CineDesi" }).click();
+    assert.equal(await page.locator("#qa-launch-check-panel").count(), 0);
+    console.log("PASS", device.name, "hidden real-icon launch diagnostic, no persistent UI changes");
     const top = await page.evaluate(() => {
       const header = document.querySelector(".catalog-header");
       const hero = document.querySelector("#home");
