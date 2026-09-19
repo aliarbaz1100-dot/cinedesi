@@ -150,6 +150,10 @@
     lastPlayed=Date.now();
     node.classList.add("qa-intro-play");
     root.setAttribute("data-qa-intro-started","1");
+    var logo=node.querySelector(".splash-logo"),credit=node.querySelector(".splash-brand p");
+    root.setAttribute("data-qa-intro-logo",logo?logo.textContent:"");
+    root.setAttribute("data-qa-intro-credit",credit?credit.textContent:"");
+    root.setAttribute("data-qa-intro-animation",logo?getComputedStyle(logo).animationName:"none");
     try{sessionStorage.setItem("cinedesi-qa-intro-timing","visible-start="+Math.round(performance.now())+", route="+location.pathname)}catch(e){}
     // Allow the visible logo motion and credit to complete, then crossfade
     // directly into the already-rendering Home screen (no static logo hold).
