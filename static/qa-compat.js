@@ -3,6 +3,7 @@
   var qa = /(^|[.-])qa([.-]|$)/i.test(location.hostname) ||
            /[?&]qa=1(?:&|$)/.test(location.search);
   if (!qa) return;
+  document.documentElement.classList.add('cd-qa-mode');
   var oldSafari = /(?:iPhone|iPad|iPod)/i.test(navigator.userAgent) &&
                   /OS 12[_\d]*/i.test(navigator.userAgent);
   if (oldSafari) document.documentElement.classList.add('cd-qa-legacy');
