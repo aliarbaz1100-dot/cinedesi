@@ -740,13 +740,18 @@ async function load() {
       const episodeIndex = rawIndex === undefined ? null : Number(rawIndex);
       const episodeNumber = rawNumber ? Number(rawNumber) : episodeIndex !== null && Number.isFinite(episodeIndex) ? episodeIndex + 1 : null;
       const list = JSON.parse(localStorage.getItem("cinedesi_continue") || "[]").filter((x) => x.slug !== m.slug);
+      const oldRow = savedContinue.find((x) => x.slug === m.slug);
+      const nextEpisodeIndex = Number.isFinite(episodeIndex) ? episodeIndex : null;
+      const sameEpisode = oldRow && oldRow.episode_index === nextEpisodeIndex;
       list.unshift({
+        ...(qaPlayback && sameEpisode ? oldRow : {}),
         slug: m.slug,
         title: m.title,
         region: m.region,
         genre: m.genre,
-        episode_index: Number.isFinite(episodeIndex) ? episodeIndex : null,
+        episode_index: nextEpisodeIndex,
         episode_number: Number.isFinite(episodeNumber) ? episodeNumber : null,
+        ...(qaPlayback && !sameEpisode ? { position_seconds: null, duration_seconds: null, progress_percent: null, completed: false } : {}),
         updated_at: Date.now()
       });
       localStorage.setItem("cinedesi_continue", JSON.stringify(list.slice(0, 12)));
