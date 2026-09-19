@@ -59,6 +59,13 @@ try {
     assert.ok(launch.qa && launch.display !== "none", device.name + " QA logo must be visible on launch");
     assert.match(String(launch.logo), /CINEDESI/);
     assert.match(String(launch.poweredBy), /Arbaz Ali/i);
+    const firstPaintLogo = await page.locator("#app-splash .splash-logo").evaluate(el => {
+      const css = getComputedStyle(el);
+      return { opacity: Number(css.opacity), filter: css.filter };
+    });
+    assert.ok(firstPaintLogo.opacity >= .95 && firstPaintLogo.filter === "none",
+      device.name + " brand must be readable at first web paint without waiting for animation");
+
     await page.waitForFunction(() => document.querySelector("#app-splash")?.classList.contains("qa-intro-play") || document.documentElement.getAttribute("data-qa-intro-started") === "1", null, { timeout: 3200 });
     const launchArt = await page.evaluate(() => {
       const logo = document.querySelector("#app-splash .splash-logo span");
@@ -74,7 +81,7 @@ try {
         catch { return false; }
       }).length > 0
     }));
-    assert.ok(cinematic.duration >= 1.1 && cinematic.keyframe, device.name + " must run the updated conspicuous zoom-in animation, not old static logo");
+    assert.ok(cinematic.duration >= .6 && cinematic.duration <= .85 && cinematic.keyframe, device.name + " installed logo must animate promptly, not hold on a black screen");
     console.log("PASS", device.name, "first-frame branded launch", Date.now() - start, "ms");
     await overlay.waitFor({ state: "detached", timeout: 7200 });
     await page.locator("#home").waitFor({ state: "visible", timeout: 7000 });
