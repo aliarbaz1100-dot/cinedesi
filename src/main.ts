@@ -860,7 +860,10 @@ function init() {
     if (e.key === "Escape" && modal.classList.contains("on")) closeModal();
   });
   let searchRenderTimer = 0;
+  let selectedSearchResult = -1;
   search.oninput = () => {
+    selectedSearchResult = -1;
+    search.removeAttribute("aria-activedescendant");
     activeCollection = "all";
     activeCollectionValue = "";
     discoverTitle.textContent = "Search results";
@@ -873,7 +876,31 @@ function init() {
   };
   search.onfocus = renderSuggestions;
   search.onkeydown = (e) => {
+    const results = [...suggestions.querySelectorAll("a.search-result-card")];
+    if (e.key === "Escape") {
+      suggestions.classList.remove("on");
+      selectedSearchResult = -1;
+      search.removeAttribute("aria-activedescendant");
+      return;
+    }
+    if ((e.key === "ArrowDown" || e.key === "ArrowUp") && results.length) {
+      e.preventDefault();
+      selectedSearchResult = (selectedSearchResult + (e.key === "ArrowDown" ? 1 : -1) + results.length) % results.length;
+      results.forEach((result, index) => {
+        result.classList.toggle("cd-search-selected", index === selectedSearchResult);
+        result.setAttribute("aria-selected", String(index === selectedSearchResult));
+        if (index === selectedSearchResult) result.id = `cd-search-option-${index}`;
+      });
+      search.setAttribute("aria-activedescendant", `cd-search-option-${selectedSearchResult}`);
+      results[selectedSearchResult].scrollIntoView({ block: "nearest", inline: "nearest" });
+      return;
+    }
     if (e.key === "Enter") {
+      if (selectedSearchResult >= 0 && results[selectedSearchResult]) {
+        e.preventDefault();
+        location.assign(results[selectedSearchResult].href);
+        return;
+      }
       suggestions.classList.remove("on");
       q("#discover").scrollIntoView({ behavior: "smooth", block: "start" });
     }
