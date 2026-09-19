@@ -1,7 +1,21 @@
 import "./cinematic-v2.css";
 import "./mobile-navigation.css";
 import "./launch-polish.css";
+import "./installed-app-qa.css";
 import { tamashaSeason5Episodes } from "./tamashaSeason5";
+// Movie -> home is an internal app navigation. Preserve the PWA home screen
+// without replaying the cold-launch overlay or losing the current film position.
+if (/(^|[.-])qa([.-]|$)/i.test(location.hostname)) {
+  const markInternal = () => {
+    try { sessionStorage.setItem("cinedesi-qa-internal-nav", String(Date.now())); } catch {}
+  };
+  markInternal();
+  window.addEventListener("pagehide", markInternal);
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest?.('a[href]');
+    if (link && new URL(link.href, location.href).origin === location.origin) markInternal();
+  }, { capture: true });
+}
 const movieBack = document.querySelector("#movie-back");
 if (movieBack) movieBack.onclick = null;
 movieBack?.addEventListener("click", (event) => {
@@ -19,7 +33,7 @@ movieBack?.addEventListener("click", (event) => {
     location.replace("./");
   }
 }, { capture: true });
-const URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co", KEY = "sb_publishable_ZEAZWO-Q-_rvMsy6krr_nw_JDRmP_kI";
+const SUPABASE_URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co", KEY = "sb_publishable_ZEAZWO-Q-_rvMsy6krr_nw_JDRmP_kI";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const xml = (s) => String(s ?? "").replace(/[&<>\"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const posterArt = (m) => {
@@ -92,12 +106,15 @@ async function load() {
     root.innerHTML = `<div class='empty'>Movie not specified. <a href='./'>Return to CineDesi</a></div>`;
     return;
   }
-  const db = supabase.createClient(URL, KEY);
+  const db = supabase.createClient(SUPABASE_URL, KEY);
+  const qaDomain = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
   const track = async (event) => {
+    if (qaDomain) return;
     const { error: error2 } = await db.rpc("track_cinedesi_event", { p_event_type: event, p_movie_slug: slug });
     if (error2) console.warn("CineDesi analytics event failed", error2.message);
   };
   const trackDestination = async (provider, url) => {
+    if (qaDomain) return;
     const { error: error2 } = await db.from("monetization_clicks").insert({ movie_id: m?.id || null, provider_name: provider, destination_url: url, click_type: "watch" });
     if (error2) console.warn("CineDesi destination tracking failed", error2.message);
   };
@@ -272,16 +289,17 @@ async function load() {
     const seasonEpisode = title.match(/S\d+E(\d+)/i);
     return numbered ? `Episode ${numbered[1]}` : seasonEpisode ? `Episode ${seasonEpisode[1]}` : `Episode ${position + 1}`;
   };
-  const episodeMeta = (title) => {
-    const date = title.match(/\b\d{1,2}\s+(?:AUG|SEP)\s+2026\b/i)?.[0] || "Season 5";
-    return `${/elimination/i.test(title) ? "Elimination Special" : "Official full episode"} · ${date}`;
+  const episodeMeta = (title, episodeSeason = seasonNumber) => {
+    const date = title.match(/\b\d{1,2}\s+(?:AUG|SEP)\s+2026\b/i)?.[0];
+    const seasonLabel = Number(episodeSeason) > 0 ? `Season ${Number(episodeSeason)}` : "Series";
+    return `${/elimination/i.test(title) ? "Elimination Special" : "Official full episode"} · ${date || seasonLabel}`;
   };
   const playlistGenerated = episodeItems.length && !episodeItems[0]?.id && Boolean(episodeItems[0]?.playlist_id);
   const episodeList = episodeItems.length ? `<div class='episode-browser'><div class='episode-browser-head'><div><small>${seasonNumber ? `SEASON ${esc(seasonNumber)}` : "EPISODES"}</small><h3>${episodeItems.length} official episodes</h3></div><span class='muted'>${m.slug === "tamasha-season-5" ? "Launch + Episodes 2–33" : `${episodeItems.length} episodes`}</span></div><div class='episode-grid'>${episodeItems.map((episode, i) => {
     const isPlaylistEpisode = Boolean(episode.playlist_id);
     const thumb = episode.id ? `https://i.ytimg.com/vi/${esc(episode.id)}/mqdefault.jpg` : esc(m.poster_url || posterArt(m));
     const disabled = episode.playlist_kind === "dailymotion" ? " data-dm-playlist='1'" : "";
-    return `<button type='button' class='episode-card${i === 0 ? " active" : ""}' data-episode='${i}' data-video-id='${esc(episode.id || "")}' data-playlist-index='${Number(episode.playlist_index ?? -1)}' data-playlist-id='${esc(episode.playlist_id || "")}' data-playlist-kind='${esc(episode.playlist_kind || "")}'${disabled}><span class='episode-thumb'><img src='${thumb}' alt='' loading='lazy' decoding='async'><b>${i + 1}</b></span><span class='episode-copy'><strong>${esc(episodeLabel(episode.title, i))}</strong><small>${isPlaylistEpisode ? (episode.playlist_kind === "dailymotion" ? "Official playlist episode · use player queue" : "Official playlist episode") : esc(episodeMeta(episode.title))}</small></span><span class='episode-play'>▶</span></button>`;
+    return `<button type='button' class='episode-card${i === 0 ? " active" : ""}' data-episode='${i}' data-video-id='${esc(episode.id || "")}' data-playlist-index='${Number(episode.playlist_index ?? -1)}' data-playlist-id='${esc(episode.playlist_id || "")}' data-playlist-kind='${esc(episode.playlist_kind || "")}'${disabled}><span class='episode-thumb'><img src='${thumb}' alt='' loading='lazy' decoding='async'><b>${i + 1}</b></span><span class='episode-copy'><strong>${esc(episodeLabel(episode.title, i))}</strong><small>${isPlaylistEpisode ? (episode.playlist_kind === "dailymotion" ? "Official playlist episode · use player queue" : "Official playlist episode") : esc(episodeMeta(episode.title, episode.season_number || seasonNumber))}</small></span><span class='episode-play'>▶</span></button>`;
   }).join("")}</div>${playlistGenerated && dmPlaylistId ? `<p class='muted episode-note'>Episodes are listed below. This ARY Digital/Dailymotion source exposes episode selection through the player’s playlist/queue control.</p>` : (m.availability_note ? `<p class='muted episode-note'>${esc(m.availability_note)}</p>` : "")}</div>` : "";
   const individualEpisode = episodeItems.length && episodeItems[0]?.id;
   const playlistPlayerUrl = playlistGenerated && ytPlaylistId
@@ -290,7 +308,19 @@ async function load() {
       ? `https://geo.dailymotion.com/player.html?playlist=${encodeURIComponent(dmPlaylistId)}`
       : normalizeExternalEmbed(m.full_video_embed_url);
   const initialPlayerUrl = individualEpisode ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(episodeItems[0].id)}?rel=0` : playlistPlayerUrl;
-  const fullVideo = m.full_video_verified && m.full_video_embed_url ? `<section id='watch' class='legal-player-section'><div class='legal-player-head'><div><small>WATCH ON CINEDESI</small><h2>${esc(m.full_video_label || "Official full video")}</h2><p>${esc(m.full_video_language || "Official source")}</p></div><span class='badge'>Rights-holder source verified</span></div><div class='legal-player'><iframe id='official-player' src='${esc(initialPlayerUrl)}' title='${esc(m.title)} official video' loading='lazy' referrerpolicy='strict-origin-when-cross-origin' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' allowfullscreen></iframe><div class='player-fallback' hidden><span aria-hidden='true'>!</span><strong>Playback is not available inside CineDesi</strong><p>The verified publisher has disabled playback on other websites.</p>${m.full_video_url ? `<a class='btn' target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Watch on official source</a>` : ""}</div></div>${episodeList}<div class='source-card'><strong>Playback source</strong><br>${esc(m.full_video_source || "Official rights-holder source")} \u2022 Playback, ads and regional availability remain controlled by the source platform/rights-holder.${m.full_video_url ? ` <a target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Open official source</a>` : ""}</div></section>` : "";
+  // Official YouTube iframe API only reports real playtime when enabled on the embed.
+  // Keep publisher URLs unchanged outside QA, and do not alter Dailymotion.
+  const qaInitialPlayerUrl = (() => {
+    const isQA = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
+    if (!isQA || !/^https:\/\/www\.youtube(?:-nocookie)?\.com\/embed\//i.test(initialPlayerUrl)) return initialPlayerUrl;
+    try {
+      const url = new URL(initialPlayerUrl);
+      url.searchParams.set("enablejsapi", "1");
+      url.searchParams.set("origin", location.origin);
+      return url.href;
+    } catch { return initialPlayerUrl; }
+  })();
+  const fullVideo = m.full_video_verified && m.full_video_embed_url ? `<section id='watch' class='legal-player-section'><div class='legal-player-head'><div><small>WATCH ON CINEDESI</small><h2>${esc(m.full_video_label || "Official full video")}</h2><p>${esc(m.full_video_language || "Official source")}</p></div><span class='badge'>Rights-holder source verified</span></div><div class='legal-player'><iframe id='official-player' src='${esc(qaInitialPlayerUrl)}' title='${esc(m.title)} official video' loading='lazy' referrerpolicy='strict-origin-when-cross-origin' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' allowfullscreen></iframe><div class='player-fallback' hidden><span aria-hidden='true'>!</span><strong>Playback is not available inside CineDesi</strong><p>The verified publisher has disabled playback on other websites.</p>${m.full_video_url ? `<a class='btn' target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Watch on official source</a>` : ""}</div></div>${episodeList}<div class='source-card'><strong>Playback source</strong><br>${esc(m.full_video_source || "Official rights-holder source")} \u2022 Playback, ads and regional availability remain controlled by the source platform/rights-holder.${m.full_video_url ? ` <a target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Open official source</a>` : ""}</div></section>` : "";
   const providerSection = providers?.length ? `<section class='engage-section'><div class='engage-head'><div><small>VERIFIED DESTINATIONS</small><h2>Where to watch</h2></div><span class='badge'>Only verified links shown</span></div><div class='provider-grid'>${providers.map((p) => `<a class='provider-card' data-track-watch='1' data-provider='${esc(p.provider_name)}' data-destination='${esc(p.destination_url)}' target='_blank' rel='noopener' href='${esc(p.destination_url)}'><strong>${esc(p.provider_name)}</strong><span>${esc(String(p.access_type || "official_platform").replaceAll("_", " "))}${p.country_code ? ` \u2022 ${esc(p.country_code)}` : ""}</span>${p.dub_language ? `<small>Dub: ${esc(p.dub_language)}</small>` : ""}${p.subtitle_language ? `<small>Subs: ${esc(p.subtitle_language)}</small>` : ""}</a>`).join("")}</div></section>` : `<section class='engage-section compact-engage'><small>WHERE TO WATCH</small><h2>Verification in progress</h2><p class='muted'>CineDesi will show a platform here only after the exact destination and availability evidence pass review.</p></section>`;
   const upNext = related?.[0];
   const moreLikeThis = (related || []).slice(1, 7);
@@ -319,6 +349,157 @@ async function load() {
     event.currentTarget.textContent = adding ? "✓ In My List" : "＋ My List";
     event.currentTarget.setAttribute("aria-pressed", String(adding));
   });
+  // QA episode deck: restore the earlier compact episode picker with
+  // functional Previous / Next. Reuses official episode cards and player handlers,
+  // without changing any published title or playback source.
+  const qaEpisodeBrowser = document.querySelector(".episode-browser");
+  if (qaEpisodeBrowser) {
+    const cards = Array.from(qaEpisodeBrowser.querySelectorAll("[data-episode]"));
+    const head = qaEpisodeBrowser.querySelector(".episode-browser-head");
+    const rail = qaEpisodeBrowser.querySelector(".episode-grid");
+    if (head && rail && cards.length > 0) {
+      qaEpisodeBrowser.classList.add("qa-episode-deck", "qa-netflix-episode-list");
+      const toolbar = document.createElement("div");
+      toolbar.className = "qa-episode-toolbar";
+      toolbar.innerHTML =
+        '<button type="button" class="qa-episode-step" data-qa-step="-1" aria-label="Previous episode">‹ <span>Previous</span></button>' +
+        '<div class="qa-episode-now" role="status" aria-live="polite"><small>EPISODES</small><strong>Episode 1 / ' + cards.length + '</strong></div>' +
+        '<button type="button" class="qa-episode-step qa-episode-next" data-qa-step="1" aria-label="Next episode"><span>Next episode</span> ›</button>';
+      head.insertAdjacentElement("afterend", toolbar);
+      const currentIndex = () => {
+        const current = cards.findIndex((item) => item.classList.contains("active"));
+        return current < 0 ? 0 : current;
+      };
+      const updateDeck = (scroll = false) => {
+        const index = currentIndex();
+        const chosen = cards[index];
+        const label = chosen?.querySelector(".episode-copy strong")?.textContent?.trim() || "Episode " + (index + 1);
+        const now = toolbar.querySelector(".qa-episode-now strong");
+        if (now) now.textContent = label + " / " + cards.length;
+        const previous = toolbar.querySelector('[data-qa-step="-1"]');
+        const next = toolbar.querySelector('[data-qa-step="1"]');
+        if (previous) previous.disabled = index === 0;
+        if (next) next.disabled = index >= cards.length - 1 || Boolean(cards[index + 1]?.disabled);
+        cards.forEach((item, i) => {
+          item.setAttribute("aria-current", i === index ? "true" : "false");
+          item.setAttribute("aria-label", (item.querySelector(".episode-copy strong")?.textContent || "Episode " + (i + 1)) + (i === index ? ", currently selected" : ""));
+        });
+        // Reuse the earlier Netflix-style vertical episode list. Scroll the
+        // list itself, never jump the whole page away from the player.
+        if (scroll && chosen && rail.scrollHeight > rail.clientHeight) {
+          const target = Math.max(0, Math.min(
+            rail.scrollHeight - rail.clientHeight,
+            chosen.offsetTop - rail.offsetTop - Math.max(0, (rail.clientHeight - chosen.offsetHeight) / 2)
+          ));
+          rail.scrollTop = target;
+        }
+      };
+      toolbar.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-qa-step]");
+        if (!button || button.disabled) return;
+        const next = cards[currentIndex() + Number(button.dataset.qaStep)];
+        if (next && !next.disabled) next.click();
+      });
+      // The existing card handlers and publisher API own actual episode changes.
+      rail.addEventListener("click", (event) => {
+        if (event.target.closest("[data-episode]")) window.setTimeout(() => updateDeck(true), 0);
+      });
+      const observer = new MutationObserver(() => updateDeck(false));
+      cards.forEach((card) => observer.observe(card, { attributes: true, attributeFilter: ["class", "disabled"] }));
+      updateDeck(false);
+    }
+  }
+  // QA-only: real YouTube playback time, shared between movies and every series episode.
+  // Never infer a timestamp from an external iframe or claim a resume point before it plays.
+  const qaPlayback = /(^|[.-])qa([.-]|$)/i.test(location.hostname) ||
+    location.hostname === "cinedesi.online" || location.hostname.endsWith(".cinedesi.online") ||
+    new URLSearchParams(location.search).get("qa") === "1";
+  let qaYoutubePlayer = null;
+  let qaProgressTimer = null;
+  const qaReadContinue = () => {
+    try {
+      const rows = JSON.parse(localStorage.getItem("cinedesi_continue") || "[]");
+      return Array.isArray(rows) ? rows : [];
+    } catch { return []; }
+  };
+  const qaActiveEpisode = () => document.querySelector("[data-episode].active");
+  const qaEpisodeIndex = () => {
+    const active = qaActiveEpisode();
+    const value = active?.dataset?.episode;
+    return value === undefined ? null : Number(value);
+  };
+  const qaCapturePosition = (player, completed = false) => {
+    if (!qaPlayback || !player?.getCurrentTime || !m.full_video_verified) return;
+    let seconds = 0, duration = 0;
+    try {
+      seconds = Number(player.getCurrentTime());
+      duration = Number(player.getDuration());
+    } catch { return; }
+    if (!Number.isFinite(seconds) || !Number.isFinite(duration) || duration <= 0 || seconds < 3) return;
+    const episodeIndex = qaEpisodeIndex();
+    const episodeLabel = qaActiveEpisode()?.querySelector?.(".episode-copy strong")?.textContent || "";
+    const explicitNumber = episodeLabel.match(/Episode\\s+(\\d+)/i)?.[1] || episodeLabel.match(/E(\\d+)/i)?.[1];
+    const episodeNumber = explicitNumber ? Number(explicitNumber) : Number.isInteger(episodeIndex) && episodeIndex >= 0 ? episodeIndex + 1 : null;
+    const rows = qaReadContinue();
+    const previous = rows.find((row) => row.slug === m.slug);
+    const boundedSeconds = Math.max(0, Math.min(duration, seconds));
+    const isComplete = completed || boundedSeconds / duration >= .98;
+    const row = {
+      ...(previous || {}),
+      slug: m.slug,
+      title: m.title,
+      region: m.region,
+      genre: m.genre,
+      episode_index: episodeIndex,
+      episode_number: episodeNumber,
+      position_seconds: Math.round(boundedSeconds),
+      duration_seconds: Math.round(duration),
+      progress_percent: Math.round(100 * boundedSeconds / duration),
+      completed: isComplete,
+      updated_at: Date.now()
+    };
+    try {
+      localStorage.setItem("cinedesi_continue", JSON.stringify([row, ...rows.filter((item) => item.slug !== m.slug)].slice(0, 12)));
+    } catch {}
+  };
+  const qaStopProgress = () => {
+    if (qaProgressTimer !== null) window.clearInterval(qaProgressTimer);
+    qaProgressTimer = null;
+  };
+  const qaOnYoutubeReady = (event) => {
+    if (!qaPlayback) return;
+    qaYoutubePlayer = event.target;
+    // On a single movie/episode, seek only if the viewer explicitly chose Resume.
+    // Playlists retain their official episode navigation and save the active index.
+    if (playlistGenerated || location.hash !== "#watch") return;
+    const row = qaReadContinue().find((item) => item.slug === m.slug);
+    if (!row || Number(row.episode_index ?? -1) !== Number(qaEpisodeIndex() ?? -1)) return;
+    const seconds = Number(row.position_seconds || 0);
+    const duration = Number(row.duration_seconds || 0);
+    if (!row.completed && Number.isFinite(seconds) && seconds > 8 && duration > seconds + 12) {
+      try { event.target.seekTo(Math.max(0, seconds - 2), true); } catch {}
+    }
+  };
+  const qaOnYoutubeState = (event) => {
+    if (!qaPlayback) return;
+    qaYoutubePlayer = event.target;
+    if (event.data === 1) {
+      qaStopProgress();
+      qaProgressTimer = window.setInterval(() => qaCapturePosition(event.target), 5000);
+    } else if (event.data === 0) {
+      qaCapturePosition(event.target, true);
+      qaStopProgress();
+    } else if (event.data === 2 || event.data === 3 || event.data === 5) {
+      qaCapturePosition(event.target);
+      qaStopProgress();
+    }
+  };
+  if (qaPlayback) {
+    window.addEventListener("pagehide", () => { qaCapturePosition(qaYoutubePlayer); qaStopProgress(); });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) qaCapturePosition(qaYoutubePlayer);
+    });
+  }
   let youtubePlaylistPlayer = null;
   let pendingYoutubePlaylistIndex = null;
 
@@ -326,7 +507,7 @@ async function load() {
   const showPlayerFallback = (errorCode = 0) => {
     if (!playbackFailureLogged) {
       playbackFailureLogged = true;
-      db.from("playback_failures").insert({
+      if (!qaDomain) db.from("playback_failures").insert({
         movie_id: m.id,
         movie_slug: m.slug,
         source_name: m.full_video_source || m.source_name || "",
@@ -411,6 +592,7 @@ async function load() {
       youtubePlaylistPlayer = new YT.Player("official-player", {
         events: {
           onReady: (event) => {
+            qaOnYoutubeReady(event);
             const ids = event.target.getPlaylist?.() || [];
             const ordered = hydrateYoutubePlaylistCards(ids);
             if (pendingYoutubePlaylistIndex !== null) {
@@ -432,6 +614,7 @@ async function load() {
             }
           },
           onStateChange: (event) => {
+            qaOnYoutubeState(event);
             const idx = event.target.getPlaylistIndex?.();
             if (Number.isInteger(idx) && idx >= 0) {
               const card = document.querySelector(`[data-playlist-kind='youtube'][data-playlist-index='${idx}']`);
@@ -472,6 +655,8 @@ async function load() {
     try {
       youtubePlaylistPlayer = new window.YT.Player("official-player", {
         events: {
+          onReady: qaOnYoutubeReady,
+          onStateChange: qaOnYoutubeState,
           onError: (event) => {
             if ([100, 101, 150].includes(Number(event?.data))) showPlayerFallback(Number(event?.data) || 0);
           }
@@ -587,6 +772,10 @@ async function load() {
   document.querySelector("#trailer-link")?.addEventListener("click", () => track("trailer_click"));
   document.querySelector("#watch-link")?.addEventListener("click", () => track("watch_click"));
   document.querySelectorAll("[data-episode]").forEach((el) => el.addEventListener("click", () => {
+    if (qaPlayback && qaActiveEpisode() !== el) {
+      qaCapturePosition(qaYoutubePlayer);
+      qaStopProgress();
+    }
     const videoId = String(el.dataset.videoId || "");
     const playlistId = String(el.dataset.playlistId || "");
     const playlistKind = String(el.dataset.playlistKind || "");
@@ -648,14 +837,20 @@ async function load() {
       const rawNumber = activeEpisode?.querySelector?.(".episode-copy strong")?.textContent?.match(/Episode\s+(\d+)/i)?.[1];
       const episodeIndex = rawIndex === undefined ? null : Number(rawIndex);
       const episodeNumber = rawNumber ? Number(rawNumber) : episodeIndex !== null && Number.isFinite(episodeIndex) ? episodeIndex + 1 : null;
-      const list = JSON.parse(localStorage.getItem("cinedesi_continue") || "[]").filter((x) => x.slug !== m.slug);
+      const currentRows = JSON.parse(localStorage.getItem("cinedesi_continue") || "[]");
+      const list = currentRows.filter((x) => x.slug !== m.slug);
+      const oldRow = currentRows.find((x) => x.slug === m.slug);
+      const nextEpisodeIndex = Number.isFinite(episodeIndex) ? episodeIndex : null;
+      const sameEpisode = oldRow && oldRow.episode_index === nextEpisodeIndex;
       list.unshift({
+        ...(qaPlayback && sameEpisode ? oldRow : {}),
         slug: m.slug,
         title: m.title,
         region: m.region,
         genre: m.genre,
-        episode_index: Number.isFinite(episodeIndex) ? episodeIndex : null,
+        episode_index: nextEpisodeIndex,
         episode_number: Number.isFinite(episodeNumber) ? episodeNumber : null,
+        ...(qaPlayback && !sameEpisode ? { position_seconds: null, duration_seconds: null, progress_percent: null, completed: false } : {}),
         updated_at: Date.now()
       });
       localStorage.setItem("cinedesi_continue", JSON.stringify(list.slice(0, 12)));

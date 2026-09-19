@@ -1,0 +1,219 @@
+name: Deploy CineDesi isolated mobile QA review
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cinedesi-isolated-qa-review
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'qa/installed-mobile-tabs-20260919'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout QA branch only
+        uses: actions/checkout@v4
+        with:
+          ref: qa/installed-mobile-tabs-20260919
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build iPhone 6 compatibility QA
+        env:
+          CINEDESI_QA_LEGACY: '1'
+        run: npm run build
+      - name: Verify review assets and isolate from production
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          for (const path of ['dist/index.html','dist/movie.html','dist/app-preview.html','dist/qa-compat.js','dist/sw.js']) {
+            assert.ok(fs.existsSync(path), 'QA asset missing: '+path);
+          }
+          const config=JSON.parse(fs.readFileSync('wrangler.qa-review.jsonc','utf8'));
+          assert.equal(config.name,'cinedesi-qa-launch-review-20260919');
+          assert.equal(config.assets.directory,'./dist');
+          assert.equal(config.assets.binding,'ASSETS');
+          assert.ok(config.assets.run_worker_first,'Review worker must apply noindex across HTML');
+          assert.ok(fs.readFileSync('dist/index.html','utf8').includes('qa-compat.js'));
+          assert.ok(fs.readFileSync('dist/app-preview.html','utf8').includes('Interactive CineDesi QA'));
+          const src=fs.readFileSync('src/main.ts','utf8');
+          assert.ok(src.includes('qa-resume-meta')&&src.includes('cd-qa-standalone'));
+          const movie=fs.readFileSync('src/movie.ts','utf8');
+          assert.ok(movie.includes('qaCapturePosition')&&movie.includes('qaOnYoutubeState'));
+          const worker=fs.readFileSync('qa/worker.js','utf8');
+          assert.ok(worker.includes('noindex, nofollow'));
+          console.log('PASS: isolated QA assets, compatibility build, launch, genuine progress logic and noindex');
+          JS
+      - name: Set Cloudflare credentials without publishing secret values
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN_RAW: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID_RAW: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          python - <<'PY'
+          import os,re
+          raw=os.environ.get('CLOUDFLARE_API_TOKEN_RAW','').strip()
+          match=re.search(r'Bearer\s+([A-Za-z0-9._-]+)',raw,re.I)
+          if match:
+              token=match.group(1)
+          else:
+              token=next((line.strip().strip('"').strip("'") for line in raw.splitlines() if line.strip()),'')
+              token=re.split(r'\s+-H\s+|\s+curl\s+',token,maxsplit=1)[0].strip()
+              if token.lower().startswith('bearer '):token=token[7:].strip()
+          account_raw=os.environ.get('CLOUDFLARE_ACCOUNT_ID_RAW','')
+          account_match=re.search(r'\b([a-fA-F0-9]{32})\b',account_raw)
+          account=account_match.group(1) if account_match else account_raw.strip().strip('"').strip("'")
+          if not token or not re.fullmatch(r'[a-fA-F0-9]{32}',account):
+              raise SystemExit('QA deploy requires valid existing Cloudflare secrets')
+          print('::add-mask::'+token)
+          print('::add-mask::'+account)
+          with open(os.environ['GITHUB_ENV'],'a') as file:
+              file.write('CLOUDFLARE_API_TOKEN='+token+'\n')
+              file.write('CLOUDFLARE_ACCOUNT_ID='+account+'\n')
+          PY
+      - name: Deploy separate review Worker only
+        run: npx --yes wrangler@4 deploy --config wrangler.qa-review.jsonc
+      - name: Test public review app without publishing production changes
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          const base='https://cinedesi-qa-launch-review-20260919.aliarbaz1100-93b.workers.dev';
+          for (const [path,kind,text] of [
+            ['/','text/html','CineDesi'],
+            ['/app-preview','text/html','Interactive CineDesi QA'],
+            ['/manifest.webmanifest','application/manifest+json','CineDesi QA'],
+            ['/movie?slug=qa-smoke','text/html','movie-page'],
+            ['/qa-compat.js','javascript','cd-qa-mode']
+          ]) {
+            let response;
+            let lastError;
+            for(let attempt=0;attempt<5;attempt++){
+              try {
+                response=await fetch(base+path,{headers:{'Cache-Control':'no-cache'},signal:AbortSignal.timeout(15000)});
+                break;
+              } catch(error) {
+                lastError=error;
+                if(attempt<4)await new Promise(resolve=>setTimeout(resolve,700*(attempt+1)));
+              }
+            }
+            if(!response)throw Error('QA route '+path+' unreachable after five attempts: '+String(lastError));
+            assert.equal(response.status,200,path+' returned '+response.status);
+            assert.ok(response.headers.get('content-type')?.includes(kind),path+' content type '+response.headers.get('content-type'));
+            assert.ok(response.headers.get('x-robots-tag')?.includes('noindex'),path+' must not be indexed');
+            assert.ok((await response.text()).includes(text),path+' missing expected QA content');
+            console.log('PASS QA HTTP '+path+' 200');
+          }
+          JS
+
+      - name: Browser QA on 375px iPhone 6 and 360px Android emulations
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node qa/verify-mobile.mjs
+      - name: QA category and See All isolation with deterministic catalog
+        run: node qa/verify-category-isolation.mjs
+      - name: WebKit mobile UI regression + review screenshots
+        run: |
+          npx playwright install --with-deps webkit
+          node qa/verify-webkit.mjs
+      - name: Save QA screenshots for user's visual review
+        uses: actions/upload-artifact@v4
+        with:
+          name: cinedesi-qa-mobile-ui-review
+          path: qa-review-screenshots/*.png
+          retention-days: 7
+      - name: Capture existing installed QA Worker rollback version
+        if: ${{ hashFiles('qa/promote-original-review.txt') != '' }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,os,re,urllib.request
+          from pathlib import Path
+          name='cinedesi-qa-safari-20260919'
+          account=os.environ['CLOUDFLARE_ACCOUNT_ID']
+          token=os.environ['CLOUDFLARE_API_TOKEN']
+          url=f'https://api.cloudflare.com/client/v4/accounts/{account}/workers/scripts/{name}/deployments'
+          request=urllib.request.Request(url,headers={'Authorization':f'Bearer {token}','User-Agent':'CineDesi-QA-Backup'})
+          with urllib.request.urlopen(request,timeout=25) as response:
+              data=json.load(response)
+          deployments=data.get('result',{}).get('deployments',[])
+          if not data.get('success') or not deployments:
+              raise SystemExit('Original QA Worker not found: no deployment, refusing to overwrite it')
+          active=deployments[0].get('versions',[])
+          if len(active)!=1 or abs(float(active[0].get('percentage',0))-100)>0.01:
+              raise SystemExit('Original QA Worker uses multi-version deployment, refusing to overwrite')
+          version=active[0]['version_id']
+          if not re.fullmatch(r'[0-9a-fA-F-]{36}',version):
+              raise SystemExit('Original QA rollback version invalid')
+          Path('/tmp/original-qa-version.txt').write_text(version+'\n')
+          with open(os.environ['GITHUB_ENV'],'a') as file:
+              file.write('ORIGINAL_QA_ROLLBACK_VERSION='+version+'\n')
+          print('Original QA worker backup available; version:',version)
+          PY
+          node --input-type=module <<'JS'
+          const response=await fetch('https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev/app-preview');
+          if(response.status!==200) throw Error('Original QA demo is not currently accessible; refusing to overwrite');
+          console.log('PASS: original QA preview online before upgrade');
+          JS
+      - name: Store original QA rollback version
+        if: ${{ hashFiles('qa/promote-original-review.txt') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: original-cinedesi-qa-worker-rollback-version
+          path: /tmp/original-qa-version.txt
+          retention-days: 7
+      - name: Update only pre-existing installed QA demo and auto-rollback on failure
+        if: ${{ hashFiles('qa/promote-original-review.txt') != '' }}
+        shell: bash
+        run: |
+          set -eo pipefail
+          undo_if_needed() {
+            local exit_code=$?
+            trap - EXIT
+            if [ "$exit_code" -ne 0 ]; then
+              echo "Original QA smoke failed; rolling back to prior Worker version."
+              npx --yes wrangler@4 rollback "$ORIGINAL_QA_ROLLBACK_VERSION" --name cinedesi-qa-safari-20260919 --message "Revert failed CineDesi QA preview deploy" || true
+            fi
+            exit "$exit_code"
+          }
+          trap undo_if_needed EXIT
+          npx --yes wrangler@4 deploy --config wrangler.qa-original.jsonc
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          const base='https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev';
+          for(const [path,kind,expected] of [
+            ['/','text/html','CineDesi'],
+            ['/app-preview','text/html','Interactive CineDesi QA'],
+            ['/manifest.webmanifest','application/manifest+json','cinedesi-qa-app=1'],
+            ['/movie?slug=qa-smoke','text/html','movie-page'],
+            ['/qa-compat.js','javascript','cd-qa-mode']
+          ]) {
+            let response;
+            for(let attempt=0;attempt<5;attempt++){
+              response=await fetch(base+path,{headers:{'Cache-Control':'no-cache'}});
+              const text=await response.text();
+              if(response.ok && text.includes(expected)) {
+                assert.ok(response.headers.get('content-type')?.includes(kind),path+' wrong MIME type');
+                assert.ok(response.headers.get('x-robots-tag')?.includes('noindex'),path+' missing noindex');
+                console.log('PASS existing QA '+path+' '+response.status);
+                break;
+              }
+              if(attempt===4) throw Error(path+' did not serve the new QA app, HTTP '+response.status);
+              await new Promise(resolve=>setTimeout(resolve,1200));
+            }
+          }
+          JS
+          trap - EXIT
+          echo "Original installed CineDesi QA demo upgraded and verified; production site untouched."

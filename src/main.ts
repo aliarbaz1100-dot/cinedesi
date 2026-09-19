@@ -2,8 +2,14 @@ import "./cinematic-v2.css";
 import "./mobile-navigation.css";
 import "./top-ten.css";
 import "./launch-polish.css";
+import "./installed-app-qa.css";
 const homeReturnKey = "cinedesi-home-return-v1";
 const rememberHomeReturn = (link) => {
+  // Entering a title is an internal navigation, not another app launch.
+  // Preserve this through iOS WebKit's full-page back/forward reload.
+  if (/(^|[.-])qa([.-]|$)/i.test(location.hostname)) {
+    try { sessionStorage.setItem("cinedesi-qa-internal-nav", String(Date.now())); } catch {}
+  }
   const section = link.closest("section[id]");
   try {
     const returnState = {
@@ -62,7 +68,12 @@ window.addEventListener("pageshow", (event) => {
   }));
 });
 const launchSplash = document.querySelector("#app-splash");
-if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true)) {
+// The QA launch controller is inline in index.html: it displays before the
+// JS bundle, handles older iOS standalone detection, and fades on warm resume.
+// Never let bundle initialization remove its overlay before the animation plays.
+if (document.documentElement.classList.contains("cd-qa-standalone")) {
+  // QA controller owns the lifecycle, including the independent failsafe.
+} else if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true)) {
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => {
     launchSplash.classList.add("splash-exit");
@@ -115,7 +126,7 @@ const skeletonMarkup = Array.from({ length: 6 }, () => `<article class="card ske
   const rail = document.getElementById(id);
   if (rail && !rail.children.length) rail.innerHTML = skeletonMarkup;
 });
-const URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co";
+const SUPABASE_URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co";
 const KEY = "sb_publishable_ZEAZWO-Q-_rvMsy6krr_nw_JDRmP_kI";
 const apiHeaders = {
   apikey: KEY,
@@ -124,7 +135,7 @@ const apiHeaders = {
   "Accept-Profile": "public",
   "Content-Profile": "public"
 };
-const apiFetch = (path, options = {}) => fetch(`${URL}/rest/v1/${path}`, {
+const apiFetch = (path, options = {}) => fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
   ...options,
   headers: { ...apiHeaders, ...(options.headers || {}) }
 });
@@ -164,7 +175,13 @@ function init() {
     else setTimeout(fn, desktopFastPath ? 120 : 180);
   };
   if ("scrollRestoration" in history) history.scrollRestoration = "auto";
+  const qaDomain = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
+  // Limit initial hero decoding/catalog batch sizes on old iOS even in production.
+  const lowPowerQa = (/iPhone OS (?:9|10|11|12)_/i.test(navigator.userAgent) ||
+    (Number(navigator.deviceMemory) > 0 && Number(navigator.deviceMemory) <= 2) ||
+    navigator.connection?.saveData === true);
   const track = async (event, slug = null) => {
+    if (qaDomain) return;
     try {
       const response = await apiFetch("rpc/track_cinedesi_event", {
         method: "POST",
@@ -231,7 +248,9 @@ function init() {
     let error = null;
     let start = 0;
     while (true) {
-      const pageSize = start === 0 ? (desktopFastPath ? 140 : 80) : 1000;
+      // First rail paints immediately; small batches keep Safari 12 responsive
+      // while the remaining real catalog loads without dropping any title.
+      const pageSize = start === 0 ? (desktopFastPath ? 140 : 80) : lowPowerQa ? 250 : 1000;
       const query = new URLSearchParams({
         select: selectColumns,
         status: "eq.published",
@@ -258,6 +277,7 @@ function init() {
       }
       if (rows.length < pageSize) break;
       start += pageSize;
+      if (lowPowerQa) await new Promise((resolve) => setTimeout(resolve, 0));
     }
     if (error && !data.length) {
       if (status) {
@@ -295,7 +315,7 @@ function init() {
     const trendMap = new Map((trendingRows || []).map((row) => [row.movie_slug, Number(row.trend_score) || 0]));
     movies = movies.map((m) => ({ ...m, _trend_score: trendMap.get(m.slug) || 0 }));
     try {
-      const homeItems = [...movies.filter((m) => isHomeDisplayTitle(m)).slice(0, 140), ...movies.filter((m) => m.full_video_verified && m.full_video_embed_url).slice(0, 80)];
+      const homeItems = [...movies.filter((m) => isHomeDisplayTitle(m)).slice(0, 140), ...movies.filter(isNewNonCinedesiMovie).slice(0, 80), ...movies.filter(hasWatchOnCineDesi).slice(0, 80)];
       const uniqueItems = [...new Map(homeItems.map((m) => [m.id, m])).values()];
       localStorage.setItem("cinedesi-home-cache-v1", JSON.stringify({ savedAt: Date.now(), items: uniqueItems }));
     } catch {}
@@ -419,9 +439,13 @@ function init() {
     const note = String(m.availability_note || "");
     return /\b(?:premieres|coming|scheduled|arrives)\b/i.test(note) && !/\b(?:premiered|streaming now|available now)\b/i.test(note);
   };
+  // A title can appear outside New & Trending only when the actual
+  // Watch on CineDesi player is verified and has an internal embed URL.
+  // An official trailer or external legal watch link does not qualify.
+  const hasWatchOnCineDesi = (m) => Boolean(m.full_video_verified && m.full_video_embed_url);
   const isHomeDisplayTitle = (m) => {
     const currentYear = new Date().getFullYear();
-    if (isUpcomingTitle(m)) return false;
+    if (!hasWatchOnCineDesi(m) || isUpcomingTitle(m)) return false;
     return Number(m._trend_score || 0) > 0 || Number(m.release_year || 0) >= currentYear - 1;
   };
   const rankRail = (list) => [...list].sort((a,b) =>
@@ -491,13 +515,8 @@ function init() {
       !isUpcomingTitle(m);
   };
 
-  const isNewNonCinedesiMovie = (m) => {
-    const currentYear = new Date().getFullYear();
-    return m.content_type === "movie" &&
-      Number(m.release_year || 0) >= currentYear - 1 &&
-      !(m.full_video_verified && m.full_video_embed_url) &&
-      !isUpcomingTitle(m);
-  };
+  const isNewNonCinedesiMovie = (m) =>
+    m.content_type === "movie" && !hasWatchOnCineDesi(m);
 
   function renderSeries() {
     const all = rankRail(movies.filter(isHollywoodMovie));
@@ -531,7 +550,7 @@ function init() {
     const gs = ["Action", "Comedy", "Horror", "Drama", "Romance", "Thriller", "Cartoons"];
     genreChips.innerHTML = gs.map((g) => `<button class='genre-chip' data-genre='${g}'>${g}</button>`).join("");
     genreRails.innerHTML = gs.map((g) => {
-      const all = rankRail(movies.filter((m) => genreMatch(m, g) && (g === "Cartoons" || isHomeDisplayTitle(m))));
+      const all = rankRail(movies.filter((m) => hasWatchOnCineDesi(m) && genreMatch(m, g) && (g === "Cartoons" || isHomeDisplayTitle(m))));
       const list = g === "Cartoons" ? all.slice(0, 8) : claimRail(all, 8);
       if (!list.length) return "";
       return `<div class='rail-block genre-block' id='genre-${g.toLowerCase()}'><div class='rail-heading'><h3>${g}</h3><button type='button' data-genre-see='${g}'>See all \u2192</button></div><div class='grid rail genre-rail'>${list.map((m) => card(m)).join("")}</div></div>`;
@@ -587,8 +606,12 @@ function init() {
     } catch {}
 
     const bySlug = new Map(movies.map((m) => [m.slug, m]));
-    const recentMovies = recentItems.map((x) => bySlug.get(x.slug)).filter(Boolean).slice(0, 12);
-    const continueMovies = continueItems.map((x) => bySlug.get(x.slug)).filter((m) => m && m.full_video_verified && m.full_video_embed_url).slice(0, 12);
+    const recentMovies = recentItems.map((x) => bySlug.get(x.slug)).filter((m) => m && hasWatchOnCineDesi(m)).slice(0, 12);
+    const qaPreview = /(^|[.-])qa([.-]|$)/i.test(location.hostname) ||
+      location.hostname === "cinedesi.online" || location.hostname.endsWith(".cinedesi.online") ||
+      new URLSearchParams(location.search).get("qa") === "1";
+    const continueMovies = continueItems.filter((x) => !qaPreview || !x.completed)
+      .map((x) => bySlug.get(x.slug)).filter((m) => m && m.full_video_verified && m.full_video_embed_url).slice(0, 12);
 
     if (continueGrid && continueSection) {
       continueSection.hidden = continueMovies.length === 0;
@@ -602,6 +625,23 @@ function init() {
           html = html.replace("▶ Details", `▶ Resume E${episodeNumber}`);
         } else {
           html = html.replace("▶ Details", "▶ Resume");
+        }
+        if (qaPreview) {
+          const rawSeconds = Number(resume?.position_seconds);
+          const rawDuration = Number(resume?.duration_seconds);
+          const validTime = Number.isFinite(rawSeconds) && Number.isFinite(rawDuration) && rawSeconds >= 3 && rawDuration > rawSeconds;
+          const percent = validTime ? Math.max(1, Math.min(99, Math.round(100 * rawSeconds / rawDuration))) : 0;
+          const minutes = validTime ? Math.floor(rawSeconds / 60) : 0;
+          const seconds = validTime ? Math.floor(rawSeconds % 60) : 0;
+          const watched = validTime ? `${minutes}:${String(seconds).padStart(2, "0")} watched` : "";
+          const label = m.content_type === "series"
+            ? (Number.isInteger(episodeNumber) && episodeNumber > 0 ? `Continue · Episode ${episodeNumber}` : "Continue series")
+            : "Continue movie";
+          const progress = validTime
+            ? `<div class='qa-resume-track' role='progressbar' aria-label='${esc(label)}' aria-valuemin='0' aria-valuemax='100' aria-valuenow='${percent}'><i style='width:${percent}%'></i></div>`
+            : "";
+          const detail = `<div class='qa-resume-meta'><span>${esc(label)}</span><small>${esc(watched)}</small>${progress}</div>`;
+          html = html.replace("</article>", detail + "</article>");
         }
         return html;
       }).join("");
@@ -636,7 +676,7 @@ function init() {
     const section = q("#coming-soon");
     if (!comingGrid || !section) return;
     const all = [...movies]
-      .filter(isUpcomingTitle)
+      .filter((m) => hasWatchOnCineDesi(m) && isUpcomingTitle(m))
       .sort((a,b) => (Number(b.score)||0) - (Number(a.score)||0) || String(b.updated_at || "").localeCompare(String(a.updated_at || "")));
     section.hidden = all.length === 0;
     const list = all.slice(0,12);
@@ -702,9 +742,12 @@ function init() {
       image.src = heroPosterUrl(videoThumb(m) || m.poster_url);
     };
     preloadHero(heroPool[0], "high");
-    const warmNextHeroes = () => heroPool.slice(1, 4).forEach((m) => preloadHero(m));
-    if ("requestIdleCallback" in window) window.requestIdleCallback(warmNextHeroes, { timeout: 1200 });
-    else setTimeout(warmNextHeroes, 600);
+    // Older phones must not decode three extra full-screen hero images on launch.
+    if (!lowPowerQa) {
+      const warmNextHeroes = () => heroPool.slice(1, 4).forEach((m) => preloadHero(m));
+      if ("requestIdleCallback" in window) window.requestIdleCallback(warmNextHeroes, { timeout: 1200 });
+      else setTimeout(warmNextHeroes, 600);
+    }
     let heroIndex = 0;
     const paintHero = () => {
       const m = heroPool[heroIndex % heroPool.length];
@@ -801,7 +844,7 @@ function init() {
   function render() {
     const term = search.value.trim().toLowerCase(), r = region.value, a = availability.value, s = sort.value, t = contentType.value;
     const south = (v) => ["South", "South Indian", "India / South Indian"].includes(String(v));
-    const list = movies.filter((m) => (activeCollection !== "new" || isNewNonCinedesiMovie(m)) && (activeCollection !== "upcoming" || isUpcomingTitle(m)) && (activeCollection !== "binge" || (m.content_type === "series" && isHomeDisplayTitle(m) && m.full_video_verified && m.full_video_embed_url && Number(m.episode_count || 0) >= 5)) && (activeCollection !== "turkish" || (m.content_type === "series" && String(m.region || "").toLowerCase() === "turkey" && String(m.original_language || "").toLowerCase() === "turkish" && m.full_video_verified && Boolean(m.full_video_embed_url) && !isUpcomingTitle(m))) && (activeCollection !== "hollywood" || isHollywoodMovie(m)) && (activeCollection !== "genre" || genreMatch(m, activeCollectionValue)) && (t === "all" || m.content_type === t) && (r === "All" || m.region === r || r === "South" && south(m.region)) && (a === "all" || a === "watch" && m.watch_verified && m.watch_url || a === "trailer" && m.trailer_verified && m.trailer_url || a === "cinedesi" && m.full_video_verified && m.full_video_embed_url) && searchText(m).includes(term)).sort((x, y) => activeCollection === "top" ? (Number(y._trend_score) || 0) - (Number(x._trend_score) || 0) || (Number(y.score) || 0) - (Number(x.score) || 0) : activeCollection === "upcoming" ? (Number(y.score) || 0) - (Number(x.score) || 0) || String(y.updated_at || "").localeCompare(String(x.updated_at || "")) : s === "title" ? String(x.title).localeCompare(String(y.title)) : s === "newest" ? (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : 0), shown = list.slice(0, visibleLimit);
+    const list = movies.filter((m) => (activeCollection === "new" ? isNewNonCinedesiMovie(m) : hasWatchOnCineDesi(m)) && (activeCollection !== "upcoming" || isUpcomingTitle(m)) && (activeCollection !== "binge" || (m.content_type === "series" && isHomeDisplayTitle(m) && m.full_video_verified && m.full_video_embed_url && Number(m.episode_count || 0) >= 5)) && (activeCollection !== "turkish" || (m.content_type === "series" && String(m.region || "").toLowerCase() === "turkey" && String(m.original_language || "").toLowerCase() === "turkish" && m.full_video_verified && Boolean(m.full_video_embed_url) && !isUpcomingTitle(m))) && (activeCollection !== "hollywood" || isHollywoodMovie(m)) && (activeCollection !== "genre" || genreMatch(m, activeCollectionValue)) && (t === "all" || m.content_type === t) && (r === "All" || m.region === r || r === "South" && south(m.region)) && (a === "all" || a === "watch" && m.watch_verified && m.watch_url || a === "trailer" && m.trailer_verified && m.trailer_url || a === "cinedesi" && m.full_video_verified && m.full_video_embed_url) && searchText(m).includes(term)).sort((x, y) => activeCollection === "top" ? (Number(y._trend_score) || 0) - (Number(x._trend_score) || 0) || (Number(y.score) || 0) - (Number(x.score) || 0) : activeCollection === "upcoming" ? (Number(y.score) || 0) - (Number(x.score) || 0) || String(y.updated_at || "").localeCompare(String(x.updated_at || "")) : s === "title" ? String(x.title).localeCompare(String(y.title)) : s === "newest" ? (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : 0), shown = list.slice(0, visibleLimit);
     grid.innerHTML = shown.length ? shown.map((m) => card(m)).join("") : `<div class='empty'>No published titles match these filters yet.</div>`;
     status.textContent = list.length ? `Showing ${shown.length} of ${list.length} matching titles` : "No matching published titles";
     loadMore.hidden = shown.length >= list.length;
@@ -809,7 +852,7 @@ function init() {
   }
   function renderWatchlist() {
     const byId = new Map(movies.map((m) => [m.id, m]));
-    const list = saved.map((id) => byId.get(id)).filter(Boolean);
+    const list = saved.map((id) => byId.get(id)).filter((m) => m && hasWatchOnCineDesi(m));
     watchGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") : `<div class='empty'>Your watchlist is empty. Save a movie from Discover and it will stay here on this device.</div>`;
     wire(watchGrid);
   }
@@ -948,6 +991,10 @@ function init() {
   });
   newsletter.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (qaDomain) {
+      newsletterMsg.textContent = "Subscriptions are disabled in the QA preview.";
+      return;
+    }
     const form = new FormData(newsletter), email = String(form.get("email") || "").trim().toLowerCase(), consent = form.get("consent") === "on";
     newsletterMsg.textContent = "";
     newsletterMsg.className = "form-msg";
@@ -980,6 +1027,52 @@ function init() {
     newsletter.reset();
     newsletterMsg.textContent = "Subscribed. Welcome to CineDesi.";
   });
+  // QA-only installed app tabs: use real catalog sections, not mock screens.
+  // Browser visitors and the existing desktop experience keep their navigation.
+  const installedApp = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
+  const mobileTabs = q(".mobile-bottom-nav");
+  if (installedApp && mobileTabs) {
+    document.documentElement.classList.add("cd-installed");
+    const tabs = Array.from(mobileTabs.querySelectorAll("a,button"));
+    const newTab = mobileTabs.querySelector('a[href="#top-today"]');
+    if (newTab) newTab.setAttribute("href", "#new-releases");
+    const selectTab = (tab) => {
+      tabs.forEach((item) => {
+        const active = item === tab;
+        item.classList.toggle("active", active);
+        if (item.tagName === "A") {
+          if (active) item.setAttribute("aria-current", "page");
+          else item.removeAttribute("aria-current");
+        } else {
+          item.setAttribute("aria-pressed", String(active));
+        }
+      });
+    };
+    const tabFromHash = () => mobileTabs.querySelector(
+      location.hash === "#watchlist" ? 'a[href="#watchlist"]' :
+      location.hash === "#new-releases" ? 'a[href="#new-releases"]' :
+      'a[href="#home"]'
+    );
+    const leaveSearch = () => {
+      catalogHeader.classList.remove("search-mode");
+      suggestions.classList.remove("on");
+      search.blur();
+    };
+    mobileTabs.addEventListener("click", (event) => {
+      const tab = event.target.closest("a,button");
+      if (!tab || !mobileTabs.contains(tab)) return;
+      if (tab.id !== "bottom-search") leaveSearch();
+      selectTab(tab);
+    });
+    searchClose.addEventListener("click", () => selectTab(tabFromHash()));
+    window.addEventListener("hashchange", () => {
+      if (!catalogHeader.classList.contains("search-mode")) selectTab(tabFromHash());
+    });
+    window.addEventListener("pageshow", () => {
+      if (!catalogHeader.classList.contains("search-mode")) selectTab(tabFromHash());
+    });
+    selectTab(tabFromHash());
+  }
   q("#bottom-search").onclick = () => {
     catalogHeader.classList.add("search-mode");
     setTimeout(() => search.focus(), 0);
