@@ -51,6 +51,13 @@ try {
     assert.ok(launch.qa && launch.display !== "none", device.name + " QA logo must be visible on launch");
     assert.match(String(launch.logo), /CINEDESI/);
     assert.match(String(launch.poweredBy), /Arbaz Ali/i);
+    const launchArt = await page.evaluate(() => {
+      const logo = document.querySelector("#app-splash .splash-logo span");
+      const brand = document.querySelector("#app-splash .splash-brand");
+      return { red: getComputedStyle(logo).color, animation: getComputedStyle(brand).animationName };
+    });
+    assert.match(launchArt.red, /229,\\s*9,\\s*20/, device.name + " launch logo must have CineDesi red");
+    assert.match(launchArt.animation, /qa-brand-in/, device.name + " launch branding must animate");
     console.log("PASS", device.name, "first-frame branded launch", Date.now() - start, "ms");
     await overlay.waitFor({ state: "detached", timeout: 6100 });
     await page.locator("#home").waitFor({ state: "visible", timeout: 7000 });
@@ -79,7 +86,22 @@ try {
     });
     assert.deepEqual(top.before, top.liveLayer, device.name + " featured viewport MUST match live CineDesi visual CSS");
     assert.ok(top.width <= top.screen + 2, device.name + " horizontal overflow " + JSON.stringify(top));
-    console.log("PASS", device.name, "featured display equals live CSS; no horizontal overflow");
+    const navParity = await page.evaluate(() => {
+      const nav = document.querySelector(".mobile-bottom-nav");
+      const read = () => ({
+        radius: getComputedStyle(nav).borderRadius,
+        background: getComputedStyle(nav).backgroundColor,
+        width: getComputedStyle(nav).width,
+        icon: getComputedStyle(nav.querySelector("svg")).width
+      });
+      const qa = read();
+      document.documentElement.classList.remove("cd-qa-mode");
+      const original = read();
+      document.documentElement.classList.add("cd-qa-mode");
+      return { qa, original };
+    });
+    assert.deepEqual(navParity.qa, navParity.original, device.name + " must restore original premium bottom bar");
+    console.log("PASS", device.name, "featured display and original premium bottom nav match live CSS");
     const search = page.locator("#bottom-search");
     await search.waitFor({ state: "visible", timeout: 9000 });
     await search.click();
@@ -91,6 +113,25 @@ try {
     await page.waitForFunction(() => location.hash === "#new-releases", null, { timeout: 3000 });
     assert.ok(await newTab.getAttribute("aria-current") === "page", device.name + " New tab not selected");
     console.log("PASS", device.name, "search and real New Releases navigation");
+    // Simulate returning home after opening an actual title in the installed app.
+    // A new HTML document must never paint the brand as if the app launched.
+    await page.evaluate(() => sessionStorage.setItem("cinedesi-qa-internal-nav", String(Date.now())));
+    const returning = await page.goto(base + "/?qa=1&source=pwa", { waitUntil: "domcontentloaded", timeout: 30000 });
+    assert.equal(returning?.status(), 200);
+    const returnState = await page.evaluate(() => ({
+      freshLaunch: document.documentElement.classList.contains("cd-qa-standalone"),
+      splashVisible: getComputedStyle(document.querySelector("#app-splash")).display !== "none",
+      savedNav: Number(sessionStorage.getItem("cinedesi-qa-internal-nav") || 0)
+    }));
+    assert.ok(returnState.savedNav > 0 && !returnState.freshLaunch && !returnState.splashVisible, device.name + " movie-return app must not display a launch logo");
+    await page.waitForTimeout(350);
+    assert.equal(await page.locator("#app-splash").count(), 0, device.name + " movie-return splash should be removed without ever appearing");
+    // Explicit return params also protect late returns when the timestamp expires.
+    const saved = Date.now() - 180000;
+    await page.evaluate(value => sessionStorage.setItem("cinedesi-qa-internal-nav", String(value)), saved);
+    await page.goto(base + "/?qa=1&source=pwa&returnY=0", { waitUntil: "domcontentloaded", timeout: 30000 });
+    assert.equal(await page.evaluate(() => document.documentElement.classList.contains("cd-qa-standalone")), false, device.name + " returnY must suppress launch");
+    console.log("PASS", device.name, "movie to home navigation does not show a false splash");
     const preview = await page.goto(base + "/app-preview", { waitUntil: "domcontentloaded", timeout: 30000 });
     assert.equal(preview?.status(), 200);
     await page.locator("#replay").click();
