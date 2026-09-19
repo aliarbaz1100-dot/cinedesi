@@ -180,6 +180,13 @@
     if(!app||document.hidden||!hiddenAt)return;
     var duration=Date.now()-hiddenAt;
     hiddenAt=0;
+    // iOS sometimes briefly backgrounds WebKit while its native startup
+    // screenshot is showing. Do not lose the pending first launch in that gap.
+    if(node&&lastShown===0&&cold){
+      node.style.opacity="";
+      visibleFrames(node,550);
+      return;
+    }
     if(duration<2600||Date.now()-lastShown<4500||blocked())return;
     if(node)return;
     var resumed=create();
