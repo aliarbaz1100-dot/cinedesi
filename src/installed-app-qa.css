@@ -196,17 +196,8 @@
     background: transparent !important;
     box-shadow: none !important;
   }
-  /* Approved final QA: remove the oversized SEASON 20 / 10 official episodes
-     display (and duplicate count) above the existing working navigation.
-     Keep the episode browser and navigation controls intact. */
-  html.cd-qa-mode .movie-page .qa-netflix-episode-list > .episode-browser-head {
-    display: none !important;
-  }
-  html.cd-qa-mode .movie-page .qa-netflix-episode-list > .qa-episode-toolbar {
-    margin-top: 0 !important;
-  }
   html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-browser-head {
-    display: none !important;
+    display: flex !important;
     align-items: flex-end !important;
     justify-content: space-between !important;
     flex-direction: row !important;
@@ -478,4 +469,10 @@
     height: 100% !important;
     width: 100% !important;
   }
+}
+
+/* All QA screen sizes and all series: hide ONLY the oversized white headline.
+   Preserve the season label, compact episode count, cards, and Previous/Next. */
+html.cd-qa-mode .movie-page .episode-browser-head h3 {
+  display: none !important;
 }
