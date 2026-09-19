@@ -59,7 +59,7 @@ jobs:
             ("/","text/html","CineDesi"),
             ("/movie.html?slug=preview-smoke","text/html","movie-page"),
             ("/manifest.webmanifest","json","start_url"),
-            ("/sw.js","javascript","cinedesi-shell-v27"),
+            ("/sw.js","javascript","cinedesi-shell-v28"),
           ]
           for path,content_type,marker in checks:
               err=None
