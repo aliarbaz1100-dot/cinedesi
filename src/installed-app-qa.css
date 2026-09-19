@@ -1,18 +1,18 @@
-/* QA: visual changes apply to installed CineDesi only; normal web UI is unchanged. */
+/* QA-only mobile visual layer: applies to the test-app preview and standalone QA origin; production remains unchanged. */
 @media screen and (max-width: 620px) {
-  html.cd-installed body.home-body {
+  html.cd-qa-mode body.home-body {
     background: #050505 !important;
     padding-bottom: calc(98px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
-  html.cd-installed .home-body .catalog-header {
+  html.cd-qa-mode .home-body .catalog-header {
     padding-top: max(9px, env(safe-area-inset-top, 0px)) !important;
     background: #080809 !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
 
-  html.cd-installed .home-body .mobile-bottom-nav {
+  html.cd-qa-mode .home-body .mobile-bottom-nav {
     width: calc(100% - 20px) !important;
     max-width: 450px !important;
     bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
@@ -25,8 +25,8 @@
     backdrop-filter: none !important;
   }
 
-  html.cd-installed .home-body .mobile-bottom-nav a,
-  html.cd-installed .home-body .mobile-bottom-nav button {
+  html.cd-qa-mode .home-body .mobile-bottom-nav a,
+  html.cd-qa-mode .home-body .mobile-bottom-nav button {
     min-height: 48px !important;
     gap: 4px !important;
     border-radius: 12px !important;
@@ -35,65 +35,68 @@
     touch-action: manipulation;
   }
 
-  html.cd-installed .home-body .mobile-bottom-nav .active,
-  html.cd-installed .home-body .mobile-bottom-nav [aria-current="page"],
-  html.cd-installed .home-body .mobile-bottom-nav [aria-pressed="true"] {
+  html.cd-qa-mode .home-body .mobile-bottom-nav .active,
+  html.cd-qa-mode .home-body .mobile-bottom-nav [aria-current="page"],
+  html.cd-qa-mode .home-body .mobile-bottom-nav [aria-pressed="true"] {
     color: #fff !important;
     background: rgba(229,9,20,.18) !important;
   }
 
-  html.cd-installed .home-body .mobile-bottom-nav svg {
+  html.cd-qa-mode .home-body .mobile-bottom-nav svg {
     width: 20px !important;
     height: 20px !important;
   }
 
-  html.cd-installed .home-body .mobile-bottom-nav b {
+  html.cd-qa-mode .home-body .mobile-bottom-nav b {
     font-size: 10px !important;
     font-weight: 700 !important;
   }
 
-  html.cd-installed .home-body .grid.rail {
+  html.cd-qa-mode .home-body .grid.rail {
     scroll-snap-type: x proximity;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-inline: contain;
   }
 
-  html.cd-installed .home-body .section-head h2 {
+  html.cd-qa-mode .home-body .section-head h2 {
     text-wrap: balance;
   }
   /* The featured title must not be clipped by mobile display zoom or long names. */
-  html.cd-installed .home-body .streaming-hero {
+  html.cd-qa-mode .home-body .streaming-hero {
+    min-height: 520px !important; /* Safari 12 fallback before modern viewport units */
     min-height: min(635px, 76svh) !important;
+    padding: 235px 16px 26px !important;
     padding: max(210px, 31svh) 16px 26px !important;
     display: flex !important;
     align-items: flex-end !important;
     overflow: hidden !important;
   }
-  html.cd-installed .home-body .hero-content {
+  html.cd-qa-mode .home-body .hero-content {
     position: relative;
     z-index: 3;
     width: 100% !important;
     min-width: 0;
     overflow: visible;
   }
-  html.cd-installed .home-body .hero-content h1 {
+  html.cd-qa-mode .home-body .hero-content h1 {
     display: block !important;
     max-width: 100% !important;
     margin: 8px 0 !important;
+    font-size: 30px !important; /* Safari 12 fallback */
     font-size: clamp(1.9rem, 8.4vw, 2.65rem) !important;
     line-height: 1.05 !important;
     letter-spacing: -.04em !important;
     overflow-wrap: break-word;
     text-wrap: balance;
   }
-  html.cd-installed .home-body .hero-actions {
+  html.cd-qa-mode .home-body .hero-actions {
     display: grid !important;
     grid-template-columns: 1fr 1fr;
     width: 100%;
     gap: 8px;
     flex-wrap: nowrap !important;
   }
-  html.cd-installed .home-body .hero-actions .btn {
+  html.cd-qa-mode .home-body .hero-actions .btn {
     min-width: 0;
     min-height: 45px;
     display: inline-flex;
@@ -103,10 +106,10 @@
     white-space: nowrap;
     font-size: .78rem !important;
   }
-  html.cd-installed .home-body .hero-actions .hero-info-btn {
+  html.cd-qa-mode .home-body .hero-actions .hero-info-btn {
     display: none !important;
   }
-  html.cd-installed .home-body #continue-grid .qa-resume-meta {
+  html.cd-qa-mode .home-body #continue-grid .qa-resume-meta {
     padding: 6px 2px 0;
     display: flex;
     flex-direction: column;
@@ -116,14 +119,14 @@
     line-height: 1.25;
     font-weight: 700;
   }
-  html.cd-installed .home-body #continue-grid .qa-resume-meta small {
+  html.cd-qa-mode .home-body #continue-grid .qa-resume-meta small {
     display: block !important;
     color: #a5a6ab;
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0;
   }
-  html.cd-installed .home-body #continue-grid .qa-resume-track {
+  html.cd-qa-mode .home-body #continue-grid .qa-resume-track {
     display: block;
     width: 100%;
     height: 3px;
@@ -131,28 +134,47 @@
     overflow: hidden;
     background: #45454a;
   }
-  html.cd-installed .home-body #continue-grid .qa-resume-track i {
+  html.cd-qa-mode .home-body #continue-grid .qa-resume-track i {
     display: block;
     height: 100%;
     border-radius: inherit;
     background: #e50914;
   }
 
-  html.cd-installed .home-body .catalog-header.search-mode .search-shell {
+  html.cd-qa-mode .home-body .catalog-header.search-mode .search-shell {
     padding-top: max(10px, env(safe-area-inset-top, 0px)) !important;
     background: #0b0b0d !important;
   }
 
-  html.cd-installed .home-body .search-suggestions {
+  html.cd-qa-mode .home-body .search-suggestions {
     max-height: min(68dvh, 540px);
     overscroll-behavior: contain;
   }
 }
 
 @media screen and (max-width: 620px) and (prefers-reduced-motion: reduce) {
-  html.cd-installed .home-body .mobile-bottom-nav *,
-  html.cd-installed .home-body .grid.rail {
+  html.cd-qa-mode .home-body .mobile-bottom-nav *,
+  html.cd-qa-mode .home-body .grid.rail {
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* iPhone 6 / iOS 12 lacks :has(), flex-gap, clamp(), svh, and some dynamic viewport units. */
+@media screen and (max-width: 420px) {
+  html.cd-qa-legacy .home-body .catalog-header { min-height: 56px !important; }
+  html.cd-qa-legacy .home-body .streaming-hero { min-height: 530px !important; padding: 230px 14px 28px !important; }
+  html.cd-qa-legacy .home-body .hero-content h1 { font-size: 29px !important; line-height: 1.08 !important; }
+  html.cd-qa-legacy .home-body .hero-actions { display: flex !important; }
+  html.cd-qa-legacy .home-body .hero-actions > * { flex: 1 1 0; margin-right: 6px !important; }
+  html.cd-qa-legacy .home-body .hero-actions > *:last-child { margin-right: 0 !important; }
+  html.cd-qa-legacy .home-body .mobile-bottom-nav { width: 95% !important; bottom: 8px !important; }
+  html.cd-qa-legacy .home-body .grid.rail { -webkit-overflow-scrolling: touch; }
+  html.cd-qa-legacy .movie-page { width: 100% !important; max-width: 100% !important; overflow-x: hidden !important; padding-bottom: 84px !important; }
+  html.cd-qa-legacy .movie-page .movie-art,
+  html.cd-qa-legacy .movie-page .legal-player-section { width: 100% !important; min-width: 0 !important; }
+  html.cd-qa-legacy .movie-page .movie-copy { min-width: 0 !important; padding: 0 14px !important; }
+  html.cd-qa-legacy .movie-page .movie-copy h1 { font-size: 30px !important; line-height: 1.1 !important; overflow-wrap: break-word; }
+  html.cd-qa-legacy .movie-page .legal-player { width: 100% !important; min-width: 0 !important; overflow: hidden !important; }
+  html.cd-qa-legacy .movie-page .legal-player iframe { display: block; width: 100% !important; max-width: 100% !important; }
 }
