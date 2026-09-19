@@ -3,6 +3,8 @@ import { defineConfig } from 'vite';
 export default defineConfig({
     base: './',
     publicDir: 'static',
+    // Local CI binds cinedesi.online to 127.0.0.1, never the public site.
+    preview: { allowedHosts: ['cinedesi.online'] },
     build: {
         // The released app, not just QA, must parse on Safari 12 (iPhone 6).
         target: 'safari12',
