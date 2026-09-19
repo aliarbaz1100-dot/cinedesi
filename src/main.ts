@@ -259,8 +259,28 @@ function init() {
       if (rows.length < pageSize) break;
       start += pageSize;
     }
-    if (error && !data.length && hadCachedPaint) {
-      status.textContent = "Showing your saved CineDesi home while the live catalog reconnects.";
+    if (error && !data.length) {
+      if (status) {
+        status.textContent = hadCachedPaint
+          ? "Showing your previously loaded titles. Live catalog is temporarily unavailable."
+          : "Could not load the CineDesi catalog. Check your connection and retry.";
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "btn secondary";
+        retry.textContent = "Retry catalog";
+        retry.addEventListener("click", () => {
+          retry.disabled = true;
+          status.textContent = "Reconnecting to CineDesi…";
+          void load();
+        }, { once: true });
+        status.append(" ", retry);
+      }
+      if (!hadCachedPaint) {
+        ["watch-now-grid", "top-grid", "new-grid"].forEach((id) => {
+          const rail = document.getElementById(id);
+          if (rail) rail.replaceChildren();
+        });
+      }
       return;
     }
     movies = hydrateMovies(data);
