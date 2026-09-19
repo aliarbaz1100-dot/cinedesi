@@ -998,8 +998,25 @@ function init() {
     newsletter.reset();
     newsletterMsg.textContent = "Subscribed. Welcome to CineDesi.";
   });
+  const mobileNav = document.querySelector(".mobile-bottom-nav");
+  const syncMobileNav = () => {
+    if (!mobileNav) return;
+    const selected = catalogHeader.classList.contains("search-mode") ? "search" :
+      location.hash === "#watchlist" ? "watchlist" :
+      (location.hash === "#top-today" || location.hash === "#new-releases") ? "new" : "home";
+    mobileNav.querySelectorAll("a,button").forEach((item) => {
+      const type = item.id === "bottom-search" ? "search" :
+        item.getAttribute("href") === "#watchlist" ? "watchlist" :
+        item.getAttribute("href") === "#top-today" ? "new" : "home";
+      const active = type === selected;
+      item.classList.toggle("active", active);
+      if (active) item.setAttribute("aria-current", "page");
+      else item.removeAttribute("aria-current");
+    });
+  };
   q("#bottom-search").onclick = () => {
     catalogHeader.classList.add("search-mode");
+    syncMobileNav();
     setTimeout(() => search.focus(), 0);
     renderSuggestions();
   };
@@ -1007,6 +1024,10 @@ function init() {
     catalogHeader.classList.remove("search-mode");
     suggestions.classList.remove("on");
     search.blur();
+    syncMobileNav();
   };
+  window.addEventListener("hashchange", syncMobileNav, { passive: true });
+  mobileNav?.addEventListener("click", () => Promise.resolve().then(syncMobileNav));
+  syncMobileNav();
   load();
 }
