@@ -1,0 +1,5 @@
+PROMOTE QA-ONLY REVIEW TO THE PRE-EXISTING CINEDESI TEST WORKER.
+Target: cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
+Never deploy to cinedesi.online or the production cinedesi Worker.
+Require active original Worker version backup, staged QA smoke tests, and automatic rollback on failure.
+Preserve the original test-app manifest identity and start URL so the user can inspect the already-installed QA icon.
