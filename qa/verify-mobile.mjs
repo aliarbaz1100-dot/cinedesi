@@ -62,7 +62,7 @@ try {
     const launchArt = await page.evaluate(() => {
       const logo = document.querySelector("#app-splash .splash-logo span");
       const brand = document.querySelector("#app-splash .splash-brand");
-      return { red: getComputedStyle(logo).color, animation: getComputedStyle(brand).animationName };
+      return { red: getComputedStyle(logo).color, animation: getComputedStyle(logo.parentElement).animationName };
     });
     assert.match(launchArt.red, /229,\s*9,\s*20/, device.name + " launch logo must have CineDesi red");
     assert.match(launchArt.animation, /qa-icon-brand-in/, device.name + " launch branding must animate");
