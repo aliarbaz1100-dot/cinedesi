@@ -130,18 +130,12 @@
     logo.addEventListener('mousedown',function(event){if(event.button===0&&!('ontouchstart' in window))start();});
     logo.addEventListener('mouseup',cancel);
     logo.addEventListener('mouseleave',cancel);
-    // Triple-tap is a reliable iPhone fallback: long-press on a link may
-    // trigger the native Safari link menu before the hold timer completes.
-    var tapCount=0,lastTap=0;
+    // iPhone may show the native link menu before a long press completes.
+    // Suppress the header logo's context menu only in this private QA app.
     logo.addEventListener('click',function(event){
-      var now=Date.now();
-      tapCount=(now-lastTap<900)?tapCount+1:1;
-      lastTap=now;
-      if(activated||tapCount<=3)event.preventDefault();
-      if(activated){activated=false;tapCount=0;return;}
-      if(tapCount===3){tapCount=0;cancel();showQaDiagnostic();}
+      if(activated){event.preventDefault();activated=false;}
     },true);
-    logo.addEventListener('contextmenu',function(event){if(activated)event.preventDefault();});
+    logo.addEventListener('contextmenu',function(event){event.preventDefault();});
   });
 
 })();
