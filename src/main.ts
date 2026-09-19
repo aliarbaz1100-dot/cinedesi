@@ -2,8 +2,6 @@ import "./cinematic-v2.css";
 import "./mobile-navigation.css";
 import "./top-ten.css";
 import "./launch-polish.css";
-import "./experience-refinement.css";
-import "./cinedesi-cinema-refresh.css";
 const homeReturnKey = "cinedesi-home-return-v1";
 const rememberHomeReturn = (link) => {
   const section = link.closest("section[id]");
