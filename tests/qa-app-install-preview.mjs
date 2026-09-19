@@ -29,6 +29,9 @@ for(const device of [
       viewport:window.innerWidth
     }));
     assert.ok(appNav.width>=appNav.viewport-2,device.name+" app nav should span its own embedded mobile viewport: "+JSON.stringify(appNav));
+    // Bring the phone simulator fully into the outer browser viewport before
+    // trying real taps inside its iframe; the device sits below the intro.
+    await page.locator(".device").scrollIntoViewIfNeeded();
     const appNavFrame=frame.locator(".mobile-bottom-nav");
     await appNavFrame.locator('a[href="#top-today"]').click();
     await frame.locator('body[data-cd-app-view="new"]').waitFor({state:"attached",timeout:7000});
