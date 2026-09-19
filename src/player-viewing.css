@@ -56,6 +56,27 @@ body.cd-player-open{overflow:hidden!important}
 #watch .cd-player-stage:-webkit-full-screen .legal-player iframe{
  width:100%!important;height:100%!important;object-fit:contain!important
 }
+/* WebKit must get standalone selectors: an unsupported fullscreen selector in a
+   comma list can invalidate the entire rule on older Safari engines. */
+#watch .cd-player-stage.cd-theater{
+ position:fixed!important;top:0!important;right:0!important;bottom:0!important;left:0!important;
+ inset:0!important;width:100vw!important;height:100vh!important;
+ margin:0!important;padding:0!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ z-index:10000!important;overflow:hidden!important;background:#000!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+}
+#watch .cd-player-stage.cd-theater .legal-player{
+ position:relative!important;flex:none!important;margin:auto!important;
+ border:0!important;border-radius:0!important;background:#000!important;
+ width:100vw!important;max-width:177.78vh!important;
+ height:56.25vw!important;max-height:100vh!important;
+ aspect-ratio:16/9!important;
+}
+#watch .cd-player-stage.cd-theater .legal-player iframe{
+ position:absolute!important;inset:0!important;
+ width:100%!important;height:100%!important;border:0!important;
+}
 @media(max-width:760px){
  #watch.legal-player-section{padding:18px 16px 20px!important}
  #watch .cd-player-toolbar{gap:8px;padding-bottom:12px}
