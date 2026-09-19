@@ -30,6 +30,35 @@ try {
     await page.locator("#top-grid a.poster-link").first().waitFor({state:"visible",timeout:45000});
     console.log("PASS installed-app style launch: original CineDesi wordmark animation + Arbaz Ali credit + no stuck splash");
   }
+  // Simulate older iOS installed-app navigator.standalone support separately from
+  // Chromium's display-mode emulation (which isn't supported on this runner).
+  const legacyContext=await browser.newContext({
+    viewport:{width:320,height:568},isMobile:true,hasTouch:true,serviceWorkers:"allow"
+  });
+  await legacyContext.addInitScript(()=>{
+    Object.defineProperty(navigator,"standalone",{configurable:true,value:true});
+  });
+  try {
+    const legacyPage=await legacyContext.newPage();
+    const response=await legacyPage.goto(base+"/",{waitUntil:"domcontentloaded",timeout:40000});
+    assert.equal(response.status(),200,"Older iOS standalone homepage failed");
+    assert.equal(await legacyPage.evaluate(()=>document.documentElement.classList.contains("cd-ios-standalone")),true,"Older iOS standalone splash CSS class missing");
+    const splash=legacyPage.locator("#app-splash");
+    await splash.waitFor({state:"visible",timeout:2500});
+    const state=await splash.evaluate(el=>({
+      logo:el.querySelector(".splash-logo")?.textContent||"",
+      credit:el.querySelector(".splash-brand p")?.textContent||"",
+      animation:getComputedStyle(el.querySelector(".splash-desi")).animationName,
+      display:getComputedStyle(el).display
+    }));
+    assert.match(state.logo,/CINEDESI/,"CineDesi wordmark missing");
+    assert.match(state.credit,/Powered by Arbaz Ali/,"Brand credit missing");
+    assert.equal(state.display,"flex","Older iOS standalone splash not shown");
+    assert.ok(state.animation.includes("cdRevealDesi"),"Older iOS wordmark animation missing");
+    await splash.waitFor({state:"detached",timeout:7000});
+    await legacyPage.locator("#top-grid a.poster-link").first().waitFor({state:"visible",timeout:45000});
+    console.log("PASS older-iOS standalone simulation: animated CineDesi logo + Arbaz Ali credit + clean launch exit");
+  } finally {await legacyContext.close();}
 } finally {
  await context.close();
  await browser.close();
