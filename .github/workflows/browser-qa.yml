@@ -32,6 +32,10 @@ jobs:
         env:
           PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
         run: node tests/qa-episode-nav.mjs
+      - name: Continue Watching precise episode resume (Android and iPhone)
+        env:
+          PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
+        run: node tests/qa-continue-watching.mjs
       - name: CineDesi branded standalone app launch
         env:
           PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
