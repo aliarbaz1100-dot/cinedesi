@@ -111,6 +111,16 @@ jobs:
           npm install --no-save --no-package-lock playwright@1.56.1
           npx playwright install --with-deps chromium
           node qa/verify-mobile.mjs
+      - name: WebKit mobile UI regression + review screenshots
+        run: |
+          npx playwright install --with-deps webkit
+          node qa/verify-webkit.mjs
+      - name: Save QA screenshots for user's visual review
+        uses: actions/upload-artifact@v4
+        with:
+          name: cinedesi-qa-mobile-ui-review
+          path: qa-review-screenshots/*.png
+          retention-days: 7
       - name: Capture existing installed QA Worker rollback version
         if: ${{ hashFiles('qa/promote-original-review.txt') != '' }}
         shell: bash
