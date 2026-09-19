@@ -29,6 +29,23 @@ for(const device of [
       viewport:window.innerWidth
     }));
     assert.ok(appNav.width>=appNav.viewport-2,device.name+" app nav should span its own embedded mobile viewport: "+JSON.stringify(appNav));
+    const appNavFrame=frame.locator(".mobile-bottom-nav");
+    await appNavFrame.locator('a[href="#top-today"]').click();
+    await frame.locator('body[data-cd-app-view="new"]').waitFor({state:"attached",timeout:7000});
+    await frame.locator("#new-releases").waitFor({state:"visible",timeout:7000});
+    await frame.locator("#home").waitFor({state:"hidden",timeout:7000});
+    await appNavFrame.locator('a[href="#watchlist"]').click();
+    await frame.locator('body[data-cd-app-view="list"]').waitFor({state:"attached",timeout:7000});
+    await frame.locator("#watchlist").waitFor({state:"visible",timeout:7000});
+    await frame.locator("#top-today").waitFor({state:"hidden",timeout:7000});
+    await appNavFrame.locator("#bottom-search").click();
+    await frame.locator('body[data-cd-app-view="search"]').waitFor({state:"attached",timeout:7000});
+    await frame.locator(".catalog-header.search-mode #search").waitFor({state:"visible",timeout:7000});
+    await frame.locator("#search-close").click();
+    await frame.locator('body[data-cd-app-view="list"]').waitFor({state:"attached",timeout:7000});
+    await appNavFrame.locator('a[href="#home"]').click();
+    await frame.locator('body[data-cd-app-view="home"]').waitFor({state:"attached",timeout:7000});
+    await frame.locator("#top-grid a.poster-link").first().waitFor({state:"visible",timeout:7000});
     await page.locator("#screen-episodes").click();
     assert.equal(await page.locator("#screen-episodes").getAttribute("aria-pressed"),"true",device.name+" movie-screen tab should be active");
     const episodes=page.frameLocator("iframe[title='Live CineDesi QA movie and episodes']");
