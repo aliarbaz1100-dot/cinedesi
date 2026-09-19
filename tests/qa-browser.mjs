@@ -31,7 +31,7 @@ try {
   console.log("URL IMMEDIATELY AFTER CLICK", page.url());
   await page.waitForTimeout(1500);
   console.log("URL AFTER 1.5S", page.url());
-  await page.waitForURL(/\/movie\.html\?slug=/, { waitUntil: "domcontentloaded", timeout: 12000 }).catch(async error => {
+  await page.waitForURL(/\/movie(?:\.html)?\?slug=/, { waitUntil: "domcontentloaded", timeout: 12000 }).catch(async error => {
     console.log("PAGE URL ON FAILURE", page.url());
     console.log("PAGE BODY ON FAILURE", (await page.locator("body").innerText().catch(() => "")).slice(0, 900));
     throw error;
@@ -42,7 +42,7 @@ try {
   }, { timeout: 40000 });
   const movieText = await page.locator("#movie-page").innerText();
   assert.ok(!/could not load movie details|unable to open this title|could not be found/i.test(movieText), "Movie failed: " + movieText.slice(0, 400));
-  console.log("PASS mobile movie: detail page loads at explicit HTML URL");
+  console.log("PASS mobile movie: detail page loads at movie document route");
   await page.locator("#movie-back").click();
   await page.waitForURL(url => url.pathname === "/" || url.pathname === "/index.html", { waitUntil: "domcontentloaded", timeout: 30000 });
   await page.locator("#top-grid a.poster-link").first().waitFor({ state: "visible", timeout: 20000 });
