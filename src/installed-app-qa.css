@@ -430,6 +430,17 @@
   html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-card:disabled {
     opacity: .38 !important;
   }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-note {
+    margin: 12px 2px 0 !important;
+    padding: 12px 2px 4px !important;
+    border-top: 1px solid rgba(255,255,255,.1);
+    color: #a8a9ae !important;
+    font-size: 11px !important;
+    line-height: 1.48 !important;
+    font-weight: 450 !important;
+    letter-spacing: 0 !important;
+    overflow-wrap: break-word;
+  }
 
 }
 @media screen and (max-width: 375px) {
