@@ -159,20 +159,24 @@
     // directly into the already-rendering Home screen (no static logo hold).
     window.setTimeout(function(){dismiss(node)},1650);
   }
-  function paintWhenVisible(node){
+  function paintWhenVisible(node,delay){
     if(!node||node!==overlay||document.hidden)return;
     var run=++token,started=false;
     function go(){
       if(started||run!==token||document.hidden||node!==overlay)return;
       started=true;animate(node);
     }
-    // iOS may mark the WebView visible before its native launch snapshot
-    // disappears. Delay the actual keyframes until the user can see them.
+    // The physical iPhone recording showed that the earlier logo animation
+    // was finished before iOS uncovered its native, non-animated startup view.
+    // Start keyframes later on iOS so the motion occurs in the visible WebView.
     window.setTimeout(function(){
       requestAnimationFrame(function(){requestAnimationFrame(go)});
-      window.setTimeout(go,110); // RAF fallback for suspended WebKit.
-    },400);
+      window.setTimeout(go,110); // RAF fallback for older Safari.
+    },delay);
   }
+  var appleHome=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var coldPaintDelay=appleHome?1200:180;
+  var warmPaintDelay=appleHome?560:160;
   function internalReturn(){
     if(/[?&](?:returnY|returnSection|returnOffset)=/.test(location.search))return true;
     var marked=0;
@@ -182,7 +186,7 @@
   function reenter(){
     if(!installed||document.hidden||!hiddenSince)return;
     var away=Date.now()-hiddenSince;hiddenSince=0;
-    if(pending&&overlay){paintWhenVisible(overlay);return;}
+    if(pending&&overlay){paintWhenVisible(overlay,warmPaintDelay);return;}
     if(away<2400||Date.now()-lastPlayed<3300||internalReturn()||overlay)return;
     pending=true;
     var node=document.createElement("div");
@@ -191,7 +195,7 @@
     root.classList.add("cd-qa-standalone");
     document.body.insertBefore(node,document.body.firstChild);
     overlay=node;
-    paintWhenVisible(node);
+    paintWhenVisible(node,warmPaintDelay);
   }
   document.addEventListener("visibilitychange",function(){
     if(document.hidden){hiddenSince=Date.now();++token}
@@ -199,15 +203,15 @@
   });
   window.addEventListener("pageshow",function(event){
     if(event.persisted){hiddenSince=0;return;} // Movie back is not app launch.
-    if(pending&&overlay)paintWhenVisible(overlay);
+    if(pending&&overlay)paintWhenVisible(overlay,coldPaintDelay);
     else reenter();
   });
   window.addEventListener("focus",reenter);
   // The icon's native static screenshot can cover early page scripts. Start
   // after pageshow/focus when possible, with a fallback for older Safari.
   if(!document.hidden)window.setTimeout(function(){
-    if(pending&&overlay)paintWhenVisible(overlay);
-  },180);
+    if(pending&&overlay)paintWhenVisible(overlay,coldPaintDelay);
+  },120);
   // Only an emergency timeout, never wait on an unavailable third-party API.
   window.setTimeout(function(){if(pending&&overlay){if(!document.hidden)animate(overlay);else dismiss(overlay)}},2500);
   window.setTimeout(function(){if(overlay) dismiss(overlay)},4200);
