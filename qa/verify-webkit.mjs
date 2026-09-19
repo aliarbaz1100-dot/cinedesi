@@ -37,13 +37,19 @@ try {
     const splash = await page.evaluate(() => ({
       logo: document.querySelector("#app-splash .splash-logo")?.textContent,
       label: document.querySelector("#app-splash .splash-brand p")?.textContent,
-      animation: getComputedStyle(document.querySelector("#app-splash .splash-brand")).animationName
+      animation: getComputedStyle(document.querySelector("#app-splash .splash-logo")).animationName
     }));
     assert.match(String(splash.logo), /CINEDESI/);
     assert.match(String(splash.label), /Arbaz Ali/);
-    assert.ok(String(splash.animation).includes("qa-brand-in"), name + " WebKit animated logo missing");
-    console.log("PASS", name, "branded iOS-like WebKit opening");
-    await page.locator("#app-splash").waitFor({ state: "detached", timeout: 6500 });
+    assert.ok(String(splash.animation).includes("qa-icon-brand-in"), name + " WebKit animated logo missing");
+    console.log("PASS", name, "installed PWA cinematic logo/credit animation (not browser mock)");
+    const ordinary = await browser.newContext(opts);
+    const browserPage = await ordinary.newPage();
+    await browserPage.goto(base + "/?qa=1&source=pwa", { waitUntil: "domcontentloaded", timeout: 30000 });
+    assert.equal(await browserPage.locator("#app-splash").count(), 0, name + " website must not show installed-only animation");
+    console.log("PASS", name, "ordinary website bypasses installed-app animation");
+    await ordinary.close();
+    await page.locator("#app-splash").waitFor({ state: "detached", timeout: 7400 });
     await page.locator("#home").waitFor({ state: "visible", timeout: 14000 });
     const sizes = await page.evaluate(() => {
       const title = document.querySelector("#hero-title")?.getBoundingClientRect();
