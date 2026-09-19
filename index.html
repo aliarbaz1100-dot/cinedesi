@@ -85,7 +85,13 @@
     <div id="app-splash" class="app-splash" aria-hidden="true"><div class="splash-brand"><div class="splash-logo">CINE<span>DESI</span></div><div class="splash-line"></div><p>Powered by <strong>Arbaz Ali</strong></p></div></div>
     <script id="qa-splash-controller">(function(){
   var splash=document.getElementById("app-splash");
-  if(!splash||!document.documentElement.classList.contains("cd-qa-standalone"))return;
+  if(!splash)return;
+  if(!document.documentElement.classList.contains("cd-qa-standalone")){
+    // A returning title page should show the existing catalog immediately.
+    // Do not wait for catalog JS / API requests to remove a hidden splash node.
+    if(document.documentElement.classList.contains("cd-qa-mode"))splash.remove();
+    return;
+  }
   // One real launch only: never replay on page visibility, movie back or tab change.
   // The native iOS static launch image cannot animate until WebKit starts rendering.
   var dismissed=false;
