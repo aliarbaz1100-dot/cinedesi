@@ -319,7 +319,7 @@ async function load() {
   const nextEpisodeButton = document.querySelector("#cd-next-episode");
   const episodePosition = document.querySelector("#cd-episode-position");
   const isPlayableEpisode = (element) => Boolean(element && !element.disabled &&
-    (element.dataset.videoId || element.dataset.playlistId));
+    (element.dataset.videoId || (element.dataset.playlistKind === "youtube" && element.dataset.playlistId)));
   const currentEpisodeIndex = () => Math.max(0, episodeButtons.findIndex((element) => element.classList.contains("active")));
   const closestPlayableEpisode = (direction) => {
     const current = currentEpisodeIndex();
@@ -339,7 +339,7 @@ async function load() {
   nextEpisodeButton?.addEventListener("click", () => closestPlayableEpisode(1)?.click());
   const episodeBrowser = document.querySelector(".episode-browser");
   episodeBrowser?.addEventListener("click", (event) => {
-    if (event.target.closest(".episode-card")) queueMicrotask(syncEpisodeControls);
+    if (event.target.closest(".episode-card")) Promise.resolve().then(syncEpisodeControls);
   });
   if (episodeBrowser && episodeButtons.length) {
     const episodeObserver = new MutationObserver(() => syncEpisodeControls());
