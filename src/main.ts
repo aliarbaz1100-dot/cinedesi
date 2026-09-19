@@ -176,7 +176,8 @@ function init() {
   };
   if ("scrollRestoration" in history) history.scrollRestoration = "auto";
   const qaDomain = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
-  const lowPowerQa = qaDomain && (/iPhone OS (?:9|10|11|12)_/i.test(navigator.userAgent) ||
+  // Limit initial hero decoding/catalog batch sizes on old iOS even in production.
+  const lowPowerQa = (/iPhone OS (?:9|10|11|12)_/i.test(navigator.userAgent) ||
     (Number(navigator.deviceMemory) > 0 && Number(navigator.deviceMemory) <= 2) ||
     navigator.connection?.saveData === true);
   const track = async (event, slug = null) => {
@@ -606,7 +607,9 @@ function init() {
 
     const bySlug = new Map(movies.map((m) => [m.slug, m]));
     const recentMovies = recentItems.map((x) => bySlug.get(x.slug)).filter((m) => m && hasWatchOnCineDesi(m)).slice(0, 12);
-    const qaPreview = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
+    const qaPreview = /(^|[.-])qa([.-]|$)/i.test(location.hostname) ||
+      location.hostname === "cinedesi.online" || /\\.cinedesi\\.online$/i.test(location.hostname) ||
+      new URLSearchParams(location.search).get("qa") === "1";
     const continueMovies = continueItems.filter((x) => !qaPreview || !x.completed)
       .map((x) => bySlug.get(x.slug)).filter((m) => m && m.full_video_verified && m.full_video_embed_url).slice(0, 12);
 
