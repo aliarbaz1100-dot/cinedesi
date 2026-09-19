@@ -357,7 +357,9 @@ async function load() {
     } catch { return; }
     if (!Number.isFinite(seconds) || !Number.isFinite(duration) || duration <= 0 || seconds < 3) return;
     const episodeIndex = qaEpisodeIndex();
-    const episodeNumber = Number.isInteger(episodeIndex) && episodeIndex >= 0 ? episodeIndex + 1 : null;
+    const episodeLabel = qaActiveEpisode()?.querySelector?.(".episode-copy strong")?.textContent || "";
+    const explicitNumber = episodeLabel.match(/Episode\\s+(\\d+)/i)?.[1] || episodeLabel.match(/E(\\d+)/i)?.[1];
+    const episodeNumber = explicitNumber ? Number(explicitNumber) : Number.isInteger(episodeIndex) && episodeIndex >= 0 ? episodeIndex + 1 : null;
     const rows = qaReadContinue();
     const previous = rows.find((row) => row.slug === m.slug);
     const boundedSeconds = Math.max(0, Math.min(duration, seconds));
@@ -690,6 +692,10 @@ async function load() {
   document.querySelector("#trailer-link")?.addEventListener("click", () => track("trailer_click"));
   document.querySelector("#watch-link")?.addEventListener("click", () => track("watch_click"));
   document.querySelectorAll("[data-episode]").forEach((el) => el.addEventListener("click", () => {
+    if (qaPlayback && qaActiveEpisode() !== el) {
+      qaCapturePosition(qaYoutubePlayer);
+      qaStopProgress();
+    }
     const videoId = String(el.dataset.videoId || "");
     const playlistId = String(el.dataset.playlistId || "");
     const playlistKind = String(el.dataset.playlistKind || "");
