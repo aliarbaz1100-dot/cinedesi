@@ -32,7 +32,19 @@ for(const device of devices){
    assert.match(await position.innerText(),/Episode 2 of/,device.label+" episode counter not updated");
    assert.equal(await previous.isEnabled(),true,device.label+" previous disabled on episode 2");
    await previous.click();
-   await page.waitForFunction(()=>document.querySelector(".episode-card.active")?.dataset.episode==="0",null,{timeout:12000});
+   await page.waitForFunction(()=>document.querySelector(".episode-card.active")?.dataset.episode==="0",null,{timeout:12000}).catch(async(error)=>{
+     const debug=await page.evaluate(()=>({
+       active:[...document.querySelectorAll(".episode-card.active")].map(el=>el.dataset.episode),
+       firstDisabled:document.querySelector(".episode-card")?.disabled,
+       previousDisabled:document.querySelector("#cd-prev-episode")?.disabled,
+       nextDisabled:document.querySelector("#cd-next-episode")?.disabled,
+       videoUrl:document.querySelector("#official-player")?.getAttribute("src"),
+       pathname:location.pathname,
+       position:document.querySelector("#cd-episode-position")?.textContent
+     })).catch(e=>({inspectionFailed:String(e)}));
+     console.log("EPISODE PREVIOUS DEBUG",device.name,JSON.stringify(debug));
+     throw error;
+   });
    assert.match(await iframe.getAttribute("src")||"",/QhmbXMnsfl4/,device.label+" previous episode did not load correct source");
    assert.equal(await previous.isDisabled(),true,device.label+" previous should disable again on first");
    assert.equal(await page.locator("#player-wide, .cd-player-source-link").count(),0,device.label+" discarded player toolbar reappeared");
