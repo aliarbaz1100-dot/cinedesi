@@ -183,7 +183,7 @@ try {
         const first = el.querySelectorAll(".episode-card")[0]?.getBoundingClientRect();
         const second = el.querySelectorAll(".episode-card")[1]?.getBoundingClientRect();
         const image = el.querySelector(".episode-thumb img")?.getBoundingClientRect();
-        const episodeTitle = el.querySelector(".episode-copy strong")?.getBoundingClientRect();
+        const episodeCopy = el.querySelector(".episode-copy")?.getBoundingClientRect();
         return {
           layout: getComputedStyle(rail).flexDirection,
           railWidth: rail.clientWidth,
@@ -192,13 +192,13 @@ try {
           rowsStacked: !!first && !!second && second.top > first.top + first.height - 2,
           rowSameLeft: !!first && !!second && Math.abs(first.left - second.left) < 2,
           imageWidth: image?.width || 0,
-          titleWidth: episodeTitle?.width || 0
+          copyWidth: episodeCopy?.width || 0
         };
       });
       assert.ok(
         geometry.layout === "column" && geometry.cardWidth >= geometry.railWidth * .94 &&
         geometry.cardCount > 1 && geometry.rowsStacked && geometry.rowSameLeft &&
-        geometry.imageWidth > 95 && geometry.titleWidth > 85,
+        geometry.imageWidth > 95 && geometry.copyWidth > 85,
         "Episodes should use the earlier Netflix-style full-width image + metadata rows: " + JSON.stringify(geometry)
       );
       console.log("PASS", device.name, "real Bigg Boss 20 Episode 1 > Next > Previous, original Netflix-style full-width episode rows");
