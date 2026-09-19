@@ -90,9 +90,14 @@ try {
     assert.equal(movie?.status(), 200);
     const episodes = page.locator(".qa-netflix-episode-list");
     await episodes.waitFor({ state: "visible", timeout: 25000 });
-    const oversizedHeader = episodes.locator(":scope > .episode-browser-head");
-    assert.equal(await oversizedHeader.count(), 1, name + " QA episode header markup should remain structurally stable");
-    assert.equal(await oversizedHeader.isVisible(), false, name + " oversized SEASON / official episodes header must stay hidden");
+    const episodeHeader = episodes.locator(":scope > .episode-browser-head");
+    assert.equal(await episodeHeader.count(), 1, name + " QA episode header markup should remain structurally stable");
+    assert.ok(await episodeHeader.isVisible(), name + " season/count header must remain visible");
+    assert.equal(await episodeHeader.locator("h3").isVisible(), false, name + " ONLY oversized bold white episode heading must be hidden");
+    assert.ok(await episodeHeader.locator("small").isVisible(), name + " SEASON label must remain visible");
+    assert.ok(await episodeHeader.locator(".muted").isVisible(), name + " compact episode count must remain visible");
+    assert.match(String(await episodeHeader.locator("small").textContent()), /SEASON 20/, name + " season label changed");
+    assert.match(String(await episodeHeader.locator(".muted").textContent()), /10 episodes/, name + " episode count changed");
     assert.ok(await episodes.locator(".qa-episode-toolbar").isVisible(), name + " working episode navigation must remain visible");
     assert.ok(await episodes.locator("[data-episode]").count() >= 2);
     const firstEpisodeMeta = await episodes.locator("[data-episode='0'] .episode-copy small").textContent();
