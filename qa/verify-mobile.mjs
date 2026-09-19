@@ -13,6 +13,14 @@ const devices = [
     deviceScaleFactor: 2
   },
   {
+    name: "iphone-modern",
+    viewport: { width: 390, height: 844 },
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+    isMobile: true,
+    hasTouch: true,
+    deviceScaleFactor: 3
+  },
+  {
     name: "android-compact",
     viewport: { width: 360, height: 740 },
     userAgent: "Mozilla/5.0 (Linux; Android 11; Pixel 4a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36",
@@ -148,6 +156,36 @@ try {
     assert.ok(await page.locator("#intro").isVisible(), device.name + " replay control failed");
     assert.ok((await page.locator("iframe[title*='Interactive CineDesi QA']").count()) === 1, device.name + " preview must render real app");
     console.log("PASS", device.name, "interactive preview and replay");
+    // Real catalog title from the user's screenshot: check that episode deck is
+    // usable, not merely styled. Do not autoplay unlicensed or unsupported media.
+    if (device.name === "iphone-modern") {
+      const movie = await page.goto(base + "/movie?slug=bigg-boss-20", { waitUntil: "domcontentloaded", timeout: 30000 });
+      assert.equal(movie?.status(), 200);
+      const episodeDeck = page.locator(".qa-episode-deck");
+      await episodeDeck.waitFor({ state: "visible", timeout: 25000 });
+      const cards = episodeDeck.locator("[data-episode]");
+      const count = await cards.count();
+      assert.ok(count >= 2, "Real Bigg Boss 20 episode deck should contain at least two episodes");
+      const next = episodeDeck.locator('[data-qa-step="1"]');
+      const prev = episodeDeck.locator('[data-qa-step="-1"]');
+      assert.ok(await next.isEnabled(), "Next should start enabled");
+      assert.ok(await prev.isDisabled(), "Previous should start disabled on Episode 1");
+      await next.click();
+      await page.waitForFunction(() => document.querySelector(".qa-episode-deck [data-episode='1']")?.classList.contains("active"), null, { timeout: 6000 });
+      assert.ok(await prev.isEnabled(), "Previous should enable on Episode 2");
+      const current = await episodeDeck.locator(".qa-episode-now strong").textContent();
+      assert.match(String(current), /Episode 2/i);
+      await prev.click();
+      await page.waitForFunction(() => document.querySelector(".qa-episode-deck [data-episode='0']")?.classList.contains("active"), null, { timeout: 6000 });
+      assert.ok(await prev.isDisabled(), "Previous should disable again on Episode 1");
+      const geometry = await episodeDeck.evaluate(el => {
+        const rail = el.querySelector(".episode-grid");
+        const card = el.querySelector(".episode-card");
+        return { railWidth: rail.clientWidth, cardWidth: card.getBoundingClientRect().width, cardCount: rail.children.length };
+      });
+      assert.ok(geometry.cardWidth < geometry.railWidth && geometry.cardCount > 1, "Episode cards should form a compact horizontal deck");
+      console.log("PASS", device.name, "real Bigg Boss 20 Episode 1 > Next > Previous, compact episode carousel");
+    }
     assert.deepEqual(errors, [], device.name + " uncaught page errors");
     await context.close();
     total += 1;
@@ -155,5 +193,5 @@ try {
 } finally {
   await browser.close();
 }
-assert.equal(total, 2);
-console.log("PASS: QA responsive/launch/tab smoke on compact iPhone 6 and Android emulations; real iOS WebKit device still requires manual verification.");
+assert.equal(total, 3);
+console.log("PASS: QA responsive/launch/tab smoke on iPhone 6-size, current-iPhone-size and Android emulations; real iOS WebKit device still requires manual verification.");
