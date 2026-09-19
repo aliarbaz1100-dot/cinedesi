@@ -120,7 +120,7 @@ try {
     assert.equal(returning?.status(), 200);
     const returnState = await page.evaluate(() => ({
       freshLaunch: document.documentElement.classList.contains("cd-qa-standalone"),
-      splashVisible: getComputedStyle(document.querySelector("#app-splash")).display !== "none",
+      splashVisible: (() => { const el=document.querySelector("#app-splash"); return !!el && getComputedStyle(el).display !== "none"; })(),
       savedNav: Number(sessionStorage.getItem("cinedesi-qa-internal-nav") || 0)
     }));
     assert.ok(returnState.savedNav > 0 && !returnState.freshLaunch && !returnState.splashVisible, device.name + " movie-return app must not display a launch logo");
