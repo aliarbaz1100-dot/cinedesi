@@ -412,7 +412,7 @@ async function load() {
   // QA-only: real YouTube playback time, shared between movies and every series episode.
   // Never infer a timestamp from an external iframe or claim a resume point before it plays.
   const qaPlayback = /(^|[.-])qa([.-]|$)/i.test(location.hostname) ||
-    location.hostname === "cinedesi.online" || /\\.cinedesi\\.online$/i.test(location.hostname) ||
+    location.hostname === "cinedesi.online" || location.hostname.endsWith(".cinedesi.online") ||
     new URLSearchParams(location.search).get("qa") === "1";
   let qaYoutubePlayer = null;
   let qaProgressTimer = null;
