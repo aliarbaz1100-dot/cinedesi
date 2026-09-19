@@ -1,0 +1,82 @@
+name: Preview CineDesi repairs (isolated from production)
+on:
+  push:
+    branches: [fix/pwa-navigation-stability-20260919]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Validate deployment entrypoints
+        run: |
+          node --check dist/sw.js
+          test -s dist/index.html
+          test -s dist/movie.html
+          test -s dist/manifest.webmanifest
+      - name: Deploy distinct QA Worker (never production cinedesi)
+        env:
+          CLOUDFLARE_API_TOKEN_RAW: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID_RAW: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          python - <<'PY'
+          import json,os,re,subprocess
+          raw=os.environ["CLOUDFLARE_API_TOKEN_RAW"].strip()
+          match=re.search(r'Bearer\s+([A-Za-z0-9._-]+)',raw,re.I)
+          token=match.group(1) if match else raw.splitlines()[0].strip().strip('"').strip("'")
+          if token.lower().startswith("bearer "): token=token[7:].strip()
+          token=re.split(r'\s+-H\s+|\s+curl\s+',token,maxsplit=1)[0].strip()
+          account_raw=os.environ["CLOUDFLARE_ACCOUNT_ID_RAW"]
+          match=re.search(r'\b([a-fA-F0-9]{32})\b',account_raw)
+          account=match.group(1) if match else account_raw.strip()
+          with open("wrangler.jsonc") as f: config=json.load(f)
+          if config.get("name")!="cinedesi" or config.get("routes") or config.get("route"):
+              raise SystemExit("Unexpected production config; refusing preview deploy")
+          config["name"]="cinedesi-qa-safari-20260919"
+          config["workers_dev"]=True
+          with open("wrangler.preview.json","w") as f: json.dump(config,f)
+          env=os.environ.copy()
+          env["CLOUDFLARE_API_TOKEN"]=token
+          env["CLOUDFLARE_ACCOUNT_ID"]=account
+          raise SystemExit(subprocess.call(["npx","--yes","wrangler@4","deploy","--config","wrangler.preview.json"],env=env))
+          PY
+      - name: Verify deployed preview is navigable HTML, not an attachment
+        run: |
+          python - <<'PY'
+          import urllib.request,urllib.error,time
+          base="https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev"
+          checks=[
+            ("/","text/html","CineDesi"),
+            ("/movie.html?slug=preview-smoke","text/html","movie-page"),
+            ("/manifest.webmanifest","json","start_url"),
+            ("/sw.js","javascript","cinedesi-shell-v28"),
+          ]
+          for path,content_type,marker in checks:
+              err=None
+              for attempt in range(5):
+                  try:
+                      with urllib.request.urlopen(urllib.request.Request(base+path,headers={"User-Agent":"CineDesi-QA"}),timeout=25) as response:
+                          mime=response.headers.get("Content-Type","").lower()
+                          disposition=response.headers.get("Content-Disposition","").lower()
+                          body=response.read().decode("utf-8","replace")
+                          assert content_type in mime, f"{path}: unexpected MIME {mime}"
+                          assert "attachment" not in disposition, f"{path}: downloaded rather than rendered"
+                          assert marker in body, f"{path}: expected content missing"
+                          print("PASS",path,response.status,mime)
+                          err=None
+                          break
+                  except Exception as exc:
+                      err=exc
+                      time.sleep(2)
+              if err: raise err
+          PY

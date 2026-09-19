@@ -1,0 +1,30 @@
+name: CineDesi browser QA (preview only)
+on:
+  push:
+    branches: [fix/pwa-navigation-stability-20260919]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm install --no-save playwright@1.55.1
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Real browser smoke test of isolated preview
+        env:
+          PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
+        run: node tests/qa-browser.mjs
+      - name: Safari WebKit mobile and desktop smoke tests
+        env:
+          PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
+        run: node tests/qa-webkit.mjs

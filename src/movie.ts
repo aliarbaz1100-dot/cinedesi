@@ -66,7 +66,25 @@ const sdk = document.createElement("script");
 sdk.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/dist/umd/supabase.min.js";
 sdk.crossOrigin = "anonymous";
 sdk.fetchPriority = "high";
-sdk.onload = () => load();
+let movieLoaderStarted = false;
+const movieLoadingFallback = () => {
+  if (movieLoaderStarted) return;
+  const root = document.querySelector("#movie-page");
+  if (root) root.innerHTML = "<div class='empty'><h2>Could not load movie details</h2><p>Check your connection and try again.</p><button type='button' id='movie-retry' class='btn'>Retry</button><p><a href='./'>Return to CineDesi</a></p></div>";
+  document.querySelector("#movie-retry")?.addEventListener("click", () => location.reload());
+};
+const movieLoaderTimeout = setTimeout(movieLoadingFallback, 12000);
+sdk.onerror = () => { clearTimeout(movieLoaderTimeout); movieLoadingFallback(); };
+sdk.onload = () => {
+  if (!window.supabase?.createClient) { clearTimeout(movieLoaderTimeout); movieLoadingFallback(); return; }
+  movieLoaderStarted = true;
+  clearTimeout(movieLoaderTimeout);
+  load().catch(() => {
+    const root = document.querySelector("#movie-page");
+    if (root) root.innerHTML = "<div class='empty'><h2>Unable to open this title</h2><p>Please check your connection and try again.</p><button type='button' id='movie-retry' class='btn'>Retry</button><p><a href='./'>Back to CineDesi</a></p></div>";
+    document.querySelector("#movie-retry")?.addEventListener("click", () => location.reload());
+  });
+};
 document.head.appendChild(sdk);
 async function load() {
   const root = document.querySelector("#movie-page"), slug = new URLSearchParams(location.search).get("slug");

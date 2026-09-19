@@ -69,7 +69,7 @@ if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || 
     setTimeout(() => launchSplash.remove(), reduceMotion ? 0 : 320);
   }, 1050)));
 } else launchSplash?.remove();
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=26").catch(() => {
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=28").catch(() => {
 }));
 let deferredInstall = null;
 const installBar = document.querySelector("#install-banner"), installButton = document.querySelector("#install-app"), installClose = document.querySelector("#install-close"), installCopy = document.querySelector("#install-copy");
@@ -88,7 +88,7 @@ const hideInstall = (remember = false) => {
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
   deferredInstall = event;
-  setTimeout(showInstall, 4200);
+  // Installation is user initiated: never overlay the browsing experience.
 });
 window.addEventListener("appinstalled", () => {
   localStorage.setItem("cinedesi-installed", "1");
@@ -109,7 +109,7 @@ installButton?.addEventListener("click", async () => {
   }
 });
 installClose?.addEventListener("click", () => hideInstall(true));
-if (isIOS && !isStandalone && !installDismissed) setTimeout(showInstall, 4200);
+// iOS users can install via Safari Share > Add to Home Screen; no automatic popup.
 const skeletonMarkup = Array.from({ length: 6 }, () => `<article class="card skeleton-card" aria-hidden="true"><div class="poster"></div><div class="info"></div></article>`).join("");
 ["watch-now-grid", "top-grid", "new-grid"].forEach((id) => {
   const rail = document.getElementById(id);
@@ -259,8 +259,28 @@ function init() {
       if (rows.length < pageSize) break;
       start += pageSize;
     }
-    if (error && !data.length && hadCachedPaint) {
-      status.textContent = "Showing your saved CineDesi home while the live catalog reconnects.";
+    if (error && !data.length) {
+      if (status) {
+        status.textContent = hadCachedPaint
+          ? "Showing your previously loaded titles. Live catalog is temporarily unavailable."
+          : "Could not load the CineDesi catalog. Check your connection and retry.";
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "btn secondary";
+        retry.textContent = "Retry catalog";
+        retry.addEventListener("click", () => {
+          retry.disabled = true;
+          status.textContent = "Reconnecting to CineDesi…";
+          void load();
+        }, { once: true });
+        status.append(" ", retry);
+      }
+      if (!hadCachedPaint) {
+        ["watch-now-grid", "top-grid", "new-grid"].forEach((id) => {
+          const rail = document.getElementById(id);
+          if (rail) rail.replaceChildren();
+        });
+      }
       return;
     }
     movies = hydrateMovies(data);

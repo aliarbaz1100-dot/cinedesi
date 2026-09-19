@@ -1,51 +1,24 @@
-const CACHE = "cinedesi-shell-v26";
-const SHELL = [
-  "./index.html",
-  "./cinedesi-icon.svg",
-  "./cinedesi-icon-192.png",
-  "./manifest.webmanifest",
-];
-self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
-  self.skipWaiting();
+/* CineDesi v28: browser-native navigation prevents iOS Safari service-worker redirect failures.
+   This worker keeps a small offline shell for future improvements but NEVER intercepts
+   page navigations, movies, assets or media. The browser owns redirects and MIME. */
+const CACHE = "cinedesi-shell-v28";
+const CORE = ["/index.html", "/movie.html", "/manifest.webmanifest", "/cinedesi-icon.svg"];
+self.addEventListener("install", (event) => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    await Promise.allSettled(CORE.map(async (url) => {
+      const response = await fetch(url, { cache: "no-store", redirect: "follow" });
+      if (response.ok && !response.redirected) await cache.put(url, response);
+    }));
+    await self.skipWaiting();
+  })());
 });
-self.addEventListener("activate", (e) => {
-  e.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)),
-        ),
-      ),
-  );
-  self.clients.claim();
+self.addEventListener("activate", (event) => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter((key) => key.startsWith("cinedesi-shell-") && key !== CACHE).map((key) => caches.delete(key)));
+    await self.clients.claim();
+  })());
 });
-self.addEventListener("fetch", (e) => {
-  if (e.request.method !== "GET") return;
-  const requestUrl = new URL(e.request.url);
-  if (requestUrl.origin !== self.location.origin) return;
-  if (e.request.mode === "navigate") {
-    e.respondWith(
-      fetch(e.request)
-        .then((r) => {
-          if (!r.ok) throw new Error("navigation_failed");
-          const copy = r.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copy));
-          return r;
-        })
-        .catch(async () => (await caches.match(e.request)) || (await caches.match("./index.html")) || Response.error()),
-    );
-    return;
-  }
-  e.respondWith(
-    fetch(e.request)
-      .then((r) => {
-        if (!r.ok) throw new Error("asset_failed");
-        const copy = r.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy));
-        return r;
-      })
-      .catch(() => caches.match(e.request)),
-  );
-});
+// Deliberately no fetch event handler: navigation, downloads and media are
+// handled by the browser itself. Never return Response.redirect() from a SW.
