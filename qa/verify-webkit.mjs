@@ -116,7 +116,7 @@ try {
       /due to access control checks/i.test(message) &&
       (String(message).includes("supabase.co") || String(message).includes("youtube-nocookie.com") || String(message).includes("youtube.com"))
     );
-    const genericNetworkErrors = errors.filter(message => /^NetworkError:\\s+A network error occurred\\.?$/.test(String(message)));
+    const genericNetworkErrors = errors.filter(message => /^NetworkError:\s+A network error occurred\.?$/.test(String(message)));
     const appErrors = errors.filter(message => !crossOriginBlocks.includes(message) && !genericNetworkErrors.includes(message));
     if (crossOriginBlocks.length) console.log("LIMITATION", name, crossOriginBlocks.length, "cross-origin provider requests blocked in CI (not playback verified)");
     if (genericNetworkErrors.length) console.log("LIMITATION", name, genericNetworkErrors.length, "unattributed WebKit network error (real-device player and API checks still required)");
