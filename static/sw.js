@@ -1,57 +1,24 @@
-/* Stable offline shell for existing CineDesi installations. */
-const CACHE = "cinedesi-shell-v27";
-const DOCUMENTS = ["/", "/index.html", "/movie.html"];
+/* CineDesi v28: browser-native navigation prevents iOS Safari service-worker redirect failures.
+   This worker keeps a small offline shell for future improvements but NEVER intercepts
+   page navigations, movies, assets or media. The browser owns redirects and MIME. */
+const CACHE = "cinedesi-shell-v28";
 const CORE = ["/index.html", "/movie.html", "/manifest.webmanifest", "/cinedesi-icon.svg"];
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
-    // A missing optional icon must never block installation or updating.
     await Promise.allSettled(CORE.map(async (url) => {
-      const response = await fetch(url, {cache: "no-store"});
-      if (response.ok) await cache.put(url, response);
+      const response = await fetch(url, { cache: "no-store", redirect: "follow" });
+      if (response.ok && !response.redirected) await cache.put(url, response);
     }));
     await self.skipWaiting();
   })());
 });
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
-    const names = await caches.keys();
-    await Promise.all(names.filter((name) => name.startsWith("cinedesi-shell-") && name !== CACHE).map((name) => caches.delete(name)));
+    const keys = await caches.keys();
+    await Promise.all(keys.filter((key) => key.startsWith("cinedesi-shell-") && key !== CACHE).map((key) => caches.delete(key)));
     await self.clients.claim();
   })());
 });
-self.addEventListener("fetch", (event) => {
-  const request = event.request;
-  if (request.method !== "GET") return;
-  const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return;
-  if (request.mode === "navigate") {
-    // Upgrade legacy /movie bookmarks without showing the homepage or a download prompt.
-    if (url.pathname === "/movie") {
-      event.respondWith(Response.redirect("/movie.html" + url.search + url.hash, 302));
-      return;
-    }
-    event.respondWith((async () => {
-      try {
-        const response = await fetch(request);
-        if (!response.ok || !(response.headers.get("content-type") || "").includes("text/html")) throw new Error("invalid_document");
-        const cache = await caches.open(CACHE);
-        // Cache only known documents, never a homepage response under a movie URL.
-        if (DOCUMENTS.includes(url.pathname)) {
-          const key = url.pathname === "/" ? "/index.html" : url.pathname;
-          await cache.put(key, response.clone()).catch(() => {});
-        }
-        return response;
-      } catch {
-        const cache = await caches.open(CACHE);
-        const key = url.pathname === "/movie" || url.pathname === "/movie.html" ? "/movie.html" : "/index.html";
-        const fallback = await cache.match(key);
-        if (fallback) return fallback;
-        return new Response("CineDesi is temporarily unavailable. Please reconnect and reload.", {status: 503, headers: {"Content-Type":"text/plain; charset=utf-8", "Cache-Control":"no-store"}});
-      }
-    })());
-    return;
-  }
-  // Do not cache API, video streams, or unversioned scripts/styles: stale assets break installed apps.
-  event.respondWith(fetch(request).catch(async () => (await caches.match(request)) || Response.error()));
-});
+// Deliberately no fetch event handler: navigation, downloads and media are
+// handled by the browser itself. Never return Response.redirect() from a SW.
