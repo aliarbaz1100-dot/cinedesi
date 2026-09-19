@@ -1,51 +1,52 @@
-const CACHE = "cinedesi-shell-v26";
-const SHELL = [
-  "./index.html",
-  "./cinedesi-icon.svg",
-  "./cinedesi-icon-192.png",
-  "./manifest.webmanifest",
-];
-self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
-  self.skipWaiting();
+/* Stable offline shell for existing CineDesi installations. */
+const CACHE = "cinedesi-shell-v27";
+const DOCUMENTS = ["/", "/index.html", "/movie.html"];
+const CORE = ["/index.html", "/movie.html", "/manifest.webmanifest", "/cinedesi-icon.svg"];
+self.addEventListener("install", (event) => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    // A missing optional icon must never block installation or updating.
+    await Promise.allSettled(CORE.map(async (url) => {
+      const response = await fetch(url, {cache: "no-store"});
+      if (response.ok) await cache.put(url, response);
+    }));
+    await self.skipWaiting();
+  })());
 });
-self.addEventListener("activate", (e) => {
-  e.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)),
-        ),
-      ),
-  );
-  self.clients.claim();
+self.addEventListener("activate", (event) => {
+  event.waitUntil((async () => {
+    const names = await caches.keys();
+    await Promise.all(names.filter((name) => name.startsWith("cinedesi-shell-") && name !== CACHE).map((name) => caches.delete(name)));
+    await self.clients.claim();
+  })());
 });
-self.addEventListener("fetch", (e) => {
-  if (e.request.method !== "GET") return;
-  const requestUrl = new URL(e.request.url);
-  if (requestUrl.origin !== self.location.origin) return;
-  if (e.request.mode === "navigate") {
-    e.respondWith(
-      fetch(e.request)
-        .then((r) => {
-          if (!r.ok) throw new Error("navigation_failed");
-          const copy = r.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copy));
-          return r;
-        })
-        .catch(async () => (await caches.match(e.request)) || (await caches.match("./index.html")) || Response.error()),
-    );
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+  if (request.method !== "GET") return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+  if (request.mode === "navigate") {
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(request);
+        if (!response.ok || !(response.headers.get("content-type") || "").includes("text/html")) throw new Error("invalid_document");
+        const cache = await caches.open(CACHE);
+        // Cache only known documents, never a homepage response under a movie URL.
+        if (DOCUMENTS.includes(url.pathname)) {
+          const key = url.pathname === "/" ? "/index.html" : url.pathname;
+          await cache.put(key, response.clone()).catch(() => {});
+        }
+        return response;
+      } catch {
+        const cache = await caches.open(CACHE);
+        const key = url.pathname === "/movie" || url.pathname === "/movie.html" ? "/movie.html" : "/index.html";
+        const fallback = await cache.match(key);
+        if (fallback) return fallback;
+        return new Response("CineDesi is temporarily unavailable. Please reconnect and reload.", {status: 503, headers: {"Content-Type":"text/plain; charset=utf-8", "Cache-Control":"no-store"}});
+      }
+    })());
     return;
   }
-  e.respondWith(
-    fetch(e.request)
-      .then((r) => {
-        if (!r.ok) throw new Error("asset_failed");
-        const copy = r.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy));
-        return r;
-      })
-      .catch(() => caches.match(e.request)),
-  );
+  // Do not cache API, video streams, or unversioned scripts/styles: stale assets break installed apps.
+  event.respondWith(fetch(request).catch(async () => (await caches.match(request)) || Response.error()));
 });
