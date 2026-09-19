@@ -49,9 +49,12 @@ for (const device of cases) {
       width:el.getBoundingClientRect().width,
       height:el.getBoundingClientRect().height,
       sameVideo:el.querySelector("#official-player")?.getAttribute("src"),
-      exitVisible:!el.querySelector("#player-exit-wide")?.hidden
+      exitVisible:!el.querySelector("#player-exit-wide")?.hidden,
+      className:el.className,fullscreen:document.fullscreenElement===el,
+      position:getComputedStyle(el).position,computedHeight:getComputedStyle(el).height
     }));
-    assert.ok(active.exitVisible && active.width>=device.width*.95,device.name+" theater not filling viewport: "+JSON.stringify(active));
+    console.log("QA WIDE MODE",device.name,JSON.stringify(active));
+    assert.ok(active.exitVisible && active.width>=device.width*.95 && active.height>=device.height*.9,device.name+" theater not filling viewport: "+JSON.stringify(active));
     assert.equal(active.sameVideo,before.iframe,device.name+" entering wide view restarted the video");
     await page.locator("#player-exit-wide").click({timeout:12000});
     await page.waitForFunction(()=>{
