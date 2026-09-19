@@ -18,16 +18,16 @@ try {
   const response = await page.goto(base + "/", { waitUntil: "domcontentloaded", timeout: 40000 });
   assert.equal(response.status(), 200, "Home must load");
   assert.ok((await response.headerValue("content-type"))?.includes("text/html"), "Homepage must render as HTML");
-  await page.locator("#top-grid a.poster-link[href*='/movie.html?slug=']").first().waitFor({ state: "visible", timeout: 40000 }).catch(async error => {
+  await page.locator("#top-grid a.poster-link[href*='/movie?slug=']").first().waitFor({ state: "visible", timeout: 40000 }).catch(async error => {
     const status = await page.locator("#status").innerText().catch(() => "");
     throw new Error("No clickable movie card loaded: " + status + " / " + error.message);
   });
   assert.equal(await page.locator("#install-banner").isVisible(), false, "Install prompt must not obstruct home");
   console.log("PASS mobile homepage: real movie cards visible, install popup hidden");
-  const selectedMovieHref = await page.locator("#top-grid a.poster-link[href*='/movie.html?slug=']").first().getAttribute("href");
+  const selectedMovieHref = await page.locator("#top-grid a.poster-link[href*='/movie?slug=']").first().getAttribute("href");
   console.log("CLICK TARGET", selectedMovieHref);
   page.on("framenavigated", frame => { if (frame === page.mainFrame()) console.log("NAVIGATED", frame.url()); });
-  await page.locator("#top-grid a.poster-link[href*='/movie.html?slug=']").first().click();
+  await page.locator("#top-grid a.poster-link[href*='/movie?slug=']").first().click();
   console.log("URL IMMEDIATELY AFTER CLICK", page.url());
   await page.waitForTimeout(1500);
   console.log("URL AFTER 1.5S", page.url());
