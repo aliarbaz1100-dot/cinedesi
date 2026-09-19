@@ -268,3 +268,26 @@
   html.cd-qa-mode .movie-page .movie-copy h1 { font-size: 30px !important; }
   html.cd-qa-mode .movie-page .movie-copy .actions > * { font-size: 11px !important; }
 }
+
+/* Explicit geometry fallbacks: iPhone 6 Safari/iOS 12 has no aspect-ratio. */
+@media screen and (max-width: 420px) {
+  html.cd-qa-legacy .movie-page .movie-art {
+    width: 100% !important;
+    height: 54vw !important;
+    max-height: 240px !important;
+    min-height: 174px !important;
+  }
+  html.cd-qa-legacy .movie-page .legal-player {
+    position: relative !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 0 56.25% !important;
+  }
+  html.cd-qa-legacy .movie-page .legal-player iframe {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    height: 100% !important;
+    width: 100% !important;
+  }
+}
