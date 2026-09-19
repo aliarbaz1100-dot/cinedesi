@@ -92,3 +92,21 @@ body.cd-player-open{overflow:hidden!important}
 @media(prefers-reduced-motion:reduce){
  #watch .cd-player-stage,#watch .cd-wide-button{animation:none!important;transition:none!important}
 }
+
+/* Keep iOS fallback separate from vendor-prefixed fullscreen selector lists:
+   one unsupported pseudo-selector must not invalidate the entire rule. */
+#watch .cd-player-stage.cd-theater{
+ position:fixed!important;top:0!important;right:0!important;bottom:0!important;left:0!important;
+ width:100vw!important;height:100vh!important;height:100dvh!important;
+ min-height:100vh!important;z-index:10000!important;
+ margin:0!important;padding:0!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ overflow:hidden!important;border-radius:0!important;background:#000!important;
+}
+#watch .cd-player-stage.cd-theater .legal-player{
+ position:relative!important;flex:none!important;
+ width:100vw!important;max-width:177.78vh!important;
+ height:56.25vw!important;max-height:100vh!important;
+ margin:auto!important;border:0!important;border-radius:0!important;
+ aspect-ratio:16/9!important;background:#000!important;
+}
