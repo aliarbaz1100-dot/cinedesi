@@ -63,12 +63,17 @@ window.addEventListener("pageshow", (event) => {
   }));
 });
 const launchSplash = document.querySelector("#app-splash");
-if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true)) {
+// The QA launch controller is inline in index.html: it displays before the
+// JS bundle, handles older iOS standalone detection, and fades on warm resume.
+// Never let bundle initialization remove its overlay before the animation plays.
+if (document.documentElement.classList.contains("cd-qa-standalone")) {
+  // QA controller owns the lifecycle, including the independent failsafe.
+} else if (launchSplash && (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true)) {
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => {
     launchSplash.classList.add("splash-exit");
     setTimeout(() => launchSplash.remove(), reduceMotion ? 0 : 320);
-  }, document.documentElement.classList.contains("cd-qa-standalone") ? 1650 : 1050)));
+  }, 1050)));
 } else launchSplash?.remove();
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=28").catch(() => {
 }));
