@@ -5,7 +5,7 @@ import "./installed-app-qa.css";
 import { tamashaSeason5Episodes } from "./tamashaSeason5";
 // Movie -> home is an internal app navigation. Preserve the PWA home screen
 // without replaying the cold-launch overlay or losing the current film position.
-if (/(^|[.-])qa([.-]|$)/i.test(location.hostname)) {
+if (/(^|[.-])qa([.-]|$)/i.test(location.hostname) || location.hostname === "cinedesi.online" || location.hostname.endsWith(".cinedesi.online")) {
   const markInternal = () => {
     try { sessionStorage.setItem("cinedesi-qa-internal-nav", String(Date.now())); } catch {}
   };
@@ -22,15 +22,23 @@ movieBack?.addEventListener("click", (event) => {
   event.preventDefault();
   event.stopImmediatePropagation();
   try {
+    // Explicitly label internal movie -> home navigation in the URL itself.
+    // iOS may create a fresh Home document with a new sessionStorage context,
+    // so an in-memory flag alone is not enough to suppress the opening logo.
+    sessionStorage.setItem("cinedesi-qa-internal-nav", String(Date.now()));
+  } catch {}
+  try {
     const referrer = document.referrer ? new URL(document.referrer, location.href) : null;
-    const destination = referrer?.origin === location.origin ? referrer : new URL("./", location.href);
+    const homeReferrer = referrer?.origin === location.origin && (referrer.pathname === "/" || referrer.pathname === "/index.html");
+    const destination = homeReferrer ? referrer : new URL("./", location.href);
     const current = new URL(location.href);
     ["returnY", "returnSection", "returnOffset"].forEach((key) => {
       if (current.searchParams.has(key)) destination.searchParams.set(key, current.searchParams.get(key));
     });
+    destination.searchParams.set("fromMovie", "1");
     location.replace(destination.href);
   } catch {
-    location.replace("./");
+    location.replace("./?fromMovie=1");
   }
 }, { capture: true });
 const SUPABASE_URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co", KEY = "sb_publishable_ZEAZWO-Q-_rvMsy6krr_nw_JDRmP_kI";
