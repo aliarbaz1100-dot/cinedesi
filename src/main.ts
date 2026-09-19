@@ -5,6 +5,11 @@ import "./launch-polish.css";
 import "./installed-app-qa.css";
 const homeReturnKey = "cinedesi-home-return-v1";
 const rememberHomeReturn = (link) => {
+  // Entering a title is an internal navigation, not another app launch.
+  // Preserve this through iOS WebKit's full-page back/forward reload.
+  if (/(^|[.-])qa([.-]|$)/i.test(location.hostname)) {
+    try { sessionStorage.setItem("cinedesi-qa-internal-nav", String(Date.now())); } catch {}
+  }
   const section = link.closest("section[id]");
   try {
     const returnState = {
