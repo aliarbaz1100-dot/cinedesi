@@ -34,6 +34,7 @@ for(const device of [
       uaStandalone:navigator.standalone
     }));
     assert.equal(identity.iosTitle,"CineDesi QA",device.name+" iOS QA install label missing");
+    console.log("QA INSTALL IDENTITY",device.name,JSON.stringify(identity));
     assert.ok(identity.manifest?.includes("qa-mobile-1"),device.name+" QA manifest not attached");
     const manifestResponse=await context.request.get(base+"/manifest.webmanifest");
     assert.equal(manifestResponse.status(),200);
