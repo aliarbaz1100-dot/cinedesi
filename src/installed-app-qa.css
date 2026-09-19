@@ -5,44 +5,12 @@
     padding-bottom: calc(98px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
-  html.cd-qa-mode .home-body .mobile-bottom-nav {
-    width: calc(100% - 20px) !important;
-    max-width: 450px !important;
-    bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
-    padding: 6px !important;
-    border-radius: 18px !important;
-    border: 1px solid rgba(255,255,255,.12) !important;
-    background: rgba(15,15,17,.98) !important;
-    box-shadow: 0 10px 32px rgba(0,0,0,.55) !important;
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
-  }
-
-  html.cd-qa-mode .home-body .mobile-bottom-nav a,
-  html.cd-qa-mode .home-body .mobile-bottom-nav button {
-    min-height: 48px !important;
-    gap: 4px !important;
-    border-radius: 12px !important;
-    color: #a2a3a8 !important;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-
-  html.cd-qa-mode .home-body .mobile-bottom-nav .active,
-  html.cd-qa-mode .home-body .mobile-bottom-nav [aria-current="page"],
-  html.cd-qa-mode .home-body .mobile-bottom-nav [aria-pressed="true"] {
+  /* Return bottom navigation to the earlier premium CineDesi glass-pill styling.
+     Existing styles.css/premium.css/cinematic-v2.css own shape, size and color;
+     keep the QA active tab semantics without adding opaque red tiles. */
+  html.cd-qa-mode .home-body .mobile-bottom-nav a[aria-current="page"],
+  html.cd-qa-mode .home-body .mobile-bottom-nav button[aria-pressed="true"] {
     color: #fff !important;
-    background: rgba(229,9,20,.18) !important;
-  }
-
-  html.cd-qa-mode .home-body .mobile-bottom-nav svg {
-    width: 20px !important;
-    height: 20px !important;
-  }
-
-  html.cd-qa-mode .home-body .mobile-bottom-nav b {
-    font-size: 10px !important;
-    font-weight: 700 !important;
   }
 
   html.cd-qa-mode .home-body .grid.rail {
@@ -116,7 +84,6 @@
   html.cd-qa-legacy .home-body .catalog-header { min-height: 56px !important; }
   html.cd-qa-legacy .home-body .streaming-hero { min-height: 500px !important; padding: 230px 16px 28px !important; }
   html.cd-qa-legacy .home-body .hero-content h1 { font-size: 35px !important; line-height: .96 !important; }
-  html.cd-qa-legacy .home-body .mobile-bottom-nav { width: 95% !important; bottom: 8px !important; }
   html.cd-qa-legacy .home-body .grid.rail { -webkit-overflow-scrolling: touch; }
   html.cd-qa-legacy .movie-page { width: 100% !important; max-width: 100% !important; overflow-x: hidden !important; padding-bottom: 84px !important; }
   html.cd-qa-legacy .movie-page .movie-art,
