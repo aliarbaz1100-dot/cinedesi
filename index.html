@@ -26,7 +26,9 @@
   try {
     var qa=/(^|[.-])qa([.-]|$)/i.test(location.hostname)||/[?&]qa=1(?:&|$)/.test(location.search);
     var home=location.pathname==="/"||location.pathname==="/index.html";
-    var small=Math.min(screen.width||window.innerWidth,window.innerWidth||screen.width)<621;
+    // Cover iPhone 6 through current iPhones and Android, including large and landscape phones.
+    var handset=/iPhone|iPod|Android/i.test(navigator.userAgent);
+    var small=handset||Math.min(screen.width||window.innerWidth,window.innerWidth||screen.width)<621;
     var topLevel=window.top===window;
     var installed=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
     // iOS 12 may omit the standalone signal. The QA installed-app start URL
@@ -36,6 +38,11 @@
     var recentInternal=0;
     try { recentInternal=Number(sessionStorage.getItem("cinedesi-qa-internal-nav")||0); } catch(e) {}
     var internalReturn=returnUrl||(recentInternal>0&&Date.now()-recentInternal<90000);
+    // A title-page return consumes the one-time navigation marker. Opening
+    // the installed icon afterwards must still play the genuine launch.
+    if(qa&&home&&internalReturn){
+      try{sessionStorage.removeItem("cinedesi-qa-internal-nav");}catch(e){}
+    }
     var qaLaunch=qa&&home&&small&&topLevel&&launched&&!internalReturn;
     if(qaLaunch)document.documentElement.classList.add("cd-qa-standalone");
   }catch(e){}
@@ -104,6 +111,42 @@
   window.setTimeout(close,1950);
   // Exit if the catalog is unavailable, never leave users trapped behind a logo.
   window.setTimeout(close,4400);
+  // On iOS a home-screen app commonly resumes its existing WebKit document
+  // when the icon is tapped. No page load occurs, so a cold-launch-only
+  // animation would never appear. Replay *only* on a genuine long background
+  // resume of the home screen, never on movie/back or ordinary tab switching.
+  var hiddenAt=0, lastShown=Date.now();
+  var appMode=(navigator.standalone===true)||
+    (window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches);
+  document.addEventListener("visibilitychange",function(){
+    if(!appMode||!document.documentElement.classList.contains("cd-qa-mode"))return;
+    if(document.hidden){hiddenAt=Date.now();return;}
+    if(!hiddenAt||Date.now()-hiddenAt<12000||Date.now()-lastShown<10000)return;
+    hiddenAt=0;
+    if(location.pathname!=="/"||document.querySelector("video:fullscreen"))return;
+    var internal=0;
+    try{internal=Number(sessionStorage.getItem("cinedesi-qa-internal-nav")||0);}catch(e){}
+    if(internal>0&&Date.now()-internal<90000)return;
+    var current=document.getElementById("app-splash");
+    if(current)return;
+    var resumed=document.createElement("div");
+    resumed.id="app-splash";
+    resumed.className="app-splash";
+    resumed.setAttribute("aria-hidden","true");
+    resumed.innerHTML='<div class="splash-brand"><div class="splash-logo">CINE<span>DESI</span></div><div class="splash-line"></div><p>Powered by <strong>Arbaz Ali</strong></p></div>';
+    document.documentElement.classList.add("cd-qa-standalone");
+    document.body.insertBefore(resumed,document.body.firstChild);
+    lastShown=Date.now();
+    window.setTimeout(function(){
+      resumed.classList.add("splash-exit");
+      window.setTimeout(function(){
+        if(resumed.parentNode)resumed.parentNode.removeChild(resumed);
+        // The persistent page is not newly launched; keep the class limited
+        // to the visible overlay's lifetime on warm resume.
+        document.documentElement.classList.remove("cd-qa-standalone");
+      },330);
+    },1650);
+  });
 })();</script>
     <div id="app">
       <header class="catalog-header">
