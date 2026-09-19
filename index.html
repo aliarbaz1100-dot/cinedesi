@@ -25,7 +25,7 @@
     <script id="qa-launch-detect">(function(){
   try{
     var qa=/(^|[.-])qa([.-]|$)/i.test(location.hostname);
-    var release=location.hostname==="cinedesi.online"||/\\.cinedesi\\.online$/i.test(location.hostname);
+    var release=location.hostname==="cinedesi.online"||location.hostname.endsWith(".cinedesi.online");
     var home=location.pathname==="/"||location.pathname==="/index.html";
     var installed=navigator.standalone===true||
       !!(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches);
