@@ -26,6 +26,11 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
   if (request.mode === "navigate") {
+    // Upgrade legacy /movie bookmarks without showing the homepage or a download prompt.
+    if (url.pathname === "/movie") {
+      event.respondWith(Response.redirect("/movie.html" + url.search + url.hash, 302));
+      return;
+    }
     event.respondWith((async () => {
       try {
         const response = await fetch(request);
