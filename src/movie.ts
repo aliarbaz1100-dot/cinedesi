@@ -290,7 +290,7 @@ async function load() {
       ? `https://geo.dailymotion.com/player.html?playlist=${encodeURIComponent(dmPlaylistId)}`
       : normalizeExternalEmbed(m.full_video_embed_url);
   const initialPlayerUrl = individualEpisode ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(episodeItems[0].id)}?rel=0` : playlistPlayerUrl;
-  const fullVideo = m.full_video_verified && m.full_video_embed_url ? `<section id='watch' class='legal-player-section'><div class='legal-player-head'><div><small>WATCH ON CINEDESI</small><h2>${esc(m.full_video_label || "Official full video")}</h2><p>${esc(m.full_video_language || "Official source")}</p></div><span class='badge'>Rights-holder source verified</span></div><div class='legal-player'><iframe id='official-player' src='${esc(initialPlayerUrl)}' title='${esc(m.title)} official video' loading='lazy' referrerpolicy='strict-origin-when-cross-origin' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' allowfullscreen></iframe><div class='player-fallback' hidden><span aria-hidden='true'>!</span><strong>Playback is not available inside CineDesi</strong><p>The verified publisher has disabled playback on other websites.</p>${m.full_video_url ? `<a class='btn' target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Watch on official source</a>` : ""}</div></div>${episodeList}<div class='source-card'><strong>Playback source</strong><br>${esc(m.full_video_source || "Official rights-holder source")} \u2022 Playback, ads and regional availability remain controlled by the source platform/rights-holder.${m.full_video_url ? ` <a target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Open official source</a>` : ""}</div></section>` : "";
+  const fullVideo = m.full_video_verified && m.full_video_embed_url ? `<section id='watch' class='legal-player-section'><div class='legal-player-head'><div><small>WATCH ON CINEDESI</small><h2>${esc(m.full_video_label || "Official full video")}</h2><p>${esc(m.full_video_language || "Official source")}</p></div><span class='badge'>Rights-holder source verified</span></div><div class='cd-player-toolbar'><button id='player-wide' class='cd-wide-button' type='button' aria-pressed='false'>⛶ Wide view</button><span id='player-view-note'>Rotate your phone for a wider view. Use the video player's own fullscreen or PiP controls when available.</span></div><div id='player-stage' class='cd-player-stage'><button id='player-exit-wide' class='cd-wide-exit' type='button' hidden aria-label='Exit wide view'>✕ Exit wide view</button><div class='legal-player'><iframe id='official-player' src='${esc(initialPlayerUrl)}' title='${esc(m.title)} official video' loading='lazy' referrerpolicy='strict-origin-when-cross-origin' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen; web-share' allowfullscreen></iframe><div class='player-fallback' hidden><span aria-hidden='true'>!</span><strong>Playback is not available inside CineDesi</strong><p>The verified publisher has disabled playback on other websites.</p>${m.full_video_url ? `<a class='btn' target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Watch on official source</a>` : ""}</div></div></div>${episodeList}<div class='source-card'><strong>Playback source</strong><br>${esc(m.full_video_source || "Official rights-holder source")} \u2022 Playback, ads and regional availability remain controlled by the source platform/rights-holder.${m.full_video_url ? ` <a target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Open official source</a>` : ""}</div></section>` : "";
   const providerSection = providers?.length ? `<section class='engage-section'><div class='engage-head'><div><small>VERIFIED DESTINATIONS</small><h2>Where to watch</h2></div><span class='badge'>Only verified links shown</span></div><div class='provider-grid'>${providers.map((p) => `<a class='provider-card' data-track-watch='1' data-provider='${esc(p.provider_name)}' data-destination='${esc(p.destination_url)}' target='_blank' rel='noopener' href='${esc(p.destination_url)}'><strong>${esc(p.provider_name)}</strong><span>${esc(String(p.access_type || "official_platform").replaceAll("_", " "))}${p.country_code ? ` \u2022 ${esc(p.country_code)}` : ""}</span>${p.dub_language ? `<small>Dub: ${esc(p.dub_language)}</small>` : ""}${p.subtitle_language ? `<small>Subs: ${esc(p.subtitle_language)}</small>` : ""}</a>`).join("")}</div></section>` : `<section class='engage-section compact-engage'><small>WHERE TO WATCH</small><h2>Verification in progress</h2><p class='muted'>CineDesi will show a platform here only after the exact destination and availability evidence pass review.</p></section>`;
   const upNext = related?.[0];
   const moreLikeThis = (related || []).slice(1, 7);
@@ -312,6 +312,54 @@ async function load() {
   const posterLine = licensedPoster(m) ? `${esc(m.poster_license)}${m.poster_attribution ? ` \u2022 ${esc(m.poster_attribution)}` : ""}${m.poster_source_url ? ` \u2022 <a target='_blank' rel='noopener' href='${esc(m.poster_source_url)}'>poster source</a>` : ""}` : m._cover_kind === "youtube" ? `Official video thumbnail supplied by ${esc(m.full_video_source || m.trailer_source || "YouTube")}; linked to the verified upload.` : "CineDesi dark original fallback; no third-party poster reused.";
   const preserveFullPoster = ["cid-official-series", "crime-patrol-city-crimes-2026"].includes(String(m.slug || ""));
   root.innerHTML = `<section class='movie-hero'><div class='movie-art' ${m.poster_url ? `style="background-image:linear-gradient(#0003,#0008),url('${esc(m.poster_url)}'),url('${esc(posterArt(m))}');background-size:${preserveFullPoster ? "contain" : "cover"};background-repeat:no-repeat;background-position:center;background-color:#050506"` : ""}><span>${licensedPoster(m) ? "Licensed image" : m._cover_kind === "youtube" ? "Official video thumbnail" : "CineDesi dark cover"}</span>${trailer}</div><div class='movie-copy'><small>${esc(m.region)}</small><h1>${esc(m.title)}</h1><div class='modal-meta'><span>${esc(m.genre || "Film")}</span><span>${esc(m.release_year || "")}</span>${m.score ? `<span>CineDesi score ${esc(m.score)}</span>` : ""}</div>${titleFacts}<div class='badges'><span class='badge'>${m.rights_status === "cleared" ? "Rights cleared" : "Official links checked"}</span>${m.trailer_verified ? "<span class='badge'>Official trailer verified</span>" : ""}${m.watch_verified ? "<span class='badge'>Legal watch verified</span>" : ""}${m.full_video_verified && m.full_video_embed_url ? "<span class='badge'>Official full video on CineDesi</span>" : ""}${licensedPoster(m) ? "<span class='badge'>Licensed image</span>" : "<span class='badge'>CineDesi original cover</span>"}</div><p class='lead'>${esc(m.editorial || m.synopsis || "Editorial coming soon.")}</p>${castSection}${availabilityCallout}<div class='actions'>${watch}<button id='share' class='ghost'>Share page</button></div><div class='source-card'><strong>Verification & source transparency</strong><br>Metadata: ${esc(m.source_name || "Verified source")}${m.source_license ? ` \u2022 ${esc(m.source_license)}` : ""}${m.source_url ? ` \u2022 <a target='_blank' rel='noopener' href='${esc(m.source_url)}'>source page</a>` : ""}${m.attribution_text ? `<br>Attribution: ${esc(m.attribution_text)}` : ""}${m.trailer_source ? `<br>Trailer source: ${esc(m.trailer_source)}` : ""}<br>Poster: ${posterLine}<br>Rights checked: ${esc(checked)}</div></div></section>${fullVideo}${providerSection}${upNextSection}${relatedSection}`;
+  const playerStage = document.querySelector("#player-stage");
+  const wideButton = document.querySelector("#player-wide");
+  const exitWideButton = document.querySelector("#player-exit-wide");
+  const playerViewNote = document.querySelector("#player-view-note");
+  const syncWideView = () => {
+    if (!playerStage || !wideButton) return;
+    const active = playerStage.classList.contains("cd-theater") || document.fullscreenElement === playerStage;
+    wideButton.textContent = active ? "↙ Exit wide view" : "⛶ Wide view";
+    wideButton.setAttribute("aria-pressed", String(active));
+    if (exitWideButton) exitWideButton.hidden = !active;
+    if (playerViewNote) playerViewNote.textContent = active
+      ? "Use the video player's own controls for fullscreen or PiP where supported."
+      : "Rotate your phone for a wider view. Use the video's own fullscreen or PiP controls where available.";
+  };
+  const closeWideView = () => {
+    if (!playerStage) return;
+    playerStage.classList.remove("cd-theater");
+    document.body.classList.remove("cd-player-open");
+    if (document.fullscreenElement === playerStage && document.exitFullscreen) {
+      Promise.resolve(document.exitFullscreen()).catch(() => {});
+    }
+    syncWideView();
+  };
+  wideButton?.addEventListener("click", async () => {
+    if (!playerStage) return;
+    if (playerStage.classList.contains("cd-theater") || document.fullscreenElement === playerStage) {
+      closeWideView();
+      return;
+    }
+    if (document.fullscreenEnabled && typeof playerStage.requestFullscreen === "function") {
+      try {
+        await playerStage.requestFullscreen();
+        syncWideView();
+        return;
+      } catch {
+        // iOS Safari / installed PWAs can reject element fullscreen.
+      }
+    }
+    playerStage.classList.add("cd-theater");
+    document.body.classList.add("cd-player-open");
+    syncWideView();
+  });
+  exitWideButton?.addEventListener("click", closeWideView);
+  document.addEventListener("fullscreenchange", syncWideView);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && playerStage?.classList.contains("cd-theater")) closeWideView();
+  });
+  syncWideView();
   document.querySelector("#detail-list")?.addEventListener("click", (event) => {
     const adding = !detailSaved.includes(m.id);
     detailSaved = adding ? [...detailSaved, m.id] : detailSaved.filter((id) => id !== m.id);
