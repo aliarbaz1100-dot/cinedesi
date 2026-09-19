@@ -23,7 +23,7 @@ for(const [label,type,width,height] of [
    await resume.first().waitFor({state:"visible",timeout:45000});
    const href=await resume.first().getAttribute("href");
    assert.ok(href?.includes("#watch"),label+" Continue Watching missing direct video destination");
-   const resumeCaption=page.locator("#continue-grid article.card").filter({has:resume.first()}).locator(".cd-resume-label");
+   const resumeCaption=page.locator("#continue-grid article.card:has(a.poster-link[href*=\'tamasha-season-5\']) .cd-resume-label");
    assert.match(await resumeCaption.innerText(),/Resume episode 2/i,label+" resume state not visible in mobile card");
    const action=page.locator("#continue-grid a.play-mini[href*='tamasha-season-5']");
    assert.match(await action.first().textContent()||"",/Resume E2/i,label+" correct episode resume action missing");
