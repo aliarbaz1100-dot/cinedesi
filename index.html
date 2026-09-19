@@ -79,19 +79,19 @@
       }
       html.cd-qa-standalone .app-splash .splash-brand strong{color:#eee!important}
       html.cd-qa-standalone .app-splash.qa-intro-play .splash-logo{
-        animation:qa-icon-brand-in .64s .02s cubic-bezier(.2,.75,.18,1) both!important;
+        animation:qa-icon-brand-in 1.16s .02s cubic-bezier(.17,.79,.16,1) both!important;
       }
       html.cd-qa-standalone .app-splash.qa-intro-play .splash-line{
-        animation:qa-icon-line-in .56s .23s both!important;
+        animation:qa-icon-line-in .68s .51s cubic-bezier(.18,.8,.18,1) both!important;
       }
       html.cd-qa-standalone .app-splash.qa-intro-play .splash-brand p{
-        animation:qa-icon-caption-in .56s .39s both!important;
+        animation:qa-icon-caption-in .65s .74s ease-out both!important;
       }
       html.cd-qa-standalone .app-splash.splash-exit{
         opacity:0!important;visibility:hidden!important;pointer-events:none!important;
         transition:opacity .35s ease,visibility .35s ease!important;
       }
-      @keyframes qa-icon-brand-in{from{opacity:0;transform:scale(.88);filter:blur(3px)}to{opacity:1;transform:scale(1);filter:blur(0)}}
+      @keyframes qa-icon-brand-in{0%{opacity:0;transform:scale(.46) translateY(7px);filter:blur(6px)}35%{opacity:1;filter:blur(0)}68%{opacity:1;transform:scale(1.075) translateY(0);filter:blur(0)}100%{opacity:1;transform:scale(1) translateY(0);filter:blur(0)}}
       @keyframes qa-icon-line-in{from{width:0;opacity:0}to{width:38px;opacity:1}}
       @keyframes qa-icon-caption-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
       @media(prefers-reduced-motion:reduce){
@@ -149,8 +149,10 @@
     pending=false;
     lastPlayed=Date.now();
     node.classList.add("qa-intro-play");
-    // UX: crossfade straight into the real Home page; no extra static logo hold.
-    window.setTimeout(function(){dismiss(node)},1250);
+    try{sessionStorage.setItem("cinedesi-qa-intro-timing","visible-start="+Math.round(performance.now())+", route="+location.pathname)}catch(e){}
+    // Allow the visible logo motion and credit to complete, then crossfade
+    // directly into the already-rendering Home screen (no static logo hold).
+    window.setTimeout(function(){dismiss(node)},1650);
   }
   function paintWhenVisible(node){
     if(!node||node!==overlay||document.hidden)return;
@@ -159,8 +161,12 @@
       if(started||run!==token||document.hidden||node!==overlay)return;
       started=true;animate(node);
     }
-    requestAnimationFrame(function(){requestAnimationFrame(go)});
-    window.setTimeout(go,85); // iOS first visible frame can postpone RAF.
+    // iOS may mark the WebView visible before its native launch snapshot
+    // disappears. Delay the actual keyframes until the user can see them.
+    window.setTimeout(function(){
+      requestAnimationFrame(function(){requestAnimationFrame(go)});
+      window.setTimeout(go,110); // RAF fallback for suspended WebKit.
+    },400);
   }
   function internalReturn(){
     if(/[?&](?:returnY|returnSection|returnOffset)=/.test(location.search))return true;
@@ -192,11 +198,14 @@
     else reenter();
   });
   window.addEventListener("focus",reenter);
-  // DOM is already here: don't delay the intro until analytics or catalog loads.
-  if(!document.hidden)paintWhenVisible(overlay);
+  // The icon's native static screenshot can cover early page scripts. Start
+  // after pageshow/focus when possible, with a fallback for older Safari.
+  if(!document.hidden)window.setTimeout(function(){
+    if(pending&&overlay)paintWhenVisible(overlay);
+  },180);
   // Only an emergency timeout, never wait on an unavailable third-party API.
-  window.setTimeout(function(){if(pending&&overlay){if(!document.hidden)animate(overlay);else dismiss(overlay)}},1600);
-  window.setTimeout(function(){if(overlay) dismiss(overlay)},3600);
+  window.setTimeout(function(){if(pending&&overlay){if(!document.hidden)animate(overlay);else dismiss(overlay)}},2500);
+  window.setTimeout(function(){if(overlay) dismiss(overlay)},4200);
 })();</script>
     <div id="app">
       <header class="catalog-header">
