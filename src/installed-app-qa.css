@@ -196,6 +196,15 @@
     background: transparent !important;
     box-shadow: none !important;
   }
+  /* Approved final QA: remove the oversized SEASON 20 / 10 official episodes
+     display (and duplicate count) above the existing working navigation.
+     Keep the episode browser and navigation controls intact. */
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list > .episode-browser-head {
+    display: none !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list > .qa-episode-toolbar {
+    margin-top: 0 !important;
+  }
   html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-browser-head {
     display: flex !important;
     align-items: flex-end !important;
