@@ -45,8 +45,10 @@ export default {
         }
       });
     }
-    const path = url.pathname === "/app-preview" || url.pathname === "/app-preview/"
-      ? "/app-preview.html"
+    const path = url.pathname === "/" || url.pathname === "/index.html"
+      ? "/index.html"
+      : url.pathname === "/app-preview" || url.pathname === "/app-preview/"
+        ? "/app-preview.html"
       : url.pathname === "/movie" || url.pathname === "/movie/"
         ? "/movie.html"
         : url.pathname;
