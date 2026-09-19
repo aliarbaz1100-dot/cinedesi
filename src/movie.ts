@@ -291,7 +291,10 @@ async function load() {
       ? `https://geo.dailymotion.com/player.html?playlist=${encodeURIComponent(dmPlaylistId)}`
       : normalizeExternalEmbed(m.full_video_embed_url);
   const initialPlayerUrl = individualEpisode ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(episodeItems[0].id)}?rel=0` : playlistPlayerUrl;
-  const fullVideo = m.full_video_verified && m.full_video_embed_url ? `<section id='watch' class='legal-player-section'><div class='legal-player-head'><div><small>WATCH ON CINEDESI</small><h2>${esc(m.full_video_label || "Official full video")}</h2><p>${esc(m.full_video_language || "Official source")}</p></div><span class='badge'>Rights-holder source verified</span></div><div class='legal-player'><iframe id='official-player' src='${esc(initialPlayerUrl)}' title='${esc(m.title)} official video' loading='lazy' referrerpolicy='strict-origin-when-cross-origin' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' allowfullscreen></iframe><div class='player-fallback' hidden><span aria-hidden='true'>!</span><strong>Playback is not available inside CineDesi</strong><p>The verified publisher has disabled playback on other websites.</p>${m.full_video_url ? `<a class='btn' target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Watch on official source</a>` : ""}</div></div>${episodeList}<div class='source-card'><strong>Playback source</strong><br>${esc(m.full_video_source || "Official rights-holder source")} \u2022 Playback, ads and regional availability remain controlled by the source platform/rights-holder.${m.full_video_url ? ` <a target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Open official source</a>` : ""}</div></section>` : "";
+  const resumeControl = !episodeItems.length && /youtube(?:-nocookie)?\\.com\\/embed\\//i.test(initialPlayerUrl || "")
+    ? "<div id='cd-resume-row' class='cd-resume-row' hidden><button id='cd-resume-playback' type='button'>Continue watching</button></div>"
+    : "";
+  const fullVideo = m.full_video_verified && m.full_video_embed_url ? `<section id='watch' class='legal-player-section'><div class='legal-player-head'><div><small>WATCH ON CINEDESI</small><h2>${esc(m.full_video_label || "Official full video")}</h2><p>${esc(m.full_video_language || "Official source")}</p></div><span class='badge'>Rights-holder source verified</span></div>${resumeControl}<div class='legal-player'><iframe id='official-player' src='${esc(initialPlayerUrl)}' title='${esc(m.title)} official video' loading='lazy' referrerpolicy='strict-origin-when-cross-origin' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' allowfullscreen></iframe><div class='player-fallback' hidden><span aria-hidden='true'>!</span><strong>Playback is not available inside CineDesi</strong><p>The verified publisher has disabled playback on other websites.</p>${m.full_video_url ? `<a class='btn' target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Watch on official source</a>` : ""}</div></div>${episodeList}<div class='source-card'><strong>Playback source</strong><br>${esc(m.full_video_source || "Official rights-holder source")} \u2022 Playback, ads and regional availability remain controlled by the source platform/rights-holder.${m.full_video_url ? ` <a target='_blank' rel='noopener' href='${esc(m.full_video_url)}'>Open official source</a>` : ""}</div></section>` : "";
   const providerSection = providers?.length ? `<section class='engage-section'><div class='engage-head'><div><small>VERIFIED DESTINATIONS</small><h2>Where to watch</h2></div><span class='badge'>Only verified links shown</span></div><div class='provider-grid'>${providers.map((p) => `<a class='provider-card' data-track-watch='1' data-provider='${esc(p.provider_name)}' data-destination='${esc(p.destination_url)}' target='_blank' rel='noopener' href='${esc(p.destination_url)}'><strong>${esc(p.provider_name)}</strong><span>${esc(String(p.access_type || "official_platform").replaceAll("_", " "))}${p.country_code ? ` \u2022 ${esc(p.country_code)}` : ""}</span>${p.dub_language ? `<small>Dub: ${esc(p.dub_language)}</small>` : ""}${p.subtitle_language ? `<small>Subs: ${esc(p.subtitle_language)}</small>` : ""}</a>`).join("")}</div></section>` : `<section class='engage-section compact-engage'><small>WHERE TO WATCH</small><h2>Verification in progress</h2><p class='muted'>CineDesi will show a platform here only after the exact destination and availability evidence pass review.</p></section>`;
   const upNext = related?.[0];
   const moreLikeThis = (related || []).slice(1, 7);
@@ -504,11 +507,74 @@ async function load() {
   }
 
   const singleYoutubeId = !playlistGenerated ? String(initialPlayerUrl || "").match(/youtube(?:-nocookie)?\.com\/embed\/([\w-]{11})/i)?.[1] : "";
+
+  // Resume a verified YouTube movie only through its official player API.
+  // Provider controls, attribution and fullscreen are never replaced.
+  const progressKey = `cinedesi-video-progress:${m.slug}`;
+  let progressTimer = null;
+  const resumeRow = document.querySelector("#cd-resume-row");
+  const resumeButton = document.querySelector("#cd-resume-playback");
+  const getStoredProgress = () => {
+    try {
+      const p = JSON.parse(localStorage.getItem(progressKey) || "null");
+      return p?.videoId === singleYoutubeId && Number.isFinite(p.seconds) &&
+        p.seconds >= 20 && p.seconds < p.duration - 25 && p.updatedAt > Date.now() - 30 * 86400000 ? p : null;
+    } catch { return null; }
+  };
+  const saveProgress = () => {
+    const p = youtubePlaylistPlayer;
+    if (!p || !singleYoutubeId || episodeItems.length) return;
+    const seconds = Number(p.getCurrentTime?.());
+    const duration = Number(p.getDuration?.());
+    if (!Number.isFinite(seconds) || !Number.isFinite(duration) || duration < 45 || seconds < 5) return;
+    try {
+      if (seconds >= duration - 15) localStorage.removeItem(progressKey);
+      else localStorage.setItem(progressKey, JSON.stringify({
+        videoId: singleYoutubeId, seconds: Math.round(seconds), duration: Math.round(duration), updatedAt: Date.now()
+      }));
+    } catch {}
+  };
+  const stopProgressTimer = () => {
+    if (progressTimer !== null) { clearInterval(progressTimer); progressTimer = null; }
+  };
+  window.addEventListener("pagehide", () => { saveProgress(); stopProgressTimer(); }, { once: true });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) saveProgress(); }, { passive: true });
+  const onVerifiedVideoReady = (event) => {
+    if (episodeItems.length || !resumeRow || !resumeButton) return;
+    const saved = getStoredProgress();
+    if (!saved) return;
+    const minutes = Math.floor(saved.seconds / 60), seconds = String(saved.seconds % 60).padStart(2, "0");
+    resumeButton.textContent = `Continue from ${minutes}:${seconds}`;
+    resumeRow.hidden = false;
+    resumeButton.addEventListener("click", () => {
+      try {
+        event.target.seekTo(saved.seconds, true);
+        event.target.playVideo();
+        resumeRow.hidden = true;
+      } catch { /* Official source may disallow seeking or autoplay. */ }
+    }, { once: true });
+  };
+  const onVerifiedVideoStateChange = (event) => {
+    if (episodeItems.length) return;
+    if (Number(event?.data) === 1) {
+      stopProgressTimer();
+      progressTimer = window.setInterval(saveProgress, 12000);
+    } else {
+      saveProgress();
+      stopProgressTimer();
+    }
+    if (Number(event?.data) === 0) {
+      try { localStorage.removeItem(progressKey); } catch {}
+      if (resumeRow) resumeRow.hidden = true;
+    }
+  };
   const initSingleYoutubeApi = () => {
     if (!singleYoutubeId || !document.querySelector("#official-player") || !window.YT?.Player) return;
     try {
       youtubePlaylistPlayer = new window.YT.Player("official-player", {
         events: {
+          onReady: onVerifiedVideoReady,
+          onStateChange: onVerifiedVideoStateChange,
           onError: (event) => {
             if ([100, 101, 150].includes(Number(event?.data))) showPlayerFallback(Number(event?.data) || 0);
           }
