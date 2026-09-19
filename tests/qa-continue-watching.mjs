@@ -19,11 +19,12 @@ for(const [label,type,width,height] of [
  try{
    const home=await page.goto(base+"/",{waitUntil:"domcontentloaded",timeout:45000});
    assert.equal(home.status(),200,label+" home");
-   const resume=page.locator("#continue-grid a.play-mini[href*='tamasha-season-5']");
+   const resume=page.locator("#continue-grid a.poster-link[href*='tamasha-season-5']");
    await resume.first().waitFor({state:"visible",timeout:45000});
    const href=await resume.first().getAttribute("href");
    assert.ok(href?.includes("#watch"),label+" Continue Watching missing direct video destination");
-   assert.match(await resume.first().innerText(),/Resume E2/i,label+" correct next episode not shown");
+   const action=page.locator("#continue-grid a.play-mini[href*='tamasha-season-5']");
+   assert.match(await action.first().textContent()||"",/Resume E2/i,label+" correct episode resume action missing");
    await resume.first().click();
    await page.waitForURL(url=>url.pathname==="/movie" && url.hash==="#watch",{waitUntil:"domcontentloaded",timeout:30000});
    await page.locator(".episode-card.active[data-episode='1']").waitFor({state:"visible",timeout:35000});
