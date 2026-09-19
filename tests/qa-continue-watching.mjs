@@ -11,6 +11,9 @@ for(const [label,type,width,height] of [
    viewport:{width,height},isMobile:true,hasTouch:true,serviceWorkers:"allow"
  });
  await context.addInitScript(()=>{
+   localStorage.setItem("cinedesi-video-progress:tamasha-season-5",JSON.stringify({
+     videoId:"QhmbXMnsfl4",seconds:60,duration:500,updatedAt:Date.now()
+   }));
    localStorage.setItem("cinedesi_continue",JSON.stringify([
      {slug:"tamasha-season-5",title:"Tamasha Season 5",episode_index:1,episode_number:2,updated_at:Date.now()}
    ]));
@@ -21,6 +24,7 @@ for(const [label,type,width,height] of [
    assert.equal(home.status(),200,label+" home");
    const resume=page.locator("#continue-grid a.poster-link[href*='tamasha-season-5']");
    await resume.first().waitFor({state:"visible",timeout:45000});
+   assert.equal(await page.locator("#continue-grid .cd-watch-progress").count(),0,label+" must not show an inaccurate movie-progress bar for a series");
    const href=await resume.first().getAttribute("href");
    assert.ok(href?.includes("#watch"),label+" Continue Watching missing direct video destination");
    const resumeCaption=page.locator("#continue-grid article.card:has(a.poster-link[href*=\'tamasha-season-5\']) .cd-resume-label");
