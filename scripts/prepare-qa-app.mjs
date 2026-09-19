@@ -20,7 +20,7 @@ manifest.short_name="CineDesi QA";
 manifest.start_url="/?source=pwa&qa=1";
 writeFileSync(dir+"manifest.webmanifest",JSON.stringify(manifest,null,2));
 
-const preview = String.raw<!doctype html>
+const preview = `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -78,6 +78,6 @@ const play=()=>{demo.hidden=false;const nodes=[...demo.querySelectorAll(".cine,.
 document.querySelector("#replay").addEventListener("click",play);
 setTimeout(()=>{demo.hidden=true;},1650);
 </script>
-</body></html>;
+</body></html>`;
 writeFileSync(dir+"app-preview.html",preview);
 console.log("PASS: QA-only install identity, manifest, preview page and distinct home-screen label");
