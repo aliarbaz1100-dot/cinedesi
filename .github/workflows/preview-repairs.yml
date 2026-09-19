@@ -42,7 +42,7 @@ jobs:
           with open("wrangler.jsonc") as f: config=json.load(f)
           if config.get("name")!="cinedesi" or config.get("routes") or config.get("route"):
               raise SystemExit("Unexpected production config; refusing preview deploy")
-          config["name"]="cinedesi-qa-20260919"
+          config["name"]="cinedesi-qa-safari-20260919"
           config["workers_dev"]=True
           with open("wrangler.preview.json","w") as f: json.dump(config,f)
           env=os.environ.copy()
@@ -54,7 +54,7 @@ jobs:
         run: |
           python - <<'PY'
           import urllib.request,urllib.error,time
-          base="https://cinedesi-qa-20260919.aliarbaz1100-93b.workers.dev"
+          base="https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev"
           checks=[
             ("/","text/html","CineDesi"),
             ("/movie.html?slug=preview-smoke","text/html","movie-page"),
