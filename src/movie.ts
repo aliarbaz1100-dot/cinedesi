@@ -353,7 +353,7 @@ async function load() {
   // functional Previous / Next. Reuses official episode cards and player handlers,
   // without changing any published title or playback source.
   const qaEpisodeBrowser = document.querySelector(".episode-browser");
-  if (qaEpisodeBrowser && /(^|[.-])qa([.-]|$)/i.test(location.hostname)) {
+  if (qaEpisodeBrowser) {
     const cards = Array.from(qaEpisodeBrowser.querySelectorAll("[data-episode]"));
     const head = qaEpisodeBrowser.querySelector(".episode-browser-head");
     const rail = qaEpisodeBrowser.querySelector(".episode-grid");
@@ -411,7 +411,9 @@ async function load() {
   }
   // QA-only: real YouTube playback time, shared between movies and every series episode.
   // Never infer a timestamp from an external iframe or claim a resume point before it plays.
-  const qaPlayback = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
+  const qaPlayback = /(^|[.-])qa([.-]|$)/i.test(location.hostname) ||
+    location.hostname === "cinedesi.online" || /\\.cinedesi\\.online$/i.test(location.hostname) ||
+    new URLSearchParams(location.search).get("qa") === "1";
   let qaYoutubePlayer = null;
   let qaProgressTimer = null;
   const qaReadContinue = () => {
