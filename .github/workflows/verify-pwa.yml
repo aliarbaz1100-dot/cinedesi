@@ -40,9 +40,9 @@ jobs:
           assert.ok(sw.includes('movie.html'), 'Offline movie page missing from PWA shell');
           assert.ok(!sw.includes('event.respondWith') && !sw.includes('self.addEventListener("fetch"'), 'Service worker must not intercept iOS navigation');
           assert.ok(home.includes('setTimeout(function()'), 'Splash failsafe missing');
-          assert.ok(read('src/main.ts').includes('/movie.html?slug='), 'Movie route not migrated');
+          assert.ok(read('src/main.ts').includes('/movie?slug='), 'Canonical movie route missing');
           assert.ok(!read('src/main.ts').includes('setTimeout(showInstall, 4200)'), 'Auto install banner still enabled');
-          assert.ok(home.includes('location.replace("/movie.html"'), 'Legacy bookmarks cannot recover');
+          assert.ok(!home.includes('location.replace("/movie.html"'), 'Redundant redirect can loop in Cloudflare');
           assert.ok(read('src/movie.ts').includes('sdk.onerror'), 'Movie SDK error state is missing');
           for (const page of [home, movie]) {
             const bundles = [...page.matchAll(/(?:src|href)=["']([^"']+\/assets\/[^"']+)["']/g)].map(m => m[1]);
