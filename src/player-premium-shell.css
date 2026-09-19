@@ -1,44 +1,49 @@
 /* CineDesi source-respecting player frame. Does not cover, replace or mask publisher video controls. */
-body:has(.movie-page) #watch.legal-player-section{
+#watch.legal-player-section{
   background:#09090b!important;border-color:rgba(255,255,255,.095)!important;
   box-shadow:0 20px 46px rgba(0,0,0,.23)!important;
 }
-body:has(.movie-page) #watch .legal-player-head{
+#watch .legal-player-head{
   display:flex;align-items:center;justify-content:space-between;
   gap:10px 20px;flex-wrap:wrap;margin-bottom:15px;
 }
-body:has(.movie-page) #watch .legal-player-head small{
+#watch .legal-player-head small{
   display:inline-block;color:#f04b56!important;font-size:.7rem!important;
   font-weight:850!important;letter-spacing:.16em!important;line-height:1.4;
 }
-body:has(.movie-page) #watch .legal-player-head h2{
+#watch .legal-player-head h2{
   margin:6px 0 0!important;font-size:clamp(1.25rem,3.4vw,2.4rem)!important;
   line-height:1.15!important;letter-spacing:-.035em!important;
   overflow-wrap:anywhere;text-wrap:balance
 }
-body:has(.movie-page) #watch .legal-player{
+#watch .legal-player{
   position:relative!important;display:block!important;width:100%!important;
   aspect-ratio:16/9!important;height:auto!important;
   border:0!important;border-radius:7px!important;
   background:#000!important;overflow:hidden!important
 }
-body:has(.movie-page) #watch .legal-player iframe{
+#watch .legal-player iframe{
   position:absolute!important;inset:0!important;display:block!important;
   width:100%!important;height:100%!important;border:0!important;background:#000!important
 }
-body:has(.movie-page) #watch .legal-player iframe[hidden]{display:none!important}
+#watch .legal-player iframe[hidden]{display:none!important}
+/* Physical older iOS Safari versions may not support aspect-ratio. */
+@supports not (aspect-ratio:16/9){
+  #watch .legal-player{height:0!important;padding-top:56.25%!important;aspect-ratio:auto!important}
+  #watch .legal-player iframe{position:absolute!important;inset:0!important}
+}
 @media(max-width:760px){
-  body:has(.movie-page) #watch.legal-player-section{
+  #watch.legal-player-section{
     padding:16px!important;margin-inline:16px!important;overflow:visible!important
   }
-  body:has(.movie-page) #watch .legal-player{
+  #watch .legal-player{
     width:100vw!important;max-width:none!important;
     margin-left:calc((100% - 100vw)/2)!important;
     border-radius:0!important;box-shadow:none!important
   }
-  body:has(.movie-page) #watch .legal-player-head{margin-bottom:13px}
-  body:has(.movie-page) #watch .legal-player-head h2{font-size:1.18rem!important}
+  #watch .legal-player-head{margin-bottom:13px}
+  #watch .legal-player-head h2{font-size:1.18rem!important}
 }
 @media(max-width:390px){
-  body:has(.movie-page) #watch .legal-player-head .badge{font-size:.61rem!important}
+  #watch .legal-player-head .badge{font-size:.61rem!important}
 }
