@@ -62,7 +62,7 @@ a{color:inherit}footer{margin-top:24px;color:#8f919a;font-size:.78rem;text-align
 <div class="grid">
 <section class="panel"><h2>App opening &amp; home screen</h2>
 <div class="screen-tabs" role="group" aria-label="Preview installed CineDesi app screens"><button class="screen-tab" id="screen-home" type="button" aria-pressed="true">Home</button><button class="screen-tab" id="screen-episodes" type="button" aria-pressed="false">Movie &amp; episodes</button></div>
-<div class="device"><iframe id="app-screen" title="Live CineDesi QA home screen" src="/?app-visual-preview=1" loading="eager"></iframe>
+<div class="device"><iframe id="app-screen" title="Live CineDesi QA home screen" src="/?app-visual-preview=1&amp;qa-app-preview=1" loading="eager"></iframe>
 <div class="demo" id="demo"><div class="mark"><div class="wordmark"><span class="cine">CINE</span><span class="desi">DESI</span></div><div class="line"></div><div class="credit">Powered by <strong>Arbaz Ali</strong></div></div></div></div>
 <p class="note">Actual home-screen icon is shown above. The installed QA app is named <b>CineDesi QA</b>, so it remains distinguishable from your existing CineDesi app.</p></section>
 <section class="panel"><h2>Put the test app on your Home Screen</h2>
@@ -82,7 +82,7 @@ const play=()=>{demo.hidden=false;const nodes=[...demo.querySelectorAll(".cine,.
 const frame=document.querySelector("#app-screen");
 const tabHome=document.querySelector("#screen-home"),tabEpisodes=document.querySelector("#screen-episodes");
 const view=(episodes)=>{
- frame.src=episodes?"/movie?slug=tamasha-season-5#watch":"/?app-visual-preview=1";
+ frame.src=episodes?"/movie?slug=tamasha-season-5&qa-app-preview=1#watch":"/?app-visual-preview=1&qa-app-preview=1";
  frame.title=episodes?"Live CineDesi QA movie and episodes":"Live CineDesi QA home screen";
  tabHome.setAttribute("aria-pressed",String(!episodes));
  tabEpisodes.setAttribute("aria-pressed",String(episodes));
