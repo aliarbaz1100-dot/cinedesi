@@ -598,6 +598,16 @@ function init() {
         const resume = continueBySlug.get(m.slug);
         const episodeNumber = Number(resume?.episode_number);
         let html = card(m).replaceAll(url, url + "#watch");
+        try {
+          const progress = JSON.parse(localStorage.getItem(`cinedesi-video-progress:${m.slug}`) || "null");
+          const elapsed = Number(progress?.seconds), duration = Number(progress?.duration);
+          if (Number.isFinite(elapsed) && Number.isFinite(duration) && duration > 45 &&
+            elapsed > 10 && elapsed < duration - 15 && progress.updatedAt > Date.now() - 30 * 86400000) {
+            const percentage = Math.max(1, Math.min(98, Math.round(100 * elapsed / duration)));
+            html = html.replace("</div></a><div class='info'>",
+              `<span class='cd-watch-progress' role='img' aria-label='${percentage}% watched' style='--progress:${percentage}%'></span></div></a><div class='info'>`);
+          }
+        } catch {}
         if (Number.isInteger(episodeNumber) && episodeNumber > 0) {
           html = html.replace("▶ Details", `▶ Resume E${episodeNumber}`);
         } else {
