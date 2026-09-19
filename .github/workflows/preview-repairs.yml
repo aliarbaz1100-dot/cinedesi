@@ -1,5 +1,7 @@
 name: Preview CineDesi repairs (isolated from production)
 on:
+  push:
+    branches: [fix/pwa-navigation-stability-20260919]
   workflow_dispatch:
 
 permissions:
