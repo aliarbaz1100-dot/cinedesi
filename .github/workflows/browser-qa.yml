@@ -19,8 +19,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm install --no-save playwright@1.55.1
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - name: Real browser smoke test of isolated preview
         env:
           PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
         run: node tests/qa-browser.mjs
+      - name: Safari WebKit mobile and desktop smoke tests
+        env:
+          PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
+        run: node tests/qa-webkit.mjs
