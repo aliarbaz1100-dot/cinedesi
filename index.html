@@ -23,50 +23,65 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="CineDesi" />
     <script id="qa-launch-detect">(function(){
-  try {
-    var qa=/(^|[.-])qa([.-]|$)/i.test(location.hostname)||/[?&]qa=1(?:&|$)/.test(location.search);
+  try{
+    var qa=/(^|[.-])qa([.-]|$)/i.test(location.hostname);
     var home=location.pathname==="/"||location.pathname==="/index.html";
-    // Cover iPhone 6 through current iPhones and Android, including large and landscape phones.
-    var handset=/iPhone|iPod|Android/i.test(navigator.userAgent);
-    var small=handset||Math.min(screen.width||window.innerWidth,window.innerWidth||screen.width)<621;
-    var topLevel=window.top===window;
-    var installed=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
-    // iOS 12 may omit the standalone signal. The QA installed-app start URL
-    // contains source=pwa, even on devices which do not support display-mode.
-    var launched=installed||/[?&]source=pwa(?:&|$)/.test(location.search);
-    var returnUrl=/[?&](?:returnY|returnSection|returnOffset)=/.test(location.search);
-    var recentInternal=0;
-    try { recentInternal=Number(sessionStorage.getItem("cinedesi-qa-internal-nav")||0); } catch(e) {}
-    var internalReturn=returnUrl||(recentInternal>0&&Date.now()-recentInternal<90000);
-    // A title-page return consumes the one-time navigation marker. Opening
-    // the installed icon afterwards must still play the genuine launch.
-    if(qa&&home&&internalReturn){
-      try{sessionStorage.removeItem("cinedesi-qa-internal-nav");}catch(e){}
-    }
-    var qaLaunch=qa&&home&&small&&topLevel&&launched&&!internalReturn;
-    if(qaLaunch)document.documentElement.classList.add("cd-qa-standalone");
+    var installed=navigator.standalone===true||
+      !!(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches);
+    var returning=/[?&](?:returnY|returnSection|returnOffset)=/.test(location.search);
+    var recent=0;
+    try{recent=Number(sessionStorage.getItem("cinedesi-qa-internal-nav")||0)}catch(e){}
+    if(recent>0&&Date.now()-recent<90000)returning=true;
+    if(returning){try{sessionStorage.removeItem("cinedesi-qa-internal-nav")}catch(e){}}
+    // IMPORTANT: source=pwa and phone UA alone never turn browser visitors into
+    // an installed app. The animated overlay exists only inside the PWA icon.
+    if(qa&&home&&installed&&window.top===window&&!returning)
+      document.documentElement.classList.add("cd-qa-standalone");
   }catch(e){}
 })();</script>
     <style id="qa-launch-style">
-      /* A returning page must NEVER flash the splash while the main bundle loads. */
+      /* This matches the /app-preview intro, but ONLY in the installed app. */
       html.cd-qa-mode:not(.cd-qa-standalone) .app-splash{display:none!important}
-      html.cd-qa-standalone{background:#050506!important}
-      html.cd-qa-standalone .app-splash{display:flex!important;position:fixed;inset:0;z-index:99999;overflow:hidden;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#1c1013 0%,#08090b 38%,#020203 100%);transition:opacity .32s ease,visibility .32s ease}
-      html.cd-qa-standalone .app-splash .splash-brand{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;transform:translateY(4px);animation:qa-brand-in .9s cubic-bezier(.17,.8,.2,1) both}
-      html.cd-qa-standalone .app-splash .splash-logo{font:950 35px/1 Arial,sans-serif;font-size:35px;font-size:clamp(2rem,11vw,3.35rem);letter-spacing:-.065em;white-space:nowrap;animation:qa-logo-in .9s cubic-bezier(.22,.76,.2,1) both}
-      html.cd-qa-standalone .app-splash .splash-line{height:2px;background:#e50914;animation:qa-line-in .75s .3s cubic-bezier(.2,.85,.2,1) both}
-      html.cd-qa-standalone .app-splash .splash-brand p{margin:0;color:#a7a8ad;font:700 11px/1.5 Arial,sans-serif;letter-spacing:.12em;text-align:center;text-transform:uppercase;animation:qa-caption-in .6s .43s ease both}
-      html.cd-qa-standalone .app-splash .splash-brand{text-align:center}
-      html.cd-qa-standalone .app-splash .splash-logo{color:#fff}
-      html.cd-qa-standalone .app-splash .splash-logo span{color:#e50914}
-      html.cd-qa-standalone .app-splash .splash-brand strong{color:#fff}
-      html.cd-qa-standalone .app-splash .splash-line{width:38px;margin:18px auto 13px}
-      html.cd-qa-standalone .app-splash.splash-exit{opacity:0;visibility:hidden;pointer-events:none}
-      @keyframes qa-brand-in{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
-      @keyframes qa-logo-in{from{opacity:0;letter-spacing:.06em;filter:blur(4px)}to{opacity:1;letter-spacing:-.065em;filter:blur(0)}}
-      @keyframes qa-line-in{from{width:0;opacity:.4}to{width:38px;opacity:1}}
-      @keyframes qa-caption-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-      @media(prefers-reduced-motion:reduce){html.cd-qa-standalone .app-splash *{animation:none!important}}
+      html.cd-qa-standalone{background:#050505!important}
+      html.cd-qa-standalone .app-splash{
+        display:flex!important;position:fixed!important;inset:0!important;z-index:2147483000!important;
+        flex-direction:column!important;align-items:center!important;justify-content:center!important;
+        overflow:hidden!important;background:radial-gradient(circle at 50% 42%,#211316,#050505 58%)!important;
+        opacity:1!important;visibility:visible!important;pointer-events:auto;
+      }
+      html.cd-qa-standalone .app-splash .splash-brand{
+        position:relative;display:flex!important;flex-direction:column!important;align-items:center!important;
+        justify-content:center!important;transform:none!important;min-height:0!important;
+        padding:20px;text-align:center!important;animation:none!important;
+      }
+      html.cd-qa-standalone .app-splash .splash-logo{
+        font:950 36px/1 Arial,sans-serif!important;letter-spacing:-2.4px!important;
+        color:#fff!important;white-space:nowrap!important;
+        animation:qa-icon-brand-in .8s .1s both!important;
+      }
+      html.cd-qa-standalone .app-splash .splash-logo span{color:#e50914!important}
+      html.cd-qa-standalone .app-splash .splash-line{
+        display:block!important;height:2px!important;width:38px!important;margin:17px 0!important;
+        background:#e50914!important;animation:qa-icon-line-in .7s .3s both!important;
+      }
+      html.cd-qa-standalone .app-splash .splash-brand p{
+        display:block!important;margin:0!important;color:#bbb!important;
+        font:700 10px/1.4 Arial,sans-serif!important;letter-spacing:2px!important;text-transform:uppercase!important;
+        animation:qa-icon-caption-in .7s .5s both!important;
+      }
+      html.cd-qa-standalone .app-splash .splash-brand strong{color:#eee!important}
+      html.cd-qa-standalone .app-splash.splash-exit{
+        opacity:0!important;visibility:hidden!important;pointer-events:none!important;
+        transition:opacity .5s ease,visibility .5s ease!important;
+      }
+      @keyframes qa-icon-brand-in{from{opacity:0;transform:scale(.88);filter:blur(3px)}to{opacity:1;transform:scale(1);filter:blur(0)}}
+      @keyframes qa-icon-line-in{from{width:0;opacity:0}to{width:38px;opacity:1}}
+      @keyframes qa-icon-caption-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+      @media(prefers-reduced-motion:reduce){
+        html.cd-qa-standalone .app-splash .splash-logo,
+        html.cd-qa-standalone .app-splash .splash-line,
+        html.cd-qa-standalone .app-splash .splash-brand p{animation:none!important}
+      }
     </style>
     <style id="pwa-splash-critical">
       .app-splash{display:none}
@@ -91,71 +106,80 @@
   <body class="home-body">
     <div id="app-splash" class="app-splash" aria-hidden="true"><div class="splash-brand"><div class="splash-logo">CINE<span>DESI</span></div><div class="splash-line"></div><p>Powered by <strong>Arbaz Ali</strong></p></div></div>
     <script id="qa-splash-controller">(function(){
+  var root=document.documentElement;
   var splash=document.getElementById("app-splash");
   if(!splash)return;
-  if(!document.documentElement.classList.contains("cd-qa-standalone")){
-    // A returning title page should show the existing catalog immediately.
-    // Do not wait for catalog JS / API requests to remove a hidden splash node.
-    if(document.documentElement.classList.contains("cd-qa-mode"))splash.remove();
-    return;
+  // No overlay on the browser, /app-preview iframe, movie return, or live site.
+  if(!root.classList.contains("cd-qa-standalone")){splash.remove();return}
+  var installed=navigator.standalone===true||
+    !!(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches);
+  if(!installed){splash.remove();root.classList.remove("cd-qa-standalone");return}
+  var shownAt=0,hiddenAt=0,removal=0,release=0,pending=true;
+  function remove(node){
+    if(!node||node!==splash)return;
+    window.clearTimeout(removal);window.clearTimeout(release);
+    node.classList.add("splash-exit");
+    release=window.setTimeout(function(){
+      if(node.parentNode)node.parentNode.removeChild(node);
+      if(splash===node)splash=null;
+      root.classList.remove("cd-qa-standalone");
+    },510);
   }
-  // One real launch only: never replay on page visibility, movie back or tab change.
-  // The native iOS static launch image cannot animate until WebKit starts rendering.
-  var dismissed=false;
-  function close(){
-    if(dismissed)return;
-    dismissed=true;
-    splash.classList.add("splash-exit");
-    window.setTimeout(function(){if(splash.parentNode)splash.parentNode.removeChild(splash);},330);
+  function show(node){
+    if(!node||node!==splash||document.hidden)return;
+    pending=false;shownAt=Date.now();
+    // Reset animation AFTER the iOS native static launch frame has yielded.
+    node.classList.remove("splash-exit");
+    var brand=node.querySelector(".splash-brand");
+    node.style.animation="none";if(brand)brand.style.animation="none";
+    void node.offsetHeight;
+    node.style.animation="";if(brand)brand.style.animation="";
+    node.style.opacity="";
+    removal=window.setTimeout(function(){remove(node)},2200);
   }
-  window.setTimeout(close,1950);
-  // Exit if the catalog is unavailable, never leave users trapped behind a logo.
-  window.setTimeout(close,4400);
-  // On iOS a home-screen app commonly resumes its existing WebKit document
-  // when the icon is tapped. No page load occurs, so a cold-launch-only
-  // animation would never appear. Replay *only* on a genuine long background
-  // resume of the home screen, never on movie/back or ordinary tab switching.
-  var hiddenAt=0, lastShown=Date.now(), navigationCooldownUntil=0;
-  var appMode=(navigator.standalone===true)||
-    (window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches);
-  // A BFCache restore is navigation back, never a new launch.
-  window.addEventListener("pageshow",function(e){
-    if(e.persisted){hiddenAt=0;navigationCooldownUntil=Date.now()+6000;}
-  });
-  // Opening a title must not become a false logo replay on older iOS.
-  document.addEventListener("click",function(e){
-    var a=e.target.closest?e.target.closest("a[href]"):null;
-    if(a&&(String(a.href||"").indexOf("/movie?")>=0||String(a.href||"").indexOf("/movie.html?")>=0))navigationCooldownUntil=Date.now()+15000;
-  },true);
-  document.addEventListener("visibilitychange",function(){
-    if(!appMode||!document.documentElement.classList.contains("cd-qa-mode"))return;
-    if(document.hidden){hiddenAt=Date.now();return;}
-    if(!hiddenAt||Date.now()-hiddenAt<3500||Date.now()-lastShown<3500||Date.now()<navigationCooldownUntil)return;
-    hiddenAt=0;
-    if(location.pathname!=="/"||document.querySelector("video:fullscreen"))return;
-    var internal=0;
-    try{internal=Number(sessionStorage.getItem("cinedesi-qa-internal-nav")||0);}catch(e){}
-    if(internal>0&&Date.now()-internal<90000)return;
-    var current=document.getElementById("app-splash");
-    if(current)return;
-    var resumed=document.createElement("div");
-    resumed.id="app-splash";
-    resumed.className="app-splash";
-    resumed.setAttribute("aria-hidden","true");
-    resumed.innerHTML='<div class="splash-brand"><div class="splash-logo">CINE<span>DESI</span></div><div class="splash-line"></div><p>Powered by <strong>Arbaz Ali</strong></p></div>';
-    document.documentElement.classList.add("cd-qa-standalone");
-    document.body.insertBefore(resumed,document.body.firstChild);
-    lastShown=Date.now();
+  function schedule(node,delay){
     window.setTimeout(function(){
-      resumed.classList.add("splash-exit");
-      window.setTimeout(function(){
-        if(resumed.parentNode)resumed.parentNode.removeChild(resumed);
-        // The persistent page is not newly launched; keep the class limited
-        // to the visible overlay's lifetime on warm resume.
-        document.documentElement.classList.remove("cd-qa-standalone");
-      },330);
-    },1650);
-  });
+      if(!node||node!==splash||document.hidden)return;
+      requestAnimationFrame(function(){requestAnimationFrame(function(){show(node)})});
+      // iOS Home Screen may postpone requestAnimationFrame while opening.
+      // The timer starts the animation once the page is visible.
+      window.setTimeout(function(){if(pending&&node===splash&&!document.hidden)show(node)},170);
+    },delay);
+  }
+  function internalReturn(){
+    if(/[?&](?:returnY|returnSection|returnOffset)=/.test(location.search))return true;
+    var at=0;
+    try{at=Number(sessionStorage.getItem("cinedesi-qa-internal-nav")||0)}catch(e){}
+    return at>0&&Date.now()-at<90000;
+  }
+  // Both events matter: cold launch can restore a suspended iOS WebView
+  // without a new page navigation. Do not replay on film back/forward.
+  function resume(){
+    if(!installed||document.hidden||!hiddenAt)return;
+    var away=Date.now()-hiddenAt;hiddenAt=0;
+    if(pending&&splash){schedule(splash,250);return}
+    if(away<2000||Date.now()-shownAt<4200||internalReturn()||splash)return;
+    pending=true;
+    var node=document.createElement("div");node.id="app-splash";node.className="app-splash";
+    node.setAttribute("aria-hidden","true");
+    node.innerHTML='<div class="splash-brand"><div class="splash-logo">CINE<span>DESI</span></div><div class="splash-line"></div><p>Powered by <strong>Arbaz Ali</strong></p></div>';
+    root.classList.add("cd-qa-standalone");
+    document.body.insertBefore(node,document.body.firstChild);splash=node;
+    node.style.opacity="0";
+    schedule(node,250);
+  }
+  document.addEventListener("visibilitychange",function(){if(document.hidden)hiddenAt=Date.now();else resume()});
+  window.addEventListener("pagehide",function(){hiddenAt=Date.now()});
+  window.addEventListener("pageshow",function(e){if(e.persisted){hiddenAt=0;return}resume()});
+  window.addEventListener("focus",resume);
+  splash.style.opacity="0";
+  function start(){if(!pending||!splash||document.hidden)return;schedule(splash,360)}
+  window.addEventListener("pageshow",start,{once:true});
+  if(document.readyState==="complete")start();
+  else window.addEventListener("load",start,{once:true});
+  // If iOS never signals readiness, do not trap users on a black screen.
+  window.setTimeout(function(){if(pending&&splash){splash.style.opacity="";show(splash)}},2500);
+  window.setTimeout(function(){if(splash&&shownAt===0)remove(splash)},6000);
 })();</script>
     <div id="app">
       <header class="catalog-header">
