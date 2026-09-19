@@ -125,7 +125,7 @@
   // Opening a title must not become a false logo replay on older iOS.
   document.addEventListener("click",function(e){
     var a=e.target.closest?e.target.closest("a[href]"):null;
-    if(a&&/\\/movie(?:\\?|\\.html\\?)/.test(a.href||""))navigationCooldownUntil=Date.now()+15000;
+    if(a&&(String(a.href||"").indexOf("/movie?")>=0||String(a.href||"").indexOf("/movie.html?")>=0))navigationCooldownUntil=Date.now()+15000;
   },true);
   document.addEventListener("visibilitychange",function(){
     if(!appMode||!document.documentElement.classList.contains("cd-qa-mode"))return;
