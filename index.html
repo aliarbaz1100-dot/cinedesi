@@ -24,49 +24,41 @@
     <meta name="apple-mobile-web-app-title" content="CineDesi" />
     <script id="qa-launch-detect">(function(){
   try {
-    var qa=/(^|[.-])qa([.-]|$)/i.test(location.hostname)||/[?&]qa=1(?:&|$)/.test(location.search);
+    var isQA=/(^|[.-])qa([.-]|$)/i.test(location.hostname)||/[?&]qa=1(?:&|$)/.test(location.search);
     var home=location.pathname==="/"||location.pathname==="/index.html";
-    // Cover iPhone 6 through current iPhones and Android, including large and landscape phones.
-    var handset=/iPhone|iPod|Android/i.test(navigator.userAgent);
-    var small=handset||Math.min(screen.width||window.innerWidth,window.innerWidth||screen.width)<621;
-    var topLevel=window.top===window;
-    var installed=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
-    // iOS 12 may omit the standalone signal. The QA installed-app start URL
-    // contains source=pwa, even on devices which do not support display-mode.
-    var launched=installed||/[?&]source=pwa(?:&|$)/.test(location.search);
-    var returnUrl=/[?&](?:returnY|returnSection|returnOffset)=/.test(location.search);
-    var recentInternal=0;
-    try { recentInternal=Number(sessionStorage.getItem("cinedesi-qa-internal-nav")||0); } catch(e) {}
-    var internalReturn=returnUrl||(recentInternal>0&&Date.now()-recentInternal<90000);
-    // A title-page return consumes the one-time navigation marker. Opening
-    // the installed icon afterwards must still play the genuine launch.
-    if(qa&&home&&internalReturn){
-      try{sessionStorage.removeItem("cinedesi-qa-internal-nav");}catch(e){}
-    }
-    var qaLaunch=qa&&home&&small&&topLevel&&launched&&!internalReturn;
-    if(qaLaunch)document.documentElement.classList.add("cd-qa-standalone");
+    var embedded=window.top!==window;
+    var installed=navigator.standalone===true||
+      !!(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches);
+    var launchLink=/[?&](?:source=pwa|install-launch=1)(?:&|$)/.test(location.search);
+    var returning=/[?&](?:returnY|returnSection|returnOffset)=/.test(location.search);
+    var marked=0;
+    try {marked=Number(sessionStorage.getItem("cinedesi-qa-internal-nav")||0);}catch(e){}
+    if(marked>0&&Date.now()-marked<90000)returning=true;
+    // The marker is consumed on return. The next app-icon tap is a new launch.
+    if(returning){try{sessionStorage.removeItem("cinedesi-qa-internal-nav");}catch(e){}}
+    // Launch the REAL QA app animation as soon as HTML starts painting, regardless
+    // of iOS 12's unreliable standalone flag or the original install URL.
+    if(isQA&&home&&!embedded&&!returning&&(installed||launchLink||/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)))
+      document.documentElement.classList.add("cd-qa-standalone");
   }catch(e){}
 })();</script>
     <style id="qa-launch-style">
-      /* A returning page must NEVER flash the splash while the main bundle loads. */
       html.cd-qa-mode:not(.cd-qa-standalone) .app-splash{display:none!important}
-      html.cd-qa-standalone{background:#050506!important}
-      html.cd-qa-standalone .app-splash{display:flex!important;position:fixed;inset:0;z-index:99999;overflow:hidden;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#1c1013 0%,#08090b 38%,#020203 100%);transition:opacity .32s ease,visibility .32s ease}
-      html.cd-qa-standalone .app-splash .splash-brand{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;transform:translateY(4px);animation:qa-brand-in .9s cubic-bezier(.17,.8,.2,1) both}
-      html.cd-qa-standalone .app-splash .splash-logo{font:950 35px/1 Arial,sans-serif;font-size:35px;font-size:clamp(2rem,11vw,3.35rem);letter-spacing:-.065em;white-space:nowrap;animation:qa-logo-in .9s cubic-bezier(.22,.76,.2,1) both}
-      html.cd-qa-standalone .app-splash .splash-line{height:2px;background:#e50914;animation:qa-line-in .75s .3s cubic-bezier(.2,.85,.2,1) both}
-      html.cd-qa-standalone .app-splash .splash-brand p{margin:0;color:#a7a8ad;font:700 11px/1.5 Arial,sans-serif;letter-spacing:.12em;text-align:center;text-transform:uppercase;animation:qa-caption-in .6s .43s ease both}
-      html.cd-qa-standalone .app-splash .splash-brand{text-align:center}
-      html.cd-qa-standalone .app-splash .splash-logo{color:#fff}
-      html.cd-qa-standalone .app-splash .splash-logo span{color:#e50914}
-      html.cd-qa-standalone .app-splash .splash-brand strong{color:#fff}
-      html.cd-qa-standalone .app-splash .splash-line{width:38px;margin:18px auto 13px}
-      html.cd-qa-standalone .app-splash.splash-exit{opacity:0;visibility:hidden;pointer-events:none}
-      @keyframes qa-brand-in{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
-      @keyframes qa-logo-in{from{opacity:0;letter-spacing:.06em;filter:blur(4px)}to{opacity:1;letter-spacing:-.065em;filter:blur(0)}}
-      @keyframes qa-line-in{from{width:0;opacity:.4}to{width:38px;opacity:1}}
-      @keyframes qa-caption-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-      @media(prefers-reduced-motion:reduce){html.cd-qa-standalone .app-splash *{animation:none!important}}
+      html.cd-qa-standalone{background:#030305!important}
+      html.cd-qa-standalone .app-splash{display:flex!important;position:fixed!important;inset:0!important;z-index:2147483600!important;overflow:hidden;align-items:center;justify-content:center;background:#030305!important;opacity:1;visibility:visible;transition:opacity .36s ease,visibility .36s ease}
+      html.cd-qa-standalone .app-splash:before{content:"";position:absolute;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(229,9,20,.17) 0%,rgba(229,9,20,.06) 31%,transparent 69%);opacity:0;animation:cd-cinema-glow 1.5s .2s ease both}
+      html.cd-qa-standalone .app-splash .splash-brand{position:relative;z-index:1;display:flex!important;flex-direction:column;align-items:center;justify-content:center;width:100%;padding:24px;min-height:180px;text-align:center;animation:cd-cinema-reveal 1.15s cubic-bezier(.22,.75,.18,1) both}
+      html.cd-qa-standalone .app-splash .splash-logo{font:900 39px/1.12 Arial,sans-serif!important;font-size:clamp(33px,10vw,51px)!important;letter-spacing:-.075em!important;white-space:nowrap!important;color:#fff!important;text-shadow:0 0 18px rgba(229,9,20,.14)}
+      html.cd-qa-standalone .app-splash .splash-logo span{color:#e50914!important}
+      html.cd-qa-standalone .app-splash .splash-line{display:block!important;width:0;height:3px;margin:19px auto 14px!important;border-radius:2px;background:#e50914!important;box-shadow:0 0 15px rgba(229,9,20,.52);animation:cd-cinema-line .85s .48s cubic-bezier(.19,.85,.2,1) both}
+      html.cd-qa-standalone .app-splash .splash-brand p{display:block!important;margin:0!important;color:#acaeb5!important;font:700 10px/1.5 Arial,sans-serif!important;letter-spacing:.14em!important;text-transform:uppercase;animation:cd-cinema-credit .5s .75s ease both}
+      html.cd-qa-standalone .app-splash .splash-brand strong{color:#f6f6f8!important}
+      html.cd-qa-standalone .app-splash.splash-exit{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+      @keyframes cd-cinema-reveal{0%{opacity:0;transform:scale(.78);filter:blur(5px)}45%{opacity:1;filter:blur(0)}100%{opacity:1;transform:scale(1);filter:blur(0)}}
+      @keyframes cd-cinema-line{0%{width:0;opacity:.25}100%{width:48px;opacity:1}}
+      @keyframes cd-cinema-credit{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+      @keyframes cd-cinema-glow{0%{opacity:0;transform:scale(.6)}70%{opacity:1}100%{opacity:.65;transform:scale(1)}}
+      @media(prefers-reduced-motion:reduce){html.cd-qa-standalone .app-splash *,html.cd-qa-standalone .app-splash:before{animation:none!important}}
     </style>
     <style id="pwa-splash-critical">
       .app-splash{display:none}
