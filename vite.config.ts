@@ -4,8 +4,8 @@ export default defineConfig({
     base: './',
     publicDir: 'static',
     build: {
-        // QA-only compatibility target for iPhone 6 (Safari on iOS 12); production stays unchanged.
-        target: process.env.CINEDESI_QA_LEGACY === '1' ? 'safari12' : undefined,
+        // The released app, not just QA, must parse on Safari 12 (iPhone 6).
+        target: 'safari12',
         outDir: process.env.APPDEPLOY_VITE_OUT_DIR || 'dist',
         sourcemap: process.env.APPDEPLOY_VITE_SOURCEMAP === 'hidden' ? 'hidden' : false,
         rollupOptions: {
