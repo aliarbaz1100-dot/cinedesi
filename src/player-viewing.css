@@ -62,7 +62,7 @@ body.cd-player-open{overflow:hidden!important}
  #watch .cd-wide-button{min-height:44px;flex:0 0 auto}
  #watch #player-view-note{font-size:.72rem}
  #watch .cd-player-stage{
-  width:calc(100% + 32px)!important;margin-left:-16px!important;
+  width:100vw!important;margin-left:calc((100% - 100vw)/2)!important;
   max-width:none!important;border-radius:0!important
  }
  #watch .cd-player-stage .legal-player{border-radius:0!important}
