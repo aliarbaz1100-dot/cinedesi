@@ -84,3 +84,9 @@ body:has(.movie-page) .movie-copy .actions #share {
  display:block;margin:0 0 5px;color:#f2aab0;font-weight:780;
  font-size:.72rem;line-height:1.3;letter-spacing:.015em;
 }
+
+.home-body .search-result-card.cd-search-selected,
+.home-body .search-result-card:focus-visible{
+ background:#252128!important;outline:2px solid rgba(229,9,20,.86);
+ outline-offset:-2px
+}
