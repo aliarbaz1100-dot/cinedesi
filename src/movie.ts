@@ -348,6 +348,61 @@ async function load() {
     event.currentTarget.textContent = adding ? "✓ In My List" : "＋ My List";
     event.currentTarget.setAttribute("aria-pressed", String(adding));
   });
+  // QA episode deck: restore the earlier compact episode picker with
+  // functional Previous / Next. Reuses official episode cards and player handlers,
+  // without changing any published title or playback source.
+  const qaEpisodeBrowser = document.querySelector(".episode-browser");
+  if (qaEpisodeBrowser && /(^|[.-])qa([.-]|$)/i.test(location.hostname)) {
+    const cards = Array.from(qaEpisodeBrowser.querySelectorAll("[data-episode]"));
+    const head = qaEpisodeBrowser.querySelector(".episode-browser-head");
+    const rail = qaEpisodeBrowser.querySelector(".episode-grid");
+    if (head && rail && cards.length > 0) {
+      qaEpisodeBrowser.classList.add("qa-episode-deck");
+      const toolbar = document.createElement("div");
+      toolbar.className = "qa-episode-toolbar";
+      toolbar.innerHTML =
+        '<button type="button" class="qa-episode-step" data-qa-step="-1" aria-label="Previous episode">‹ <span>Previous</span></button>' +
+        '<div class="qa-episode-now" role="status" aria-live="polite"><small>NOW SELECTED</small><strong>Episode 1 / ' + cards.length + '</strong></div>' +
+        '<button type="button" class="qa-episode-step qa-episode-next" data-qa-step="1" aria-label="Next episode"><span>Next</span> ›</button>';
+      head.insertAdjacentElement("afterend", toolbar);
+      const currentIndex = () => {
+        const current = cards.findIndex((item) => item.classList.contains("active"));
+        return current < 0 ? 0 : current;
+      };
+      const updateDeck = (scroll = false) => {
+        const index = currentIndex();
+        const chosen = cards[index];
+        const label = chosen?.querySelector(".episode-copy strong")?.textContent?.trim() || "Episode " + (index + 1);
+        const now = toolbar.querySelector(".qa-episode-now strong");
+        if (now) now.textContent = label + " / " + cards.length;
+        const previous = toolbar.querySelector('[data-qa-step="-1"]');
+        const next = toolbar.querySelector('[data-qa-step="1"]');
+        if (previous) previous.disabled = index === 0;
+        if (next) next.disabled = index >= cards.length - 1 || Boolean(cards[index + 1]?.disabled);
+        cards.forEach((item, i) => {
+          item.setAttribute("aria-current", i === index ? "true" : "false");
+          item.setAttribute("aria-label", (item.querySelector(".episode-copy strong")?.textContent || "Episode " + (i + 1)) + (i === index ? ", currently selected" : ""));
+        });
+        if (scroll && chosen && rail.scrollWidth > rail.clientWidth) {
+          const target = Math.max(0, chosen.offsetLeft - rail.offsetLeft - Math.max(0, (rail.clientWidth - chosen.offsetWidth) / 2));
+          rail.scrollTo({ left: target, behavior: "smooth" });
+        }
+      };
+      toolbar.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-qa-step]");
+        if (!button || button.disabled) return;
+        const next = cards[currentIndex() + Number(button.dataset.qaStep)];
+        if (next && !next.disabled) next.click();
+      });
+      // The existing card handlers and publisher API own actual episode changes.
+      rail.addEventListener("click", (event) => {
+        if (event.target.closest("[data-episode]")) window.setTimeout(() => updateDeck(true), 0);
+      });
+      const observer = new MutationObserver(() => updateDeck(false));
+      cards.forEach((card) => observer.observe(card, { attributes: true, attributeFilter: ["class", "disabled"] }));
+      updateDeck(false);
+    }
+  }
   // QA-only: real YouTube playback time, shared between movies and every series episode.
   // Never infer a timestamp from an external iframe or claim a resume point before it plays.
   const qaPlayback = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
