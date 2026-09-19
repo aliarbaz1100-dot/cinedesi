@@ -37,7 +37,12 @@ export default {
       return new Response("Method not allowed", { status: 405 });
     }
     if (url.pathname === "/manifest.webmanifest") {
-      return new Response(JSON.stringify(QA_MANIFEST), {
+      // Preserve original iOS Home Screen identity on the already-installed QA origin.
+      const originalDemo = url.hostname === "cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev";
+      const manifest = originalDemo
+        ? { ...QA_MANIFEST, id: "/?cinedesi-qa-app=1", name: "CineDesi QA — Test Mobile App", start_url: "/?source=pwa&qa=1" }
+        : QA_MANIFEST;
+      return new Response(JSON.stringify(manifest), {
         headers: {
           "Content-Type": "application/manifest+json; charset=utf-8",
           "Cache-Control": "no-cache, must-revalidate",
