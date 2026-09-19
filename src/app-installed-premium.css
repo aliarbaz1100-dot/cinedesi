@@ -345,6 +345,40 @@
   }
   html.cd-app-installed body footer {background:#060608!important;color:#a1a2aa!important}
 }
+/* Dedicated installed-app destinations (the source website remains one long page).
+   Show only sections populated by the original, live CineDesi catalog. */
+@media(max-width:760px){
+  html.cd-app-installed body.home-body[data-cd-app-view="new"] #app > :not(.catalog-header):not(#top-today):not(#new-releases):not(#coming-soon):not(#discover):not(.mobile-bottom-nav):not(#modal):not(#install-banner){
+    display:none!important;
+  }
+  html.cd-app-installed body.home-body[data-cd-app-view="list"] #app > :not(.catalog-header):not(#watchlist):not(.mobile-bottom-nav):not(#modal):not(#install-banner){
+    display:none!important;
+  }
+  html.cd-app-installed body.home-body[data-cd-app-view="search"] #app > :not(.catalog-header):not(.mobile-bottom-nav):not(#modal):not(#install-banner){
+    display:none!important;
+  }
+  html.cd-app-installed body.home-body[data-cd-app-view="new"] #top-today,
+  html.cd-app-installed body.home-body[data-cd-app-view="new"] #new-releases,
+  html.cd-app-installed body.home-body[data-cd-app-view="list"] #watchlist {
+    min-height:0!important;content-visibility:visible!important;contain-intrinsic-size:auto!important
+  }
+  html.cd-app-installed body.home-body[data-cd-app-view="new"] #top-today,
+  html.cd-app-installed body.home-body[data-cd-app-view="list"] #watchlist{
+    padding-top:25px!important;
+  }
+  html.cd-app-installed body.home-body[data-cd-app-view="list"] #watchlist .section-head{
+    display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:9px!important
+  }
+  html.cd-app-installed body.home-body[data-cd-app-view="list"] #watch-grid{
+    margin-top:10px!important
+  }
+  html.cd-app-installed body.home-body[data-cd-app-view="search"] .catalog-header.search-mode{
+    position:relative!important;top:0!important;
+  }
+  html.cd-app-installed body.home-body[data-cd-app-view="search"] .catalog-header.search-mode .search-shell{
+    position:fixed!important;top:0!important;z-index:245!important;
+  }
+}
 @media (max-width:370px) {
   html.cd-app-installed body #watch .episode-thumb {
     width:89px!important;min-width:89px!important;max-width:89px!important
