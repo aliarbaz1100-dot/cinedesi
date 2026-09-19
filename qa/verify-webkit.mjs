@@ -106,6 +106,11 @@ try {
     await next.click();
     await page.waitForFunction(() => document.querySelector(".qa-netflix-episode-list [data-episode='1']")?.classList.contains("active"), null, { timeout: 5000 });
     assert.ok(await prev.isEnabled());
+    // Clicking Next scrolls the *page* smoothly to the player. Wait until
+    // that animation settles before testing the Previous button; otherwise
+    // WebKit may dispatch the second tap to a moving element outside viewport.
+    await page.waitForTimeout(850);
+    await prev.scrollIntoViewIfNeeded();
     await prev.click();
     const episodeAfterBack = await page.evaluate(() => ({
       active: Array.from(document.querySelectorAll(".qa-episode-deck [data-episode].active")).map(x => x.dataset.episode),
