@@ -1,0 +1,52 @@
+name: Gate CineDesi Safari 12 production release
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  safari12-release:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'release/ios12-reviewed-20260919'
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/ios12-reviewed-20260919
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - name: Build actual production bundle targeting Safari 12
+        run: npm run build
+      - name: Ensure deployed app retains the real original worker identity
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          assert.equal(JSON.parse(fs.readFileSync('wrangler.jsonc','utf8')).name,'cinedesi');
+          assert.ok(fs.readFileSync('dist/qa-compat.js','utf8').includes('if (!qa) return; // Never expose'));
+          assert.ok(fs.readFileSync('dist/index.html','utf8').includes('apple-mobile-web-app-title" content="CineDesi"'));
+          assert.ok(!fs.readFileSync('dist/sw.js','utf8').includes('Promise.allSettled('));
+          console.log('PASS original live worker and PWA identity, no debug tools or unsupported service-worker API');
+          JS
+      - name: Start isolated local production preview using live hostname (no external writes)
+        run: |
+          echo '127.0.0.1 cinedesi.online' | sudo tee -a /etc/hosts
+          nohup npm run preview -- --host 0.0.0.0 --port 4173 > /tmp/cinedesi-release-vite.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl --noproxy '*' -fsS -H 'Host: cinedesi.online' http://127.0.0.1:4173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/cinedesi-release-vite.log
+          exit 1
+      - name: Check Safari 12 missing-API compatibility and production UI in browser emulation
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node qa/verify-release-ios12.mjs
