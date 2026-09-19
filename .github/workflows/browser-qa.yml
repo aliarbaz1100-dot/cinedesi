@@ -22,5 +22,5 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Real browser smoke test of isolated preview
         env:
-          PREVIEW_URL: https://cinedesi-qa-20260919.aliarbaz1100-93b.workers.dev
+          PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
         run: node tests/qa-browser.mjs
