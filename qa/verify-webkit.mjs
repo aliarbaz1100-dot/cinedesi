@@ -97,7 +97,14 @@ try {
     await page.waitForFunction(() => document.querySelector(".qa-netflix-episode-list [data-episode='1']")?.classList.contains("active"), null, { timeout: 5000 });
     assert.ok(await prev.isEnabled());
     await prev.click();
-    await page.waitForFunction(() => document.querySelector(".qa-netflix-episode-list [data-episode='0']")?.classList.contains("active"), null, { timeout: 5000 });
+    const episodeAfterBack = await page.evaluate(() => ({
+      active: Array.from(document.querySelectorAll(".qa-episode-deck [data-episode].active")).map(x => x.dataset.episode),
+      provider: document.querySelector(".qa-episode-deck [data-episode='0']")?.dataset.playlistKind,
+      player: document.querySelector("#official-player")?.getAttribute("src")?.slice(0,180),
+      label: document.querySelector(".qa-episode-now strong")?.textContent
+    }));
+    console.log("QA episode-back diagnostic", name, JSON.stringify(episodeAfterBack));
+    await page.waitForFunction(() => document.querySelector(".qa-netflix-episode-list [data-episode='0']")?.classList.contains("active"), null, { timeout: 6000 });
     await episodes.screenshot({ path: "qa-review-screenshots/" + name + "-episodes.png", animations: "disabled" });
     console.log("PASS", name, "Netflix-style episode list, actual Previous/Next taps");
     // The CI runner's WebKit sandbox can block cross-origin Supabase RPCs
