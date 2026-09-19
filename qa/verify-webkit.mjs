@@ -90,7 +90,7 @@ try {
     // any first-party JavaScript exception.
     const crossOriginBlocks = errors.filter(message =>
       /due to access control checks/i.test(message) &&
-      /supabase\\.co|youtube-nocookie\\.com|youtube\\.com/i.test(message)
+      (String(message).includes("supabase.co") || String(message).includes("youtube-nocookie.com") || String(message).includes("youtube.com"))
     );
     const appErrors = errors.filter(message => !crossOriginBlocks.includes(message));
     if (crossOriginBlocks.length) console.log("LIMITATION", name, crossOriginBlocks.length, "cross-origin provider requests blocked in CI (not playback verified)");
