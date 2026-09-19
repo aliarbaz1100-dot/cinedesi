@@ -38,6 +38,7 @@ main{max-width:920px;margin:auto}.brand{display:flex;align-items:center;gap:12px
 .button{display:inline-flex;justify-content:center;align-items:center;min-height:48px;padding:12px 17px;border-radius:9px;background:#f4f4f6;color:#0b0b0d;text-decoration:none;font-weight:800;cursor:pointer;border:0;font:inherit}
 .button.secondary{background:#25262c;color:#fff;border:1px solid #ffffff2a}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
 .guide{line-height:1.7;color:#d7d7de}.guide b{color:#fff}.guide li{margin:8px 0}
+.screen-tabs{display:flex;gap:7px;margin:0 0 15px}.screen-tab{flex:1;min-height:44px;border:1px solid #ffffff1f;border-radius:8px;background:#1b1c21;color:#d4d5df;font:inherit;font-size:.82rem;font-weight:760;cursor:pointer;padding:8px}.screen-tab[aria-pressed="true"]{background:#ededf0;color:#0b0b0d}.screen-tab:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .device{position:relative;aspect-ratio:390/738;width:min(100%,350px);max-height:675px;overflow:hidden;background:#060606;border:7px solid #2b2b30;border-radius:37px;box-shadow:0 32px 90px #000a;margin:0 auto;isolation:isolate}
 .device iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#050505}
 .demo{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#050507;z-index:6;pointer-events:none;transition:opacity .28s ease}
@@ -60,7 +61,8 @@ a{color:inherit}footer{margin-top:24px;color:#8f919a;font-size:.78rem;text-align
 <div class="actions"><a class="button" href="/?app-install=1">Open app to install ↗</a><button class="button secondary" type="button" id="replay">Replay opening animation</button></div>
 <div class="grid">
 <section class="panel"><h2>App opening &amp; home screen</h2>
-<div class="device"><iframe title="Live CineDesi QA home screen" src="/?app-visual-preview=1" loading="eager"></iframe>
+<div class="screen-tabs" role="group" aria-label="Preview installed CineDesi app screens"><button class="screen-tab" id="screen-home" type="button" aria-pressed="true">Home</button><button class="screen-tab" id="screen-episodes" type="button" aria-pressed="false">Movie &amp; episodes</button></div>
+<div class="device"><iframe id="app-screen" title="Live CineDesi QA home screen" src="/?app-visual-preview=1" loading="eager"></iframe>
 <div class="demo" id="demo"><div class="mark"><div class="wordmark"><span class="cine">CINE</span><span class="desi">DESI</span></div><div class="line"></div><div class="credit">Powered by <strong>Arbaz Ali</strong></div></div></div></div>
 <p class="note">Actual home-screen icon is shown above. The installed QA app is named <b>CineDesi QA</b>, so it remains distinguishable from your existing CineDesi app.</p></section>
 <section class="panel"><h2>Put the test app on your Home Screen</h2>
@@ -77,6 +79,17 @@ a{color:inherit}footer{margin-top:24px;color:#8f919a;font-size:.78rem;text-align
 <script>
 const demo=document.querySelector("#demo");
 const play=()=>{demo.hidden=false;const nodes=[...demo.querySelectorAll(".cine,.desi")];nodes.forEach(n=>{n.style.animation="none";void n.offsetWidth;n.style.animation="";});setTimeout(()=>{demo.hidden=true;},1650);};
+const frame=document.querySelector("#app-screen");
+const tabHome=document.querySelector("#screen-home"),tabEpisodes=document.querySelector("#screen-episodes");
+const view=(episodes)=>{
+ frame.src=episodes?"/movie?slug=tamasha-season-5#watch":"/?app-visual-preview=1";
+ frame.title=episodes?"Live CineDesi QA movie and episodes":"Live CineDesi QA home screen";
+ tabHome.setAttribute("aria-pressed",String(!episodes));
+ tabEpisodes.setAttribute("aria-pressed",String(episodes));
+ demo.hidden=true;
+};
+tabHome.addEventListener("click",()=>view(false));
+tabEpisodes.addEventListener("click",()=>view(true));
 document.querySelector("#replay").addEventListener("click",play);
 setTimeout(()=>{demo.hidden=true;},1650);
 </script>
