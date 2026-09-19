@@ -598,6 +598,10 @@ function init() {
         const resume = continueBySlug.get(m.slug);
         const episodeNumber = Number(resume?.episode_number);
         let html = card(m).replaceAll(url, url + "#watch");
+        const resumeLabel = Number.isInteger(episodeNumber) && episodeNumber > 0
+          ? `Resume episode ${episodeNumber}` : "Continue watching";
+        html = html.replace("<div class='info'><div class='card-title-row'>",
+          `<div class='info'><span class='cd-resume-label'>${resumeLabel}</span><div class='card-title-row'>`);
         try {
           const progress = JSON.parse(localStorage.getItem(`cinedesi-video-progress:${m.slug}`) || "null");
           const elapsed = Number(progress?.seconds), duration = Number(progress?.duration);
