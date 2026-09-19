@@ -50,3 +50,33 @@ jobs:
           env["CLOUDFLARE_ACCOUNT_ID"]=account
           raise SystemExit(subprocess.call(["npx","--yes","wrangler@4","deploy","--config","wrangler.preview.json"],env=env))
           PY
+      - name: Verify deployed preview is navigable HTML, not an attachment
+        run: |
+          python - <<'PY'
+          import urllib.request,urllib.error,time
+          base="https://cinedesi-qa-20260919.aliarbaz1100-93b.workers.dev"
+          checks=[
+            ("/","text/html","CineDesi"),
+            ("/movie.html?slug=preview-smoke","text/html","movie-page"),
+            ("/manifest.webmanifest","json","start_url"),
+            ("/sw.js","javascript","cinedesi-shell-v27"),
+          ]
+          for path,content_type,marker in checks:
+              err=None
+              for attempt in range(5):
+                  try:
+                      with urllib.request.urlopen(urllib.request.Request(base+path,headers={"User-Agent":"CineDesi-QA"}),timeout=25) as response:
+                          mime=response.headers.get("Content-Type","").lower()
+                          disposition=response.headers.get("Content-Disposition","").lower()
+                          body=response.read().decode("utf-8","replace")
+                          assert content_type in mime, f"{path}: unexpected MIME {mime}"
+                          assert "attachment" not in disposition, f"{path}: downloaded rather than rendered"
+                          assert marker in body, f"{path}: expected content missing"
+                          print("PASS",path,response.status,mime)
+                          err=None
+                          break
+                  except Exception as exc:
+                      err=exc
+                      time.sleep(2)
+              if err: raise err
+          PY
