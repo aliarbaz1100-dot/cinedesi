@@ -6,10 +6,12 @@ const CORE = ["/index.html", "/movie.html", "/manifest.webmanifest", "/cinedesi-
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
-    await Promise.allSettled(CORE.map(async (url) => {
+    // iPhone 6 / iOS 12 does not provide Promise.allSettled.
+    const tasks = CORE.map(async (url) => {
       const response = await fetch(url, { cache: "no-store", redirect: "follow" });
       if (response.ok && !response.redirected) await cache.put(url, response);
-    }));
+    });
+    await Promise.all(tasks.map((task) => task.catch(() => null)));
     await self.skipWaiting();
   })());
 });

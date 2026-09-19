@@ -1,0 +1,478 @@
+/* QA-only mobile visual layer: applies to the test-app preview and standalone QA origin; production remains unchanged. */
+@media screen and (max-width: 620px) {
+  html.cd-qa-mode body.home-body {
+    background: #050505 !important;
+    padding-bottom: calc(98px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* Return bottom navigation to the earlier premium CineDesi glass-pill styling.
+     Existing styles.css/premium.css/cinematic-v2.css own shape, size and color;
+     keep the QA active tab semantics without adding opaque red tiles. */
+  html.cd-qa-mode .home-body .mobile-bottom-nav a[aria-current="page"],
+  html.cd-qa-mode .home-body .mobile-bottom-nav button[aria-pressed="true"] {
+    color: #fff !important;
+  }
+
+  html.cd-qa-mode .home-body .grid.rail {
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-inline: contain;
+  }
+
+  html.cd-qa-mode .home-body .section-head h2 {
+    text-wrap: balance;
+  }
+  /* The featured display deliberately inherits EXACT live CineDesi hero geometry,
+     typography, image crop, menu and button arrangement. Only non-visual safety
+     is added here; never re-skin the first viewport in the demo. */
+  html.cd-qa-mode .home-body .hero-content h1 {
+    overflow-wrap: break-word;
+  }
+  html.cd-qa-mode .home-body #continue-grid .qa-resume-meta {
+    padding: 6px 2px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: #f5f5f6;
+    font-size: 11px;
+    line-height: 1.25;
+    font-weight: 700;
+  }
+  html.cd-qa-mode .home-body #continue-grid .qa-resume-meta small {
+    display: block !important;
+    color: #a5a6ab;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+  html.cd-qa-mode .home-body #continue-grid .qa-resume-track {
+    display: block;
+    width: 100%;
+    height: 3px;
+    border-radius: 3px;
+    overflow: hidden;
+    background: #45454a;
+  }
+  html.cd-qa-mode .home-body #continue-grid .qa-resume-track i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #e50914;
+  }
+
+  html.cd-qa-mode .home-body .catalog-header.search-mode .search-shell {
+    padding-top: max(10px, env(safe-area-inset-top, 0px)) !important;
+    background: #0b0b0d !important;
+  }
+
+  html.cd-qa-mode .home-body .search-suggestions {
+    max-height: min(68dvh, 540px);
+    overscroll-behavior: contain;
+  }
+}
+
+@media screen and (max-width: 620px) and (prefers-reduced-motion: reduce) {
+  html.cd-qa-mode .home-body .mobile-bottom-nav *,
+  html.cd-qa-mode .home-body .grid.rail {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* iPhone 6 / iOS 12 lacks :has(), flex-gap, clamp(), svh, and some dynamic viewport units. */
+@media screen and (max-width: 420px) {
+  html.cd-qa-legacy .home-body .catalog-header { min-height: 56px !important; }
+  html.cd-qa-legacy .home-body .streaming-hero { min-height: 500px !important; padding: 230px 16px 28px !important; }
+  html.cd-qa-legacy .home-body .hero-content h1 { font-size: 35px !important; line-height: .96 !important; }
+  html.cd-qa-legacy .home-body .grid.rail { -webkit-overflow-scrolling: touch; }
+  html.cd-qa-legacy .movie-page { width: 100% !important; max-width: 100% !important; overflow-x: hidden !important; padding-bottom: 84px !important; }
+  html.cd-qa-legacy .movie-page .movie-art,
+  html.cd-qa-legacy .movie-page .legal-player-section { width: 100% !important; min-width: 0 !important; }
+  html.cd-qa-legacy .movie-page .movie-copy { min-width: 0 !important; padding: 0 14px !important; }
+  html.cd-qa-legacy .movie-page .movie-copy h1 { font-size: 30px !important; line-height: 1.1 !important; overflow-wrap: break-word; }
+  html.cd-qa-legacy .movie-page .legal-player { width: 100% !important; min-width: 0 !important; overflow: hidden !important; }
+  html.cd-qa-legacy .movie-page .legal-player iframe { display: block; width: 100% !important; max-width: 100% !important; }
+}
+
+/* QA-only detail/episode polish; featured home display continues to use live CSS. */
+@media screen and (max-width: 620px) {
+  html.cd-qa-mode .movie-page {
+    background: #050505 !important;
+    padding: 8px 0 90px !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+  html.cd-qa-mode .movie-page .movie-hero {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    min-width: 0 !important;
+  }
+  html.cd-qa-mode .movie-page .movie-art {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    aspect-ratio: 16 / 9 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background-color: #080809;
+  }
+  html.cd-qa-mode .movie-page .movie-copy {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 16px 16px 0 !important;
+  }
+  html.cd-qa-mode .movie-page .movie-copy h1 {
+    max-width: 100%;
+    margin: 7px 0 11px !important;
+    font-size: 34px !important;
+    line-height: 1.06 !important;
+    letter-spacing: -.045em !important;
+    overflow-wrap: break-word;
+  }
+  html.cd-qa-mode .movie-page .movie-copy .lead {
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+    color: #cdced2 !important;
+  }
+  html.cd-qa-mode .movie-page .movie-copy .actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  html.cd-qa-mode .movie-page .movie-copy .actions .detail-play-btn {
+    grid-column: 1 / -1 !important;
+    min-height: 46px !important;
+    color: #080809 !important;
+    background: #fff !important;
+  }
+  html.cd-qa-mode .movie-page .movie-copy .actions > * {
+    min-width: 0 !important;
+    font-size: 12px !important;
+    border-radius: 7px !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html.cd-qa-mode .movie-page .legal-player-section,
+  html.cd-qa-mode .movie-page .engage-section {
+    margin: 18px 12px !important;
+    width: calc(100% - 24px) !important;
+    min-width: 0 !important;
+    padding: 13px !important;
+    border: 1px solid rgba(255,255,255,.08) !important;
+    border-radius: 12px !important;
+    background: #111113 !important;
+    box-shadow: none !important;
+  }
+  html.cd-qa-mode .movie-page .legal-player {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    aspect-ratio: 16 / 9;
+    overflow: hidden !important;
+    background: #000 !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+  }
+  html.cd-qa-mode .movie-page .legal-player iframe {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    border: 0;
+  }
+  /* Restore the prior Netflix-inspired EPISODES view: open, full-width rows
+     with landscape stills and readable metadata, not the later tiled carousel.
+     Leave movie art, player, top display and the main navigation unchanged. */
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list {
+    margin-top: 22px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-browser-head {
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: space-between !important;
+    flex-direction: row !important;
+    gap: 10px !important;
+    margin: 0 !important;
+    padding: 0 1px 14px !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-browser-head small {
+    display: block !important;
+    margin-bottom: 3px !important;
+    color: #9ca0a7 !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    letter-spacing: .13em !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-browser-head h3 {
+    margin: 0 !important;
+    color: #fff !important;
+    font-size: 21px !important;
+    line-height: 1.12 !important;
+    font-weight: 850 !important;
+    letter-spacing: -.035em !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-browser-head > .muted {
+    max-width: 38% !important;
+    color: #c5c5cb !important;
+    text-align: right !important;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .qa-episode-toolbar {
+    display: grid !important;
+    grid-template-columns: minmax(0,1fr) minmax(0,1.17fr) minmax(0,1fr) !important;
+    align-items: center !important;
+    gap: 6px !important;
+    min-width: 0 !important;
+    margin: 0 0 5px !important;
+    padding: 10px 1px 12px !important;
+    border: 0 !important;
+    border-top: 1px solid rgba(255,255,255,.13) !important;
+    border-bottom: 1px solid rgba(255,255,255,.13) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .qa-episode-step {
+    min-width: 0 !important;
+    min-height: 42px !important;
+    padding: 7px 5px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 4px !important;
+    border: 1px solid rgba(255,255,255,.24) !important;
+    border-radius: 6px !important;
+    background: rgba(255,255,255,.075) !important;
+    color: #fff !important;
+    font-size: 12px !important;
+    font-weight: 750 !important;
+    white-space: nowrap !important;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .qa-episode-next {
+    background: #eeeef0 !important;
+    border-color: #eeeef0 !important;
+    color: #0b0b0d !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .qa-episode-step:disabled {
+    opacity: .32 !important;
+    cursor: default !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .qa-episode-now {
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+    overflow: hidden !important;
+    text-align: center !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .qa-episode-now small {
+    color: #989aa0 !important;
+    font-size: 9px !important;
+    font-weight: 800 !important;
+    letter-spacing: .13em !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .qa-episode-now strong {
+    display: block !important;
+    max-width: 100% !important;
+    color: #f7f7f9 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    font-size: 11px !important;
+    font-weight: 750 !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    grid-auto-columns: auto !important;
+    grid-auto-flow: row !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    max-height: 560px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scroll-snap-type: none !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #45454a transparent;
+    overscroll-behavior-y: contain;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-card {
+    display: grid !important;
+    grid-template-columns: minmax(103px,36%) minmax(0,1fr) 33px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    align-self: stretch !important;
+    justify-content: stretch !important;
+    gap: 10px !important;
+    position: relative !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 93px !important;
+    margin: 0 !important;
+    padding: 10px 1px !important;
+    border: 0 !important;
+    border-bottom: 1px solid rgba(255,255,255,.11) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: #f8f8f9 !important;
+    text-align: left !important;
+    box-shadow: none !important;
+    scroll-snap-align: none !important;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-card.active {
+    background: rgba(255,255,255,.07) !important;
+    border-bottom-color: rgba(255,255,255,.20) !important;
+    box-shadow: none !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-thumb {
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+    height: 78px !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    border-radius: 6px !important;
+    background: #131416 !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-thumb img {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-thumb b {
+    position: absolute !important;
+    left: 6px !important;
+    bottom: 6px !important;
+    display: grid !important;
+    place-items: center !important;
+    min-width: 22px !important;
+    height: 22px !important;
+    padding: 0 4px !important;
+    border-radius: 4px !important;
+    background: rgba(0,0,0,.78) !important;
+    color: #fff !important;
+    font-size: 11px !important;
+    font-weight: 850 !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-copy {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    flex: 1 1 auto !important;
+    gap: 5px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-copy strong {
+    color: #fff !important;
+    font-size: 14px !important;
+    line-height: 1.25 !important;
+    font-weight: 750 !important;
+    overflow-wrap: break-word;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-copy small {
+    color: #a9a9b0 !important;
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+    overflow-wrap: break-word;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-play {
+    position: static !important;
+    display: grid !important;
+    place-items: center !important;
+    align-self: center !important;
+    justify-self: center !important;
+    width: 31px !important;
+    height: 31px !important;
+    padding: 0 0 0 2px !important;
+    border: 1px solid rgba(255,255,255,.6) !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    color: #fff !important;
+    font-size: 11px !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-card.active .episode-play {
+    background: #f2f2f4 !important;
+    border-color: #f2f2f4 !important;
+    color: #08090a !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-card:disabled {
+    opacity: .38 !important;
+  }
+  html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-note {
+    margin: 12px 2px 0 !important;
+    padding: 12px 2px 4px !important;
+    border-top: 1px solid rgba(255,255,255,.1);
+    color: #a8a9ae !important;
+    font-size: 11px !important;
+    line-height: 1.48 !important;
+    font-weight: 450 !important;
+    letter-spacing: 0 !important;
+    overflow-wrap: break-word;
+  }
+
+}
+@media screen and (max-width: 375px) {
+  html.cd-qa-mode .movie-page .movie-copy h1 { font-size: 30px !important; }
+  html.cd-qa-mode .movie-page .movie-copy .actions > * { font-size: 11px !important; }
+}
+
+/* Explicit geometry fallbacks: iPhone 6 Safari/iOS 12 has no aspect-ratio. */
+@media screen and (max-width: 420px) {
+  html.cd-qa-legacy .movie-page .movie-art {
+    width: 100% !important;
+    height: 54vw !important;
+    max-height: 240px !important;
+    min-height: 174px !important;
+  }
+  html.cd-qa-legacy .movie-page .legal-player {
+    position: relative !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 0 56.25% !important;
+  }
+  html.cd-qa-legacy .movie-page .legal-player iframe {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    height: 100% !important;
+    width: 100% !important;
+  }
+}
+
+/* All QA screen sizes and all series: hide ONLY the oversized white headline.
+   Preserve the season label, compact episode count, cards, and Previous/Next. */
+html.cd-qa-mode .movie-page .episode-browser-head h3 {
+  display: none !important;
+}
