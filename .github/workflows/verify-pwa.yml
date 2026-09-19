@@ -41,5 +41,42 @@ jobs:
           assert.ok(home.includes('setTimeout(function()'), 'Splash failsafe missing');
           assert.ok(read('src/main.ts').includes('/movie.html?slug='), 'Movie route not migrated');
           assert.ok(!read('src/main.ts').includes('setTimeout(showInstall, 4200)'), 'Auto install banner still enabled');
-          console.log('PASS: build entrypoints, movie route, PWA shell, splash, and install popup');
+          assert.ok(home.includes('location.replace("/movie.html"'), 'Legacy bookmarks cannot recover');
+          assert.ok(read('src/movie.ts').includes('sdk.onerror'), 'Movie SDK error state is missing');
+          for (const page of [home, movie]) {
+            const bundles = [...page.matchAll(/(?:src|href)=["']([^"']+\/assets\/[^"']+)["']/g)].map(m => m[1]);
+            for (const asset of bundles) {
+              const path = 'dist/' + asset.replace(/^\.\//, '').replace(/^\//, '');
+              assert.ok(fs.existsSync(path), 'Broken script or stylesheet path: ' + path);
+            }
+          }
+          assert.ok(!sw.includes('cinedesi-shell-v26'), 'Old service worker version deployed');
+          console.log('PASS: build entrypoints, asset paths, movie routes, PWA shell, splash, and install popup');
+          JS
+      - name: Check service worker JavaScript syntax
+        run: node --check dist/sw.js
+      - name: Smoke-test actual built HTTP responses
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/cinedesi-preview.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          const base = 'http://127.0.0.1:4173';
+          for (const [path,kind,expected] of [
+            ['/', 'text/html', 'CineDesi'],
+            ['/movie.html?slug=smoke-test', 'text/html', 'movie-page'],
+            ['/manifest.webmanifest', 'application/manifest+json', 'start_url'],
+            ['/sw.js', 'javascript', 'cinedesi-shell-v27']
+          ]) {
+            const response = await fetch(base+path);
+            assert.equal(response.status, 200, path+' returned '+response.status);
+            assert.ok(response.headers.get('content-type')?.includes(kind), path+' unexpected Content-Type '+response.headers.get('content-type'));
+            assert.ok((await response.text()).includes(expected), path+' unexpected body');
+            console.log('PASS HTTP', path, response.status);
+          }
           JS
