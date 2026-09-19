@@ -319,6 +319,93 @@ async function load() {
     event.currentTarget.textContent = adding ? "✓ In My List" : "＋ My List";
     event.currentTarget.setAttribute("aria-pressed", String(adding));
   });
+  // QA-only: real YouTube playback time, shared between movies and every series episode.
+  // Never infer a timestamp from an external iframe or claim a resume point before it plays.
+  const qaPlayback = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
+  let qaYoutubePlayer = null;
+  let qaProgressTimer = null;
+  const qaReadContinue = () => {
+    try {
+      const rows = JSON.parse(localStorage.getItem("cinedesi_continue") || "[]");
+      return Array.isArray(rows) ? rows : [];
+    } catch { return []; }
+  };
+  const qaActiveEpisode = () => document.querySelector("[data-episode].active");
+  const qaEpisodeIndex = () => {
+    const active = qaActiveEpisode();
+    const value = active?.dataset?.episode;
+    return value === undefined ? null : Number(value);
+  };
+  const qaCapturePosition = (player, completed = false) => {
+    if (!qaPlayback || !player?.getCurrentTime || !m.full_video_verified) return;
+    let seconds = 0, duration = 0;
+    try {
+      seconds = Number(player.getCurrentTime());
+      duration = Number(player.getDuration());
+    } catch { return; }
+    if (!Number.isFinite(seconds) || !Number.isFinite(duration) || duration <= 0 || seconds < 3) return;
+    const episodeIndex = qaEpisodeIndex();
+    const episodeNumber = Number.isInteger(episodeIndex) && episodeIndex >= 0 ? episodeIndex + 1 : null;
+    const rows = qaReadContinue();
+    const previous = rows.find((row) => row.slug === m.slug);
+    const boundedSeconds = Math.max(0, Math.min(duration, seconds));
+    const isComplete = completed || boundedSeconds / duration >= .98;
+    const row = {
+      ...(previous || {}),
+      slug: m.slug,
+      title: m.title,
+      region: m.region,
+      genre: m.genre,
+      episode_index: episodeIndex,
+      episode_number: episodeNumber,
+      position_seconds: Math.round(boundedSeconds),
+      duration_seconds: Math.round(duration),
+      progress_percent: Math.round(100 * boundedSeconds / duration),
+      completed: isComplete,
+      updated_at: Date.now()
+    };
+    try {
+      localStorage.setItem("cinedesi_continue", JSON.stringify([row, ...rows.filter((item) => item.slug !== m.slug)].slice(0, 12)));
+    } catch {}
+  };
+  const qaStopProgress = () => {
+    if (qaProgressTimer !== null) window.clearInterval(qaProgressTimer);
+    qaProgressTimer = null;
+  };
+  const qaOnYoutubeReady = (event) => {
+    if (!qaPlayback) return;
+    qaYoutubePlayer = event.target;
+    // On a single movie/episode, seek only if the viewer explicitly chose Resume.
+    // Playlists retain their official episode navigation and save the active index.
+    if (playlistGenerated || location.hash !== "#watch") return;
+    const row = qaReadContinue().find((item) => item.slug === m.slug);
+    if (!row || Number(row.episode_index ?? -1) !== Number(qaEpisodeIndex() ?? -1)) return;
+    const seconds = Number(row.position_seconds || 0);
+    const duration = Number(row.duration_seconds || 0);
+    if (!row.completed && Number.isFinite(seconds) && seconds > 8 && duration > seconds + 12) {
+      try { event.target.seekTo(Math.max(0, seconds - 2), true); } catch {}
+    }
+  };
+  const qaOnYoutubeState = (event) => {
+    if (!qaPlayback) return;
+    qaYoutubePlayer = event.target;
+    if (event.data === 1) {
+      qaStopProgress();
+      qaProgressTimer = window.setInterval(() => qaCapturePosition(event.target), 5000);
+    } else if (event.data === 0) {
+      qaCapturePosition(event.target, true);
+      qaStopProgress();
+    } else if (event.data === 2 || event.data === 3 || event.data === 5) {
+      qaCapturePosition(event.target);
+      qaStopProgress();
+    }
+  };
+  if (qaPlayback) {
+    window.addEventListener("pagehide", () => { qaCapturePosition(qaYoutubePlayer); qaStopProgress(); });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) qaCapturePosition(qaYoutubePlayer);
+    });
+  }
   let youtubePlaylistPlayer = null;
   let pendingYoutubePlaylistIndex = null;
 
@@ -411,6 +498,7 @@ async function load() {
       youtubePlaylistPlayer = new YT.Player("official-player", {
         events: {
           onReady: (event) => {
+            qaOnYoutubeReady(event);
             const ids = event.target.getPlaylist?.() || [];
             const ordered = hydrateYoutubePlaylistCards(ids);
             if (pendingYoutubePlaylistIndex !== null) {
@@ -432,6 +520,7 @@ async function load() {
             }
           },
           onStateChange: (event) => {
+            qaOnYoutubeState(event);
             const idx = event.target.getPlaylistIndex?.();
             if (Number.isInteger(idx) && idx >= 0) {
               const card = document.querySelector(`[data-playlist-kind='youtube'][data-playlist-index='${idx}']`);
@@ -472,6 +561,8 @@ async function load() {
     try {
       youtubePlaylistPlayer = new window.YT.Player("official-player", {
         events: {
+          onReady: qaOnYoutubeReady,
+          onStateChange: qaOnYoutubeState,
           onError: (event) => {
             if ([100, 101, 150].includes(Number(event?.data))) showPlayerFallback(Number(event?.data) || 0);
           }
