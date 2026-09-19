@@ -180,11 +180,28 @@ try {
       assert.ok(await prev.isDisabled(), "Previous should disable again on Episode 1");
       const geometry = await episodeDeck.evaluate(el => {
         const rail = el.querySelector(".episode-grid");
-        const card = el.querySelector(".episode-card");
-        return { railWidth: rail.clientWidth, cardWidth: card.getBoundingClientRect().width, cardCount: rail.children.length };
+        const first = el.querySelectorAll(".episode-card")[0]?.getBoundingClientRect();
+        const second = el.querySelectorAll(".episode-card")[1]?.getBoundingClientRect();
+        const image = el.querySelector(".episode-thumb img")?.getBoundingClientRect();
+        const episodeTitle = el.querySelector(".episode-copy strong")?.getBoundingClientRect();
+        return {
+          layout: getComputedStyle(rail).flexDirection,
+          railWidth: rail.clientWidth,
+          cardWidth: first?.width || 0,
+          cardCount: rail.children.length,
+          rowsStacked: !!first && !!second && second.top > first.top + first.height - 2,
+          rowSameLeft: !!first && !!second && Math.abs(first.left - second.left) < 2,
+          imageWidth: image?.width || 0,
+          titleWidth: episodeTitle?.width || 0
+        };
       });
-      assert.ok(geometry.cardWidth < geometry.railWidth && geometry.cardCount > 1, "Episode cards should form a compact horizontal deck");
-      console.log("PASS", device.name, "real Bigg Boss 20 Episode 1 > Next > Previous, compact episode carousel");
+      assert.ok(
+        geometry.layout === "column" && geometry.cardWidth >= geometry.railWidth * .94 &&
+        geometry.cardCount > 1 && geometry.rowsStacked && geometry.rowSameLeft &&
+        geometry.imageWidth > 95 && geometry.titleWidth > 85,
+        "Episodes should use the earlier Netflix-style full-width image + metadata rows: " + JSON.stringify(geometry)
+      );
+      console.log("PASS", device.name, "real Bigg Boss 20 Episode 1 > Next > Previous, original Netflix-style full-width episode rows");
     }
     assert.deepEqual(errors, [], device.name + " uncaught page errors");
     await context.close();
