@@ -206,7 +206,7 @@
     margin-top: 0 !important;
   }
   html.cd-qa-mode .movie-page .qa-netflix-episode-list .episode-browser-head {
-    display: flex !important;
+    display: none !important;
     align-items: flex-end !important;
     justify-content: space-between !important;
     flex-direction: row !important;
