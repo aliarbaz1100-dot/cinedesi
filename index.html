@@ -35,8 +35,16 @@
     if(returning){try{sessionStorage.removeItem("cinedesi-qa-internal-nav")}catch(e){}}
     // IMPORTANT: source=pwa and phone UA alone never turn browser visitors into
     // an installed app. The animated overlay exists only inside the PWA icon.
-    if(qa&&home&&installed&&window.top===window&&!returning)
-      document.documentElement.classList.add("cd-qa-standalone");
+    var play=qa&&home&&installed&&window.top===window&&!returning;
+    if(qa){
+      try{
+        sessionStorage.setItem("cinedesi-qa-last-launch-check",
+          'mode='+(installed?'installed':'browser')+
+          ', home='+home+', returning='+returning+
+          ', detected='+play+', at='+new Date().toISOString());
+      }catch(e){}
+    }
+    if(play)document.documentElement.classList.add("cd-qa-standalone");
   }catch(e){}
 })();</script>
     <style id="qa-launch-style">
