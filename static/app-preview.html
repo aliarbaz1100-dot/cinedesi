@@ -2,10 +2,15 @@
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="CineDesi QA"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script id="qa-installed-shortcut-route">(function(){
   try {
     var standalone=(navigator.standalone===true)||(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches);
-    if(standalone && window.top===window && !/[?&]inspect=1(?:&|$)/.test(location.search)){
+    var handset=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    // iOS may save /app-preview as an ordinary Safari home-screen shortcut
+    // (navigator.standalone=false), since the older preview lacked PWA meta tags.
+    // Send ANY top-level phone visit to the real app; ?inspect=1 preserves preview.
+    if((standalone||handset) && window.top===window && !/[?&]inspect=1(?:&|$)/.test(location.search)){
       // Older home-screen shortcuts may point to /app-preview, the desktop
       // review page. Take them to the ACTUAL QA app instead of showing its
       // decorative embedded animation (which never runs on the installed icon).
