@@ -132,8 +132,16 @@
     logo.addEventListener('mouseleave',cancel);
     // iPhone may show the native link menu before a long press completes.
     // Suppress the header logo's context menu only in this private QA app.
+    var taps=0,lastTap=0;
     logo.addEventListener('click',function(event){
-      if(activated){event.preventDefault();activated=false;}
+      var now=Date.now();
+      taps=(now-lastTap<950)?taps+1:1;
+      lastTap=now;
+      // Clicking the logo while on the home screen is a no-op anyway.
+      // Prevent a full-page reload between taps on older iPhones.
+      if(activated||taps<=3)event.preventDefault();
+      if(activated){activated=false;taps=0;return;}
+      if(taps===3){taps=0;cancel();showQaDiagnostic();}
     },true);
     logo.addEventListener('contextmenu',function(event){event.preventDefault();});
   });
