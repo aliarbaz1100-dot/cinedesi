@@ -66,3 +66,15 @@ body:has(.movie-page) .movie-copy .actions #share {
     transition: none;
   }
 }
+
+/* A compact, source-backed Continue Watching indicator; no fake playback progress. */
+.home-body #continue-grid .poster{position:relative}
+.home-body #continue-grid .cd-watch-progress{
+ position:absolute;bottom:0;left:0;right:0;z-index:3;
+ height:4px;background:rgba(255,255,255,.28);
+ pointer-events:none;border-radius:0 0 5px 5px;overflow:hidden
+}
+.home-body #continue-grid .cd-watch-progress::before{
+ content:"";display:block;height:100%;width:var(--progress,0%);
+ background:#e50914;border-radius:0 4px 4px 0
+}
