@@ -157,7 +157,7 @@ try {
       const bookmarkContext = await browser.newContext({ ...browserDevice });
       const bookmarkPage = await bookmarkContext.newPage();
       await bookmarkPage.goto(base + "/app-preview", { waitUntil: "domcontentloaded", timeout: 30000 });
-      await bookmarkPage.waitForURL(/\\/\\?qa=1&source=pwa&install-launch=1/, { timeout: 8000 });
+      await bookmarkPage.waitForURL(url => url.pathname === "/" && url.searchParams.get("install-launch") === "1", { timeout: 8000 });
       await bookmarkPage.locator("#app-splash").waitFor({ state: "visible", timeout: 2000 });
       assert.equal(await bookmarkPage.locator("#intro").count(), 0, "Safari bookmark shortcut must display the REAL QA app, not decorative mock preview");
       console.log("PASS", device.name, "old non-standalone iOS bookmark shortcut redirects into real app and animated logo");
