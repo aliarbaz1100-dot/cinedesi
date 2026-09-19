@@ -1,8 +1,6 @@
 import "./cinematic-v2.css";
 import "./mobile-navigation.css";
 import "./launch-polish.css";
-import "./experience-refinement.css";
-import "./cinedesi-cinema-refresh.css";
 import { tamashaSeason5Episodes } from "./tamashaSeason5";
 const movieBack = document.querySelector("#movie-back");
 if (movieBack) movieBack.onclick = null;
