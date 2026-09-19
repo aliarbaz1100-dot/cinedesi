@@ -338,10 +338,10 @@ function init() {
     }
     count.textContent = String(saved.length);
   }
-  function card(m) {
+  function card(m, prioritizePoster = false) {
     const preserveFullThumb = ["cid-official-series", "crime-patrol-city-crimes-2026"].includes(String(m.slug || ""));
     const fallbackCover = posterArt(m);
-    const image = m.poster_url ? `<img src='${esc(m.poster_url)}' data-poster-fallback='${esc(fallbackCover)}' alt='${esc(m.title)} cover' loading='lazy' decoding='async'${preserveFullThumb ? " style='object-fit:contain;background:#050506'" : ""}>` : "";
+    const image = m.poster_url ? `<img src='${esc(m.poster_url)}' data-poster-fallback='${esc(fallbackCover)}' alt='${esc(m.title)} cover' ${prioritizePoster ? "loading='eager' fetchpriority='high'" : "loading='lazy'"} decoding='async'${preserveFullThumb ? " style='object-fit:contain;background:#050506'" : ""}>` : "";
     const upcoming = typeof isUpcomingTitle === "function" && isUpcomingTitle(m);
     const availabilityBadge = upcoming ? "<span class='badge'>Coming soon</span>" : m.full_video_verified && m.full_video_embed_url ? "<span class='badge watch-now'>Watch here</span>" : m.watch_verified && m.watch_url ? "<span class='badge'>Legal watch</span>" : m.trailer_verified ? "<span class='badge'>Official trailer</span>" : "<span class='badge'>Editorial</span>";
     const ribbon = upcoming ? "<span class='poster-ribbon new'>Upcoming</span>" : m.full_video_verified && m.full_video_embed_url ? "<span class='poster-ribbon'>\u25B6 Watch here</span>" : Number(m.release_year) >= 2025 ? "<span class='poster-ribbon new'>New</span>" : "";
@@ -667,7 +667,7 @@ function init() {
         (Number(b.score) || 0) - (Number(a.score) || 0)
       );
     const list = claimRail([...pinned, ...rest], 10);
-    topGrid.innerHTML = list.map((m, i) => card(m).replace("class='card'", `class='card top-card' data-rank='${i + 1}'`)).join("");
+    topGrid.innerHTML = list.map((m, i) => card(m, i < 3).replace("class='card'", `class='card top-card' data-rank='${i + 1}'`)).join("");
     wire(topGrid);
     document.querySelectorAll("[data-top-all]").forEach((el) => el.onclick = () => showCollection("top"));
   }
@@ -702,9 +702,13 @@ function init() {
       image.src = heroPosterUrl(videoThumb(m) || m.poster_url);
     };
     preloadHero(heroPool[0], "high");
-    const warmNextHeroes = () => heroPool.slice(1, 4).forEach((m) => preloadHero(m));
-    if ("requestIdleCallback" in window) window.requestIdleCallback(warmNextHeroes, { timeout: 1200 });
-    else setTimeout(warmNextHeroes, 600);
+    // Do not compete with first visible posters on slower mobile networks.
+    const saveData = navigator.connection?.saveData || /(?:^|-)2g$/.test(navigator.connection?.effectiveType || "");
+    if (!saveData && !window.matchMedia("(max-width: 760px)").matches) {
+      const warmNextHeroes = () => heroPool.slice(1, 3).forEach((m) => preloadHero(m));
+      if ("requestIdleCallback" in window) window.requestIdleCallback(warmNextHeroes, { timeout: 2400 });
+      else setTimeout(warmNextHeroes, 1200);
+    }
     let heroIndex = 0;
     const paintHero = () => {
       const m = heroPool[heroIndex % heroPool.length];
