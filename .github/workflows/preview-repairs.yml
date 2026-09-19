@@ -86,7 +86,8 @@ jobs:
                           assert content_type in mime, f"{path}: unexpected MIME {mime}"
                           assert "attachment" not in disposition, f"{path}: downloaded rather than rendered"
                           assert marker in body, f"{path}: expected content missing"
-                          if path.endswith("/") or path.startswith("/movie.html"):\n                              assert "noindex,nofollow,noarchive" in body, f"{path}: QA noindex missing"
+                          if path.endswith("/") or path.startswith("/movie.html"):
+                              assert "noindex,nofollow,noarchive" in body, f"{path}: QA noindex missing"
                           print("PASS",path,response.status,mime)
                           err=None
                           break
