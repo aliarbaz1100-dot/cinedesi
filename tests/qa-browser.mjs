@@ -25,7 +25,7 @@ try {
   assert.equal(await page.locator("#install-banner").isVisible(), false, "Install prompt must not obstruct home");
   console.log("PASS mobile homepage: real movie cards visible, install popup hidden");
   await page.locator("#top-grid a.poster-link[href*='/movie.html?slug=']").first().click();
-  await page.waitForURL(/\/movie\.html\?slug=/, { timeout: 30000 });
+  await page.waitForURL(/\/movie\.html\?slug=/, { waitUntil: "domcontentloaded", timeout: 30000 });
   await page.waitForFunction(() => {
     const text = document.querySelector("#movie-page")?.textContent || "";
     return text.length > 100 && !text.includes("Loading verified movie details");
@@ -34,7 +34,7 @@ try {
   assert.ok(!/could not load movie details|unable to open this title|could not be found/i.test(movieText), "Movie failed: " + movieText.slice(0, 400));
   console.log("PASS mobile movie: detail page loads at explicit HTML URL");
   await page.locator("#movie-back").click();
-  await page.waitForURL(url => url.pathname === "/" || url.pathname === "/index.html", { timeout: 30000 });
+  await page.waitForURL(url => url.pathname === "/" || url.pathname === "/index.html", { waitUntil: "domcontentloaded", timeout: 30000 });
   await page.locator("#top-grid a.poster-link").first().waitFor({ state: "visible", timeout: 20000 });
   console.log("PASS mobile back navigation and restored catalog");
   const sw = await page.evaluate(async () => {
