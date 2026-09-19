@@ -739,8 +739,9 @@ async function load() {
       const rawNumber = activeEpisode?.querySelector?.(".episode-copy strong")?.textContent?.match(/Episode\s+(\d+)/i)?.[1];
       const episodeIndex = rawIndex === undefined ? null : Number(rawIndex);
       const episodeNumber = rawNumber ? Number(rawNumber) : episodeIndex !== null && Number.isFinite(episodeIndex) ? episodeIndex + 1 : null;
-      const list = JSON.parse(localStorage.getItem("cinedesi_continue") || "[]").filter((x) => x.slug !== m.slug);
-      const oldRow = savedContinue.find((x) => x.slug === m.slug);
+      const currentRows = JSON.parse(localStorage.getItem("cinedesi_continue") || "[]");
+      const list = currentRows.filter((x) => x.slug !== m.slug);
+      const oldRow = currentRows.find((x) => x.slug === m.slug);
       const nextEpisodeIndex = Number.isFinite(episodeIndex) ? episodeIndex : null;
       const sameEpisode = oldRow && oldRow.episode_index === nextEpisodeIndex;
       list.unshift({
