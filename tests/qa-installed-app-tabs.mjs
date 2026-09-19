@@ -27,6 +27,17 @@ for(const d of devices){
      bottom:Math.round(el.getBoundingClientRect().bottom)
    }));
    assert.ok(Math.abs(navMetrics.width-navMetrics.viewport)<=2,d.name+" nav not app-width "+JSON.stringify(navMetrics));
+   const diagnostic=await page.evaluate(()=>{
+     const a=document.querySelector('.mobile-bottom-nav a[href="#top-today"]');
+     const n=document.querySelector('.mobile-bottom-nav');
+     const b=a?.getBoundingClientRect(),r=n?.getBoundingClientRect();
+     const hit=b&&document.elementFromPoint(b.left+b.width/2,b.top+b.height/2);
+     return {link:b&&{x:b.x,y:b.y,width:b.width,height:b.height},nav:r&&{x:r.x,y:r.y,width:r.width,height:r.height},
+       hit:hit?.tagName,hitClass:hit?.className?.baseVal||hit?.className,navPosition:n&&getComputedStyle(n).position,
+       navZ:n&&getComputedStyle(n).zIndex,bodyWidth:document.body.scrollWidth,scrollY:scrollY,viewport:{w:innerWidth,h:innerHeight},
+       appTransform:getComputedStyle(document.querySelector("#app")).transform};
+   });
+   console.log("QA INSTALLED NAV HIT",d.name,JSON.stringify(diagnostic));
    await nav.locator('a[href="#top-today"]').click();
    await page.locator("body[data-cd-app-view='new']").waitFor({state:"attached",timeout:7000});
    await page.locator("#new-releases").waitFor({state:"visible",timeout:7000});
