@@ -357,13 +357,13 @@ async function load() {
     const head = qaEpisodeBrowser.querySelector(".episode-browser-head");
     const rail = qaEpisodeBrowser.querySelector(".episode-grid");
     if (head && rail && cards.length > 0) {
-      qaEpisodeBrowser.classList.add("qa-episode-deck");
+      qaEpisodeBrowser.classList.add("qa-episode-deck", "qa-netflix-episode-list");
       const toolbar = document.createElement("div");
       toolbar.className = "qa-episode-toolbar";
       toolbar.innerHTML =
         '<button type="button" class="qa-episode-step" data-qa-step="-1" aria-label="Previous episode">‹ <span>Previous</span></button>' +
-        '<div class="qa-episode-now" role="status" aria-live="polite"><small>NOW SELECTED</small><strong>Episode 1 / ' + cards.length + '</strong></div>' +
-        '<button type="button" class="qa-episode-step qa-episode-next" data-qa-step="1" aria-label="Next episode"><span>Next</span> ›</button>';
+        '<div class="qa-episode-now" role="status" aria-live="polite"><small>EPISODES</small><strong>Episode 1 / ' + cards.length + '</strong></div>' +
+        '<button type="button" class="qa-episode-step qa-episode-next" data-qa-step="1" aria-label="Next episode"><span>Next episode</span> ›</button>';
       head.insertAdjacentElement("afterend", toolbar);
       const currentIndex = () => {
         const current = cards.findIndex((item) => item.classList.contains("active"));
@@ -383,9 +383,14 @@ async function load() {
           item.setAttribute("aria-current", i === index ? "true" : "false");
           item.setAttribute("aria-label", (item.querySelector(".episode-copy strong")?.textContent || "Episode " + (i + 1)) + (i === index ? ", currently selected" : ""));
         });
-        if (scroll && chosen && rail.scrollWidth > rail.clientWidth) {
-          const target = Math.max(0, chosen.offsetLeft - rail.offsetLeft - Math.max(0, (rail.clientWidth - chosen.offsetWidth) / 2));
-          rail.scrollTo({ left: target, behavior: "smooth" });
+        // Reuse the earlier Netflix-style vertical episode list. Scroll the
+        // list itself, never jump the whole page away from the player.
+        if (scroll && chosen && rail.scrollHeight > rail.clientHeight) {
+          const target = Math.max(0, Math.min(
+            rail.scrollHeight - rail.clientHeight,
+            chosen.offsetTop - rail.offsetTop - Math.max(0, (rail.clientHeight - chosen.offsetHeight) / 2)
+          ));
+          rail.scrollTop = target;
         }
       };
       toolbar.addEventListener("click", (event) => {
