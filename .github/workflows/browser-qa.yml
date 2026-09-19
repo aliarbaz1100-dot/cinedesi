@@ -40,6 +40,10 @@ jobs:
         env:
           PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
         run: node tests/qa-search-navigation.mjs
+      - name: Mobile app navigation state (Android and compact iPhones)
+        env:
+          PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
+        run: node tests/qa-mobile-nav.mjs
       - name: CineDesi branded standalone app launch
         env:
           PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
