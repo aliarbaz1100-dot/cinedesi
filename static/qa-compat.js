@@ -86,8 +86,9 @@
       'splash-node=' + String(!!element),
       'logo-animation=' + String(style ? style.animationName : 'none'),
       'service-worker-controlled=' + String(!!(navigator.serviceWorker && navigator.serviceWorker.controller)),
-      'events=' + qaEvents.join(', ')
-    ].join('\\n');
+      'events=' + qaEvents.join(', '),
+      'early-launch=' + (function(){try{return sessionStorage.getItem('cinedesi-qa-last-launch-check')||'none'}catch(e){return 'unavailable'}})()
+    ].join('\n');
   }
   function showQaDiagnostic() {
     if (document.getElementById('qa-launch-check-panel')) return;
