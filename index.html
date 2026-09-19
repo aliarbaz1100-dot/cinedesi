@@ -24,6 +24,13 @@
     <script>/* Older installed iOS web apps may not support the display-mode media query. */
       if (navigator.standalone === true) document.documentElement.classList.add("cd-ios-standalone");
     </script>
+    <script>/* Installed QA app and explicitly requested QA preview only. */
+      try {
+        var cinedesiInstalled = navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+        var cinedesiVisualPreview = location.hostname.indexOf("cinedesi-qa-") === 0 && new URLSearchParams(location.search).has("qa-app-preview");
+        if (cinedesiInstalled || cinedesiVisualPreview) document.documentElement.classList.add("cd-app-installed");
+      } catch (e) {}
+    </script>
     <style id="pwa-splash-critical">
       .app-splash{display:none}
       @media (display-mode:standalone){html,body{background:#08090b}.app-splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 44%,#19191d 0,#08090b 40%,#020203 100%)}.splash-brand{text-align:center}.splash-logo{color:#fff;font:950 clamp(2rem,10vw,3.25rem)/1 Arial,sans-serif;letter-spacing:-.065em}.splash-logo span{color:#e50914}.splash-line{width:38px;height:2px;margin:18px auto 13px;background:#e50914}.splash-brand p{margin:0;color:#858991;font:700 .72rem/1.4 Arial,sans-serif;letter-spacing:.15em;text-transform:uppercase}.splash-brand strong{color:#ddd}}
@@ -85,6 +92,7 @@
     <link rel="stylesheet" href="./src/styles.css" />
     <link rel="stylesheet" href="./src/premium.css" />
     <link rel="stylesheet" href="./src/polish.css" />
+    <link rel="stylesheet" href="./src/app-installed-premium.css" />
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"CineDesi","url":"https://cinedesi.online/","description":"CineDesi helps audiences discover trending movies and series, official full titles where available, trailers and verified legal streaming destinations."}</script>
     <script id="catalog-schema" type="application/ld+json">{"@context":"https://schema.org","@type":"ItemList","itemListElement":[]}</script>
   </head>
