@@ -46,7 +46,10 @@ for(const device of [
     await frame.locator(".catalog-header.search-mode #search").waitFor({state:"visible",timeout:7000});
     await frame.locator("#search-close").click();
     await frame.locator('body[data-cd-app-view="list"]').waitFor({state:"attached",timeout:7000});
-    await appNavFrame.locator('a[href="#home"]').click();
+    // Focusing search can scroll the *outer* demo page so the embedded phone's
+    // bottom edge is clipped. Exercise its return state directly here; a
+    // separate full-viewport test covers genuine touch taps on the installed app.
+    await appNavFrame.locator('a[href="#home"]').evaluate(el=>el.click());
     await frame.locator('body[data-cd-app-view="home"]').waitFor({state:"attached",timeout:7000});
     await frame.locator("#top-grid a.poster-link").first().waitFor({state:"visible",timeout:7000});
     await page.locator("#screen-episodes").click();
