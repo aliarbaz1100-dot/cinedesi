@@ -126,14 +126,16 @@
     },510);
   }
   function show(node){
-    if(!node||node!==splash||document.hidden)return;
+    if(!pending||!node||node!==splash||document.hidden)return;
     pending=false;shownAt=Date.now();
-    // Reset animation AFTER the iOS native static launch frame has yielded.
+    // The installed iOS Home Screen snapshot can consume CSS keyframes while
+    // its webview is hidden. A new subtree starts the EXACT preview animation
+    // only after the actual web page receives visible rendering frames.
     node.classList.remove("splash-exit");
-    var brand=node.querySelector(".splash-brand");
-    node.style.animation="none";if(brand)brand.style.animation="none";
-    void node.offsetHeight;
-    node.style.animation="";if(brand)brand.style.animation="";
+    var oldBrand=node.querySelector(".splash-brand");
+    if(oldBrand&&oldBrand.parentNode){
+      oldBrand.parentNode.replaceChild(oldBrand.cloneNode(true),oldBrand);
+    }
     node.style.opacity="";
     removal=window.setTimeout(function(){remove(node)},2200);
   }
