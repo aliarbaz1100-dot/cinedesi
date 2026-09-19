@@ -94,11 +94,14 @@ async function load() {
     return;
   }
   const db = supabase.createClient(URL, KEY);
+  const qaDomain = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
   const track = async (event) => {
+    if (qaDomain) return;
     const { error: error2 } = await db.rpc("track_cinedesi_event", { p_event_type: event, p_movie_slug: slug });
     if (error2) console.warn("CineDesi analytics event failed", error2.message);
   };
   const trackDestination = async (provider, url) => {
+    if (qaDomain) return;
     const { error: error2 } = await db.from("monetization_clicks").insert({ movie_id: m?.id || null, provider_name: provider, destination_url: url, click_type: "watch" });
     if (error2) console.warn("CineDesi destination tracking failed", error2.message);
   };
@@ -428,7 +431,7 @@ async function load() {
   const showPlayerFallback = (errorCode = 0) => {
     if (!playbackFailureLogged) {
       playbackFailureLogged = true;
-      db.from("playback_failures").insert({
+      if (!qaDomain) db.from("playback_failures").insert({
         movie_id: m.id,
         movie_slug: m.slug,
         source_name: m.full_video_source || m.source_name || "",
