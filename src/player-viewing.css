@@ -12,6 +12,14 @@
 #watch .cd-wide-button:focus-visible,
 #watch .cd-wide-exit:focus-visible{outline:2px solid #fff;outline-offset:3px}
 #watch #player-view-note{flex:1;min-width:175px}
+#watch .cd-player-source-link{
+ color:#e7e7e9!important;font-weight:700;font-size:.77rem;
+ border:1px solid rgba(255,255,255,.19);border-radius:6px;
+ min-height:44px;padding:10px 12px;display:inline-flex;align-items:center;
+ text-decoration:none;white-space:nowrap;background:#17171b
+}
+#watch .cd-player-source-link:focus-visible{outline:2px solid #fff;outline-offset:3px}
+
 #watch .cd-player-stage{position:relative;width:100%;background:#000;isolation:isolate}
 #watch .cd-player-stage .legal-player{
  position:relative;display:block;aspect-ratio:16/9;width:100%;
