@@ -2,7 +2,7 @@
 (function () {
   var qa = /(^|[.-])qa([.-]|$)/i.test(location.hostname) ||
            /[?&]qa=1(?:&|$)/.test(location.search);
-  var release = location.hostname === 'cinedesi.online' || /\\.cinedesi\\.online$/i.test(location.hostname);
+  var release = location.hostname === 'cinedesi.online' || location.hostname.endsWith(".cinedesi.online");
   if (!qa && !release) return;
   // Shared, approved layout and Safari 12 shims apply on the live domain too.
   // Only the diagnostic tools and QA-only analytics restrictions remain private.
