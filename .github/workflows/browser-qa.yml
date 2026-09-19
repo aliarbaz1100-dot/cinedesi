@@ -28,6 +28,10 @@ jobs:
         env:
           PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
         run: node tests/qa-player-view.mjs
+      - name: Verified series episode navigation (Android, compact iPhones and desktop)
+        env:
+          PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
+        run: node tests/qa-episode-nav.mjs
       - name: CineDesi branded standalone app launch
         env:
           PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
