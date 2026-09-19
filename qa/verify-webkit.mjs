@@ -34,11 +34,14 @@ try {
     const response = await page.goto(base + "/?qa=1&source=pwa", { waitUntil: "domcontentloaded", timeout: 30000 });
     assert.equal(response?.status(), 200);
     await page.locator("#app-splash").waitFor({ state: "visible", timeout: 1800 });
-    await page.waitForFunction(() => document.querySelector("#app-splash")?.classList.contains("qa-intro-play"), null, { timeout: 1700 });
+    // iOS-like WebKit may complete the deliberately short intro before the
+    // test starts polling. Check the durable per-page event recorded when the
+    // REAL installed overlay begins its logo keyframes.
+    await page.waitForFunction(() => document.documentElement.getAttribute("data-qa-intro-started") === "1", null, { timeout: 4600 });
     const splash = await page.evaluate(() => ({
-      logo: document.querySelector("#app-splash .splash-logo")?.textContent,
-      label: document.querySelector("#app-splash .splash-brand p")?.textContent,
-      animation: getComputedStyle(document.querySelector("#app-splash .splash-logo")).animationName
+      logo: document.documentElement.getAttribute("data-qa-intro-logo"),
+      label: document.documentElement.getAttribute("data-qa-intro-credit"),
+      animation: document.documentElement.getAttribute("data-qa-intro-animation")
     }));
     assert.match(String(splash.logo), /CINEDESI/);
     assert.match(String(splash.label), /Arbaz Ali/);
