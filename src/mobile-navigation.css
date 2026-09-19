@@ -44,3 +44,32 @@
     animation-duration: 1ms !important;
   }
 }
+
+/* Installed app keeps the approved CineDesi layout; only its navigation safe
+   area and currently selected destination receive app-specific polish. */
+@media (display-mode: standalone) and (max-width: 760px) {
+  .home-body { padding-bottom: 100px!important; }
+  .home-body .mobile-bottom-nav {
+    padding-bottom: 7px!important;
+    padding-bottom: max(7px, env(safe-area-inset-bottom))!important;
+    background: rgba(12,12,16,.97)!important;
+    border-color: rgba(255,255,255,.13)!important;
+  }
+  .home-body .mobile-bottom-nav [aria-current="page"] {
+    color: #fff!important;
+  }
+  .home-body .mobile-bottom-nav [aria-current="page"] svg {
+    color: #ed2438!important;
+  }
+}
+@media (max-width: 760px) {
+  html.cd-ios-standalone .home-body { padding-bottom: 100px!important; }
+  html.cd-ios-standalone .home-body .mobile-bottom-nav {
+    padding-bottom: 7px!important;
+    padding-bottom: max(7px, env(safe-area-inset-bottom))!important;
+    background: rgba(12,12,16,.97)!important;
+    border-color: rgba(255,255,255,.13)!important;
+  }
+  html.cd-ios-standalone .home-body .mobile-bottom-nav [aria-current="page"] { color: #fff!important; }
+  html.cd-ios-standalone .home-body .mobile-bottom-nav [aria-current="page"] svg { color: #ed2438!important; }
+}
