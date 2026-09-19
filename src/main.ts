@@ -2,6 +2,7 @@ import "./cinematic-v2.css";
 import "./mobile-navigation.css";
 import "./top-ten.css";
 import "./launch-polish.css";
+import "./app-installed-tabs";
 const homeReturnKey = "cinedesi-home-return-v1";
 const rememberHomeReturn = (link) => {
   const section = link.closest("section[id]");
