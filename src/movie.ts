@@ -278,7 +278,7 @@ async function load() {
     return `${/elimination/i.test(title) ? "Elimination Special" : "Official full episode"} · ${date}`;
   };
   const playlistGenerated = episodeItems.length && !episodeItems[0]?.id && Boolean(episodeItems[0]?.playlist_id);
-  const episodeList = episodeItems.length ? `<div class='episode-browser'><div class='episode-browser-head'><div><small>${seasonNumber ? `SEASON ${esc(seasonNumber)}` : "EPISODES"}</small><h3>${episodeItems.length} official episodes</h3></div><span class='muted'>${m.slug === "tamasha-season-5" ? "Launch + Episodes 2–33" : `${episodeItems.length} episodes`}</span></div><div class='episode-grid'>${episodeItems.map((episode, i) => {
+  const episodeList = episodeItems.length ? `<div class='episode-browser'><div class='episode-browser-head'><div><small>${seasonNumber ? `SEASON ${esc(seasonNumber)}` : "EPISODES"}</small><h3>${episodeItems.length} official episodes</h3></div><span class='muted'>${m.slug === "tamasha-season-5" ? "Launch + Episodes 2–33" : `${episodeItems.length} episodes`}</span></div>${episodeItems.length > 1 ? `<div class='cd-episode-controls' role='group' aria-label='Episode navigation'><button type='button' id='cd-prev-episode' disabled aria-label='Previous episode'>← Previous</button><span id='cd-episode-position' aria-live='polite'>Episode 1 of ${episodeItems.length}</span><button type='button' id='cd-next-episode' aria-label='Next episode'>Next episode →</button></div>` : ""}<div class='episode-grid'>${episodeItems.map((episode, i) => {
     const isPlaylistEpisode = Boolean(episode.playlist_id);
     const thumb = episode.id ? `https://i.ytimg.com/vi/${esc(episode.id)}/mqdefault.jpg` : esc(m.poster_url || posterArt(m));
     const disabled = episode.playlist_kind === "dailymotion" ? " data-dm-playlist='1'" : "";
@@ -313,6 +313,42 @@ async function load() {
   const posterLine = licensedPoster(m) ? `${esc(m.poster_license)}${m.poster_attribution ? ` \u2022 ${esc(m.poster_attribution)}` : ""}${m.poster_source_url ? ` \u2022 <a target='_blank' rel='noopener' href='${esc(m.poster_source_url)}'>poster source</a>` : ""}` : m._cover_kind === "youtube" ? `Official video thumbnail supplied by ${esc(m.full_video_source || m.trailer_source || "YouTube")}; linked to the verified upload.` : "CineDesi dark original fallback; no third-party poster reused.";
   const preserveFullPoster = ["cid-official-series", "crime-patrol-city-crimes-2026"].includes(String(m.slug || ""));
   root.innerHTML = `<section class='movie-hero'><div class='movie-art' ${m.poster_url ? `style="background-image:linear-gradient(#0003,#0008),url('${esc(m.poster_url)}'),url('${esc(posterArt(m))}');background-size:${preserveFullPoster ? "contain" : "cover"};background-repeat:no-repeat;background-position:center;background-color:#050506"` : ""}><span>${licensedPoster(m) ? "Licensed image" : m._cover_kind === "youtube" ? "Official video thumbnail" : "CineDesi dark cover"}</span>${trailer}</div><div class='movie-copy'><small>${esc(m.region)}</small><h1>${esc(m.title)}</h1><div class='modal-meta'><span>${esc(m.genre || "Film")}</span><span>${esc(m.release_year || "")}</span>${m.score ? `<span>CineDesi score ${esc(m.score)}</span>` : ""}</div>${titleFacts}<div class='badges'><span class='badge'>${m.rights_status === "cleared" ? "Rights cleared" : "Official links checked"}</span>${m.trailer_verified ? "<span class='badge'>Official trailer verified</span>" : ""}${m.watch_verified ? "<span class='badge'>Legal watch verified</span>" : ""}${m.full_video_verified && m.full_video_embed_url ? "<span class='badge'>Official full video on CineDesi</span>" : ""}${licensedPoster(m) ? "<span class='badge'>Licensed image</span>" : "<span class='badge'>CineDesi original cover</span>"}</div><p class='lead'>${esc(m.editorial || m.synopsis || "Editorial coming soon.")}</p>${castSection}${availabilityCallout}<div class='actions'>${watch}<button id='share' class='ghost'>Share page</button></div><div class='source-card'><strong>Verification & source transparency</strong><br>Metadata: ${esc(m.source_name || "Verified source")}${m.source_license ? ` \u2022 ${esc(m.source_license)}` : ""}${m.source_url ? ` \u2022 <a target='_blank' rel='noopener' href='${esc(m.source_url)}'>source page</a>` : ""}${m.attribution_text ? `<br>Attribution: ${esc(m.attribution_text)}` : ""}${m.trailer_source ? `<br>Trailer source: ${esc(m.trailer_source)}` : ""}<br>Poster: ${posterLine}<br>Rights checked: ${esc(checked)}</div></div></section>${fullVideo}${providerSection}${upNextSection}${relatedSection}`;
+  // Functional, unobtrusive episode controls; reuse existing verified episode URLs.
+  const episodeButtons = [...document.querySelectorAll(".episode-browser .episode-card")];
+  const previousEpisodeButton = document.querySelector("#cd-prev-episode");
+  const nextEpisodeButton = document.querySelector("#cd-next-episode");
+  const episodePosition = document.querySelector("#cd-episode-position");
+  const isPlayableEpisode = (element) => Boolean(element && !element.disabled &&
+    (element.dataset.videoId || element.dataset.playlistId));
+  const currentEpisodeIndex = () => Math.max(0, episodeButtons.findIndex((element) => element.classList.contains("active")));
+  const closestPlayableEpisode = (direction) => {
+    const current = currentEpisodeIndex();
+    for (let index = current + direction; index >= 0 && index < episodeButtons.length; index += direction) {
+      if (isPlayableEpisode(episodeButtons[index])) return episodeButtons[index];
+    }
+    return null;
+  };
+  const syncEpisodeControls = () => {
+    if (!episodeButtons.length) return;
+    const current = currentEpisodeIndex();
+    if (episodePosition) episodePosition.textContent = `Episode ${current + 1} of ${episodeButtons.length}`;
+    if (previousEpisodeButton) previousEpisodeButton.disabled = !closestPlayableEpisode(-1);
+    if (nextEpisodeButton) nextEpisodeButton.disabled = !closestPlayableEpisode(1);
+  };
+  previousEpisodeButton?.addEventListener("click", () => closestPlayableEpisode(-1)?.click());
+  nextEpisodeButton?.addEventListener("click", () => closestPlayableEpisode(1)?.click());
+  const episodeBrowser = document.querySelector(".episode-browser");
+  episodeBrowser?.addEventListener("click", (event) => {
+    if (event.target.closest(".episode-card")) queueMicrotask(syncEpisodeControls);
+  });
+  if (episodeBrowser && episodeButtons.length) {
+    const episodeObserver = new MutationObserver(() => syncEpisodeControls());
+    episodeObserver.observe(episodeBrowser.querySelector(".episode-grid"), {
+      attributes: true, attributeFilter: ["class", "disabled", "data-video-id"], subtree: true
+    });
+    window.addEventListener("pagehide", () => episodeObserver.disconnect(), { once: true });
+  }
+  syncEpisodeControls();
   document.querySelector("#detail-list")?.addEventListener("click", (event) => {
     const adding = !detailSaved.includes(m.id);
     detailSaved = adding ? [...detailSaved, m.id] : detailSaved.filter((id) => id !== m.id);
