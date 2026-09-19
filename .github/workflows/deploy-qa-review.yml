@@ -122,6 +122,8 @@ jobs:
           npm install --no-save --no-package-lock playwright@1.56.1
           npx playwright install --with-deps chromium
           node qa/verify-mobile.mjs
+      - name: QA category and See All isolation with deterministic catalog
+        run: node qa/verify-category-isolation.mjs
       - name: WebKit mobile UI regression + review screenshots
         run: |
           npx playwright install --with-deps webkit
