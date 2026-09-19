@@ -24,6 +24,10 @@ jobs:
         env:
           PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
         run: node tests/qa-browser.mjs
+      - name: iPhone and Android installable app preview
+        env:
+          PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
+        run: node tests/qa-app-install-preview.mjs
       - name: Original player native fullscreen and PiP compatibility checks
         env:
           PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
