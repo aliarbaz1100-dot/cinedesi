@@ -604,9 +604,11 @@ function init() {
           `<div class='info'><span class='cd-resume-label'>${resumeLabel}</span><div class='card-title-row'>`);
         try {
           const progress = JSON.parse(localStorage.getItem(`cinedesi-video-progress:${m.slug}`) || "null");
-          const currentYoutubeId = String(m.full_video_embed_url || "").match(/youtube(?:-nocookie)?\\.com\\/embed\\/([\\w-]{11})/i)?.[1];
+          const embedUrl = String(m.full_video_embed_url || "");
+          const isYoutubeEmbed = embedUrl.includes("youtube.com/embed/") || embedUrl.includes("youtube-nocookie.com/embed/");
+          const currentYoutubeId = isYoutubeEmbed ? embedUrl.split("/embed/")[1]?.split(/[?&#/]/)[0] : "";
           const elapsed = Number(progress?.seconds), duration = Number(progress?.duration);
-          if (currentYoutubeId && progress?.videoId === currentYoutubeId &&
+          if (currentYoutubeId?.length === 11 && progress?.videoId === currentYoutubeId &&
             Number.isFinite(elapsed) && Number.isFinite(duration) && duration > 45 &&
             elapsed > 10 && elapsed < duration - 15 && progress.updatedAt > Date.now() - 30 * 86400000) {
             const percentage = Math.max(1, Math.min(98, Math.round(100 * elapsed / duration)));
