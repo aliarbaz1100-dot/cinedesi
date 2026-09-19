@@ -314,7 +314,7 @@ function init() {
     const trendMap = new Map((trendingRows || []).map((row) => [row.movie_slug, Number(row.trend_score) || 0]));
     movies = movies.map((m) => ({ ...m, _trend_score: trendMap.get(m.slug) || 0 }));
     try {
-      const homeItems = [...movies.filter((m) => isHomeDisplayTitle(m)).slice(0, 140), ...movies.filter((m) => m.full_video_verified && m.full_video_embed_url).slice(0, 80)];
+      const homeItems = [...movies.filter((m) => isHomeDisplayTitle(m)).slice(0, 140), ...movies.filter(isNewNonCinedesiMovie).slice(0, 80), ...movies.filter(hasWatchOnCineDesi).slice(0, 80)];
       const uniqueItems = [...new Map(homeItems.map((m) => [m.id, m])).values()];
       localStorage.setItem("cinedesi-home-cache-v1", JSON.stringify({ savedAt: Date.now(), items: uniqueItems }));
     } catch {}
@@ -438,9 +438,13 @@ function init() {
     const note = String(m.availability_note || "");
     return /\b(?:premieres|coming|scheduled|arrives)\b/i.test(note) && !/\b(?:premiered|streaming now|available now)\b/i.test(note);
   };
+  // A title can appear outside New & Trending only when the actual
+  // Watch on CineDesi player is verified and has an internal embed URL.
+  // An official trailer or external legal watch link does not qualify.
+  const hasWatchOnCineDesi = (m) => Boolean(m.full_video_verified && m.full_video_embed_url);
   const isHomeDisplayTitle = (m) => {
     const currentYear = new Date().getFullYear();
-    if (isUpcomingTitle(m)) return false;
+    if (!hasWatchOnCineDesi(m) || isUpcomingTitle(m)) return false;
     return Number(m._trend_score || 0) > 0 || Number(m.release_year || 0) >= currentYear - 1;
   };
   const rankRail = (list) => [...list].sort((a,b) =>
@@ -510,13 +514,8 @@ function init() {
       !isUpcomingTitle(m);
   };
 
-  const isNewNonCinedesiMovie = (m) => {
-    const currentYear = new Date().getFullYear();
-    return m.content_type === "movie" &&
-      Number(m.release_year || 0) >= currentYear - 1 &&
-      !(m.full_video_verified && m.full_video_embed_url) &&
-      !isUpcomingTitle(m);
-  };
+  const isNewNonCinedesiMovie = (m) =>
+    m.content_type === "movie" && !hasWatchOnCineDesi(m);
 
   function renderSeries() {
     const all = rankRail(movies.filter(isHollywoodMovie));
@@ -550,7 +549,7 @@ function init() {
     const gs = ["Action", "Comedy", "Horror", "Drama", "Romance", "Thriller", "Cartoons"];
     genreChips.innerHTML = gs.map((g) => `<button class='genre-chip' data-genre='${g}'>${g}</button>`).join("");
     genreRails.innerHTML = gs.map((g) => {
-      const all = rankRail(movies.filter((m) => genreMatch(m, g) && (g === "Cartoons" || isHomeDisplayTitle(m))));
+      const all = rankRail(movies.filter((m) => hasWatchOnCineDesi(m) && genreMatch(m, g) && (g === "Cartoons" || isHomeDisplayTitle(m))));
       const list = g === "Cartoons" ? all.slice(0, 8) : claimRail(all, 8);
       if (!list.length) return "";
       return `<div class='rail-block genre-block' id='genre-${g.toLowerCase()}'><div class='rail-heading'><h3>${g}</h3><button type='button' data-genre-see='${g}'>See all \u2192</button></div><div class='grid rail genre-rail'>${list.map((m) => card(m)).join("")}</div></div>`;
@@ -606,7 +605,7 @@ function init() {
     } catch {}
 
     const bySlug = new Map(movies.map((m) => [m.slug, m]));
-    const recentMovies = recentItems.map((x) => bySlug.get(x.slug)).filter(Boolean).slice(0, 12);
+    const recentMovies = recentItems.map((x) => bySlug.get(x.slug)).filter((m) => m && hasWatchOnCineDesi(m)).slice(0, 12);
     const qaPreview = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
     const continueMovies = continueItems.filter((x) => !qaPreview || !x.completed)
       .map((x) => bySlug.get(x.slug)).filter((m) => m && m.full_video_verified && m.full_video_embed_url).slice(0, 12);
@@ -674,7 +673,7 @@ function init() {
     const section = q("#coming-soon");
     if (!comingGrid || !section) return;
     const all = [...movies]
-      .filter(isUpcomingTitle)
+      .filter((m) => hasWatchOnCineDesi(m) && isUpcomingTitle(m))
       .sort((a,b) => (Number(b.score)||0) - (Number(a.score)||0) || String(b.updated_at || "").localeCompare(String(a.updated_at || "")));
     section.hidden = all.length === 0;
     const list = all.slice(0,12);
@@ -842,7 +841,7 @@ function init() {
   function render() {
     const term = search.value.trim().toLowerCase(), r = region.value, a = availability.value, s = sort.value, t = contentType.value;
     const south = (v) => ["South", "South Indian", "India / South Indian"].includes(String(v));
-    const list = movies.filter((m) => (activeCollection !== "new" || isNewNonCinedesiMovie(m)) && (activeCollection !== "upcoming" || isUpcomingTitle(m)) && (activeCollection !== "binge" || (m.content_type === "series" && isHomeDisplayTitle(m) && m.full_video_verified && m.full_video_embed_url && Number(m.episode_count || 0) >= 5)) && (activeCollection !== "turkish" || (m.content_type === "series" && String(m.region || "").toLowerCase() === "turkey" && String(m.original_language || "").toLowerCase() === "turkish" && m.full_video_verified && Boolean(m.full_video_embed_url) && !isUpcomingTitle(m))) && (activeCollection !== "hollywood" || isHollywoodMovie(m)) && (activeCollection !== "genre" || genreMatch(m, activeCollectionValue)) && (t === "all" || m.content_type === t) && (r === "All" || m.region === r || r === "South" && south(m.region)) && (a === "all" || a === "watch" && m.watch_verified && m.watch_url || a === "trailer" && m.trailer_verified && m.trailer_url || a === "cinedesi" && m.full_video_verified && m.full_video_embed_url) && searchText(m).includes(term)).sort((x, y) => activeCollection === "top" ? (Number(y._trend_score) || 0) - (Number(x._trend_score) || 0) || (Number(y.score) || 0) - (Number(x.score) || 0) : activeCollection === "upcoming" ? (Number(y.score) || 0) - (Number(x.score) || 0) || String(y.updated_at || "").localeCompare(String(x.updated_at || "")) : s === "title" ? String(x.title).localeCompare(String(y.title)) : s === "newest" ? (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : 0), shown = list.slice(0, visibleLimit);
+    const list = movies.filter((m) => (activeCollection === "new" ? isNewNonCinedesiMovie(m) : hasWatchOnCineDesi(m)) && (activeCollection !== "upcoming" || isUpcomingTitle(m)) && (activeCollection !== "binge" || (m.content_type === "series" && isHomeDisplayTitle(m) && m.full_video_verified && m.full_video_embed_url && Number(m.episode_count || 0) >= 5)) && (activeCollection !== "turkish" || (m.content_type === "series" && String(m.region || "").toLowerCase() === "turkey" && String(m.original_language || "").toLowerCase() === "turkish" && m.full_video_verified && Boolean(m.full_video_embed_url) && !isUpcomingTitle(m))) && (activeCollection !== "hollywood" || isHollywoodMovie(m)) && (activeCollection !== "genre" || genreMatch(m, activeCollectionValue)) && (t === "all" || m.content_type === t) && (r === "All" || m.region === r || r === "South" && south(m.region)) && (a === "all" || a === "watch" && m.watch_verified && m.watch_url || a === "trailer" && m.trailer_verified && m.trailer_url || a === "cinedesi" && m.full_video_verified && m.full_video_embed_url) && searchText(m).includes(term)).sort((x, y) => activeCollection === "top" ? (Number(y._trend_score) || 0) - (Number(x._trend_score) || 0) || (Number(y.score) || 0) - (Number(x.score) || 0) : activeCollection === "upcoming" ? (Number(y.score) || 0) - (Number(x.score) || 0) || String(y.updated_at || "").localeCompare(String(x.updated_at || "")) : s === "title" ? String(x.title).localeCompare(String(y.title)) : s === "newest" ? (Number(y.release_year) || 0) - (Number(x.release_year) || 0) : 0), shown = list.slice(0, visibleLimit);
     grid.innerHTML = shown.length ? shown.map((m) => card(m)).join("") : `<div class='empty'>No published titles match these filters yet.</div>`;
     status.textContent = list.length ? `Showing ${shown.length} of ${list.length} matching titles` : "No matching published titles";
     loadMore.hidden = shown.length >= list.length;
@@ -850,7 +849,7 @@ function init() {
   }
   function renderWatchlist() {
     const byId = new Map(movies.map((m) => [m.id, m]));
-    const list = saved.map((id) => byId.get(id)).filter(Boolean);
+    const list = saved.map((id) => byId.get(id)).filter((m) => m && hasWatchOnCineDesi(m));
     watchGrid.innerHTML = list.length ? list.map((m) => card(m)).join("") : `<div class='empty'>Your watchlist is empty. Save a movie from Discover and it will stay here on this device.</div>`;
     wire(watchGrid);
   }
