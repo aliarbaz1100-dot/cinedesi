@@ -25,6 +25,7 @@
     <script id="qa-launch-detect">(function(){
   try{
     var qa=/(^|[.-])qa([.-]|$)/i.test(location.hostname);
+    var release=location.hostname==="cinedesi.online"||/\\.cinedesi\\.online$/i.test(location.hostname);
     var home=location.pathname==="/"||location.pathname==="/index.html";
     var installed=navigator.standalone===true||
       !!(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches);
@@ -35,7 +36,7 @@
     if(returning){try{sessionStorage.removeItem("cinedesi-qa-internal-nav")}catch(e){}}
     // IMPORTANT: source=pwa and phone UA alone never turn browser visitors into
     // an installed app. The animated overlay exists only inside the PWA icon.
-    var play=qa&&home&&installed&&window.top===window&&!returning;
+    var play=(qa||release)&&home&&installed&&window.top===window&&!returning;
     if(qa){
       try{
         sessionStorage.setItem("cinedesi-qa-last-launch-check",
