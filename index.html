@@ -24,6 +24,23 @@
     <style id="pwa-splash-critical">
       .app-splash{display:none}
       @media (display-mode:standalone){html,body{background:#08090b}.app-splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 44%,#19191d 0,#08090b 40%,#020203 100%)}.splash-brand{text-align:center}.splash-logo{color:#fff;font:950 clamp(2rem,10vw,3.25rem)/1 Arial,sans-serif;letter-spacing:-.065em}.splash-logo span{color:#e50914}.splash-line{width:38px;height:2px;margin:18px auto 13px;background:#e50914}.splash-brand p{margin:0;color:#858991;font:700 .72rem/1.4 Arial,sans-serif;letter-spacing:.15em;text-transform:uppercase}.splash-brand strong{color:#ddd}}
+      /* Original CineDesi brand animation; independent of the main app bundle. */
+      @media (display-mode:standalone){
+        .app-splash{background:#050507!important;overflow:hidden}
+        .app-splash .splash-brand{width:100%;max-width:100vw;padding:24px;text-align:center}
+        .app-splash .splash-logo{display:flex;align-items:center;justify-content:center;gap:.04em;font:950 clamp(2rem,9.2vw,3.5rem)/1 Arial,sans-serif;letter-spacing:-.07em;white-space:nowrap}
+        .app-splash .splash-logo .splash-cine{color:#f7f7f9!important;animation:cdRevealCine .65s cubic-bezier(.2,.7,.1,1) both}
+        .app-splash .splash-logo .splash-desi{color:#e50914!important;animation:cdRevealDesi .72s cubic-bezier(.2,.7,.1,1) .09s both}
+        .app-splash .splash-line{transform-origin:center;animation:cdRevealLine .55s ease .37s both}
+        .app-splash .splash-brand p{animation:cdRevealCredit .55s ease .48s both}
+      }
+      @keyframes cdRevealCine{from{opacity:0;transform:translate3d(-16px,0,0) scale(.975)}to{opacity:1;transform:none}}
+      @keyframes cdRevealDesi{from{opacity:0;transform:translate3d(16px,0,0) scale(.975)}to{opacity:1;transform:none}}
+      @keyframes cdRevealLine{from{opacity:0;transform:scaleX(.15)}to{opacity:1;transform:scaleX(1)}}
+      @keyframes cdRevealCredit{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+      @media (prefers-reduced-motion:reduce){
+        .app-splash .splash-logo .splash-cine,.app-splash .splash-logo .splash-desi,.app-splash .splash-line,.app-splash .splash-brand p{animation:none!important;opacity:1!important;transform:none!important}
+      }
     </style>
     <link rel="manifest" href="/manifest.webmanifest?v=9" />
     <link rel="icon" type="image/svg+xml" href="./cinedesi-icon.svg?v=3" />
@@ -42,7 +59,7 @@
     <script id="catalog-schema" type="application/ld+json">{"@context":"https://schema.org","@type":"ItemList","itemListElement":[]}</script>
   </head>
   <body class="home-body">
-    <div id="app-splash" class="app-splash" aria-hidden="true"><div class="splash-brand"><div class="splash-logo">CINE<span>DESI</span></div><div class="splash-line"></div><p>Powered by <strong>Arbaz Ali</strong></p></div></div>
+    <div id="app-splash" class="app-splash" aria-hidden="true"><div class="splash-brand"><div class="splash-logo"><span class="splash-cine">CINE</span><span class="splash-desi">DESI</span></div><div class="splash-line"></div><p>Powered by <strong>Arbaz Ali</strong></p></div></div>
     <script>/* Independent startup failsafe even when the main bundle fails to load. */ setTimeout(function(){var splash=document.getElementById("app-splash");if(splash){splash.classList.add("splash-exit");splash.remove();}},5000);</script>
     <div id="app">
       <header class="catalog-header">
