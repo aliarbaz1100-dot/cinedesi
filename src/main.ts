@@ -589,7 +589,9 @@ function init() {
 
     const bySlug = new Map(movies.map((m) => [m.slug, m]));
     const recentMovies = recentItems.map((x) => bySlug.get(x.slug)).filter(Boolean).slice(0, 12);
-    const continueMovies = continueItems.map((x) => bySlug.get(x.slug)).filter((m) => m && m.full_video_verified && m.full_video_embed_url).slice(0, 12);
+    const qaPreview = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
+    const continueMovies = continueItems.filter((x) => !qaPreview || !x.completed)
+      .map((x) => bySlug.get(x.slug)).filter((m) => m && m.full_video_verified && m.full_video_embed_url).slice(0, 12);
 
     if (continueGrid && continueSection) {
       continueSection.hidden = continueMovies.length === 0;
@@ -604,7 +606,6 @@ function init() {
         } else {
           html = html.replace("▶ Details", "▶ Resume");
         }
-        const qaPreview = /(^|[.-])qa([.-]|$)/i.test(location.hostname) || new URLSearchParams(location.search).get("qa") === "1";
         if (qaPreview) {
           const rawSeconds = Number(resume?.position_seconds);
           const rawDuration = Number(resume?.duration_seconds);
