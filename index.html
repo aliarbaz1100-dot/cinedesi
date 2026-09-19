@@ -29,11 +29,31 @@
     var home=location.pathname==="/"||location.pathname==="/index.html";
     var installed=navigator.standalone===true||
       !!(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches);
-    var returning=/[?&](?:returnY|returnSection|returnOffset)=/.test(location.search);
+    var returning=/[?&](?:returnY|returnSection|returnOffset|fromMovie)=/.test(location.search);
+    // iOS PWA can reload Home instead of using BFCache when returning from
+    // a video. History/referrer also suppress a false launch on that path.
+    try{
+      var navigation=performance.getEntriesByType&&performance.getEntriesByType("navigation")[0];
+      if(navigation&&navigation.type==="back_forward")returning=true;
+      var previous=document.referrer?new URL(document.referrer,location.href):null;
+      if(previous&&previous.origin===location.origin&&
+         (previous.pathname==="/movie"||previous.pathname==="/movie.html"))returning=true;
+    }catch(e){}
     var recent=0;
     try{recent=Number(sessionStorage.getItem("cinedesi-qa-internal-nav")||0)}catch(e){}
     if(recent>0&&Date.now()-recent<90000)returning=true;
-    if(returning){try{sessionStorage.removeItem("cinedesi-qa-internal-nav")}catch(e){}}
+    if(returning){
+      try{sessionStorage.removeItem("cinedesi-qa-internal-nav")}catch(e){}
+      // One-time navigation marker must not survive into later Home Screen
+      // icon opens, which should continue to receive the normal launch intro.
+      if(/[?&]fromMovie=1(?:&|$)/.test(location.search)){
+        try{
+          var clean=new URL(location.href);
+          clean.searchParams.delete("fromMovie");
+          history.replaceState(history.state,"",clean.href);
+        }catch(e){}
+      }
+    }
     // IMPORTANT: source=pwa and phone UA alone never turn browser visitors into
     // an installed app. The animated overlay exists only inside the PWA icon.
     var play=(qa||release)&&home&&installed&&window.top===window&&!returning;
