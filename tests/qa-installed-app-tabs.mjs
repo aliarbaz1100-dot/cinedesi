@@ -38,6 +38,16 @@ for(const d of devices){
        appTransform:getComputedStyle(document.querySelector("#app")).transform};
    });
    console.log("QA INSTALLED NAV HIT",d.name,JSON.stringify(diagnostic));
+   const layout=await page.evaluate(()=>({
+     visual:{width:window.visualViewport?.width,height:window.visualViewport?.height,scale:window.visualViewport?.scale},
+     clientWidth:document.documentElement.clientWidth,screenWidth:screen.width,
+     viewportMeta:document.querySelector('meta[name="viewport"]')?.content,
+     offscreen:[...document.querySelectorAll('body *')].map(el=>{
+       const r=el.getBoundingClientRect(); return {el,id:el.id,tag:el.tagName,cls:String(el.className||'').slice(0,85),l:Math.round(r.left),r:Math.round(r.right),w:Math.round(r.width)};
+     }).filter(o=>o.r>390 || o.l<0).sort((a,b)=>b.r-a.r).slice(0,14).map(({el,...rest})=>rest)
+   }));
+   console.log("QA INSTALLED LAYOUT",d.name,JSON.stringify(layout));
+
    await nav.locator('a[href="#top-today"]').click();
    await page.locator("body[data-cd-app-view='new']").waitFor({state:"attached",timeout:7000});
    await page.locator("#new-releases").waitFor({state:"visible",timeout:7000});
