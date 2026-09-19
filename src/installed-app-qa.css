@@ -126,3 +126,145 @@
   html.cd-qa-legacy .movie-page .legal-player { width: 100% !important; min-width: 0 !important; overflow: hidden !important; }
   html.cd-qa-legacy .movie-page .legal-player iframe { display: block; width: 100% !important; max-width: 100% !important; }
 }
+
+/* QA-only detail/episode polish; featured home display continues to use live CSS. */
+@media screen and (max-width: 620px) {
+  html.cd-qa-mode .movie-page {
+    background: #050505 !important;
+    padding: 8px 0 90px !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+  html.cd-qa-mode .movie-page .movie-hero {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    min-width: 0 !important;
+  }
+  html.cd-qa-mode .movie-page .movie-art {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    aspect-ratio: 16 / 9 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background-color: #080809;
+  }
+  html.cd-qa-mode .movie-page .movie-copy {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 16px 16px 0 !important;
+  }
+  html.cd-qa-mode .movie-page .movie-copy h1 {
+    max-width: 100%;
+    margin: 7px 0 11px !important;
+    font-size: 34px !important;
+    line-height: 1.06 !important;
+    letter-spacing: -.045em !important;
+    overflow-wrap: break-word;
+  }
+  html.cd-qa-mode .movie-page .movie-copy .lead {
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+    color: #cdced2 !important;
+  }
+  html.cd-qa-mode .movie-page .movie-copy .actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  html.cd-qa-mode .movie-page .movie-copy .actions .detail-play-btn {
+    grid-column: 1 / -1 !important;
+    min-height: 46px !important;
+    color: #080809 !important;
+    background: #fff !important;
+  }
+  html.cd-qa-mode .movie-page .movie-copy .actions > * {
+    min-width: 0 !important;
+    font-size: 12px !important;
+    border-radius: 7px !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html.cd-qa-mode .movie-page .legal-player-section,
+  html.cd-qa-mode .movie-page .engage-section {
+    margin: 18px 12px !important;
+    width: calc(100% - 24px) !important;
+    min-width: 0 !important;
+    padding: 13px !important;
+    border: 1px solid rgba(255,255,255,.08) !important;
+    border-radius: 12px !important;
+    background: #111113 !important;
+    box-shadow: none !important;
+  }
+  html.cd-qa-mode .movie-page .legal-player {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    aspect-ratio: 16 / 9;
+    overflow: hidden !important;
+    background: #000 !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+  }
+  html.cd-qa-mode .movie-page .legal-player iframe {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    border: 0;
+  }
+  html.cd-qa-mode .movie-page .episode-browser {
+    margin-top: 18px !important;
+    min-width: 0 !important;
+  }
+  html.cd-qa-mode .movie-page .episode-browser-head {
+    align-items: center !important;
+    gap: 8px;
+  }
+  html.cd-qa-mode .movie-page .episode-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+    min-width: 0 !important;
+  }
+  html.cd-qa-mode .movie-page .episode-card {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+    min-height: 76px !important;
+    padding: 8px !important;
+    border-radius: 9px !important;
+    border: 1px solid rgba(255,255,255,.07) !important;
+    background: #1a1a1d !important;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  html.cd-qa-mode .movie-page .episode-card.active {
+    border-color: rgba(229,9,20,.75) !important;
+    background: #211719 !important;
+  }
+  html.cd-qa-mode .movie-page .episode-copy {
+    min-width: 0 !important;
+    text-align: left !important;
+    flex: 1 1 auto;
+  }
+  html.cd-qa-mode .movie-page .episode-copy strong {
+    display: block;
+    font-size: 13px !important;
+    line-height: 1.3 !important;
+    overflow-wrap: break-word;
+  }
+  html.cd-qa-mode .movie-page .episode-copy small {
+    display: block;
+    color: #aaabb1 !important;
+    font-size: 10px !important;
+    line-height: 1.35 !important;
+  }
+}
+@media screen and (max-width: 375px) {
+  html.cd-qa-mode .movie-page .movie-copy h1 { font-size: 30px !important; }
+  html.cd-qa-mode .movie-page .movie-copy .actions > * { font-size: 11px !important; }
+}
