@@ -43,6 +43,7 @@
   </head>
   <body class="home-body">
     <div id="app-splash" class="app-splash" aria-hidden="true"><div class="splash-brand"><div class="splash-logo">CINE<span>DESI</span></div><div class="splash-line"></div><p>Powered by <strong>Arbaz Ali</strong></p></div></div>
+    <script>/* Independent startup failsafe even when the main bundle fails to load. */ setTimeout(function(){var splash=document.getElementById("app-splash");if(splash){splash.classList.add("splash-exit");splash.remove();}},5000);</script>
     <div id="app">
       <header class="catalog-header">
         <a class="logo" href="./">CINE<span>DESI</span></a>
