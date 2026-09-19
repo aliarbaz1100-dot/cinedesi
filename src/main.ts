@@ -608,7 +608,7 @@ function init() {
     const bySlug = new Map(movies.map((m) => [m.slug, m]));
     const recentMovies = recentItems.map((x) => bySlug.get(x.slug)).filter((m) => m && hasWatchOnCineDesi(m)).slice(0, 12);
     const qaPreview = /(^|[.-])qa([.-]|$)/i.test(location.hostname) ||
-      location.hostname === "cinedesi.online" || /\\.cinedesi\\.online$/i.test(location.hostname) ||
+      location.hostname === "cinedesi.online" || location.hostname.endsWith(".cinedesi.online") ||
       new URLSearchParams(location.search).get("qa") === "1";
     const continueMovies = continueItems.filter((x) => !qaPreview || !x.completed)
       .map((x) => bySlug.get(x.slug)).filter((m) => m && m.full_video_verified && m.full_video_embed_url).slice(0, 12);
