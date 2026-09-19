@@ -24,8 +24,18 @@ try {
   });
   assert.equal(await page.locator("#install-banner").isVisible(), false, "Install prompt must not obstruct home");
   console.log("PASS mobile homepage: real movie cards visible, install popup hidden");
+  const selectedMovieHref = await page.locator("#top-grid a.poster-link[href*='/movie.html?slug=']").first().getAttribute("href");
+  console.log("CLICK TARGET", selectedMovieHref);
+  page.on("framenavigated", frame => { if (frame === page.mainFrame()) console.log("NAVIGATED", frame.url()); });
   await page.locator("#top-grid a.poster-link[href*='/movie.html?slug=']").first().click();
-  await page.waitForURL(/\/movie\.html\?slug=/, { waitUntil: "domcontentloaded", timeout: 30000 });
+  console.log("URL IMMEDIATELY AFTER CLICK", page.url());
+  await page.waitForTimeout(1500);
+  console.log("URL AFTER 1.5S", page.url());
+  await page.waitForURL(/\/movie\.html\?slug=/, { waitUntil: "domcontentloaded", timeout: 12000 }).catch(async error => {
+    console.log("PAGE URL ON FAILURE", page.url());
+    console.log("PAGE BODY ON FAILURE", (await page.locator("body").innerText().catch(() => "")).slice(0, 900));
+    throw error;
+  });
   await page.waitForFunction(() => {
     const text = document.querySelector("#movie-page")?.textContent || "";
     return text.length > 100 && !text.includes("Loading verified movie details");
