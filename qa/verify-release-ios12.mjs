@@ -67,7 +67,7 @@ try {
   assert.equal(state.host,"cinedesi.online");
   assert.ok(state.class&&state.installed&&state.shimmed&&introPlayed,"Live origin should use approved UI, real standalone intro, and Safari 12 shims");
   assert.deepEqual(new Set(state.newIds),new Set([92001,92002]),"Only non-Watch movies in New & Trending");
-  assert.ok(state.topIds.length&&state.topIds.every(id=>id===92003),"Other rails only Watch on CineDesi");
+  assert.ok(state.topIds.length&&state.topIds.every(id=>id===92003||id===92004),"Other rails only Watch on CineDesi (movie OR playable series)");
   assert.equal(state.diagnostic,false,"Private QA debug controls must stay out of production");
   await page.locator("#app-splash").waitFor({state:"detached",timeout:6000});
   await page.locator("#bottom-search").click();
