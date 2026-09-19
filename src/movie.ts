@@ -539,7 +539,12 @@ async function load() {
     if (progressTimer !== null) { clearInterval(progressTimer); progressTimer = null; }
   };
   window.addEventListener("pagehide", () => { saveProgress(); stopProgressTimer(); }, { once: true });
-  document.addEventListener("visibilitychange", () => { if (document.hidden) saveProgress(); }, { passive: true });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { saveProgress(); stopProgressTimer(); }
+    else if (youtubePlaylistPlayer?.getPlayerState?.() === 1 && progressTimer === null) {
+      progressTimer = window.setInterval(saveProgress, 12000);
+    }
+  }, { passive: true });
   const onVerifiedVideoReady = (event) => {
     if (episodeItems.length || !resumeRow || !resumeButton) return;
     const saved = getStoredProgress();
@@ -558,6 +563,14 @@ async function load() {
   const onVerifiedVideoStateChange = (event) => {
     if (episodeItems.length) return;
     if (Number(event?.data) === 1) {
+      // Add to Continue Watching only after real playback, not when viewing a detail page.
+      try {
+        const existing = JSON.parse(localStorage.getItem("cinedesi_continue") || "[]");
+        const list = Array.isArray(existing) ? existing.filter((item) => item.slug !== m.slug) : [];
+        list.unshift({ slug: m.slug, title: m.title, region: m.region, genre: m.genre,
+          episode_index: null, episode_number: null, updated_at: Date.now() });
+        localStorage.setItem("cinedesi_continue", JSON.stringify(list.slice(0, 12)));
+      } catch {}
       stopProgressTimer();
       progressTimer = window.setInterval(saveProgress, 12000);
     } else {
