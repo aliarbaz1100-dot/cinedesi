@@ -46,7 +46,7 @@ jobs:
           for (const page of [home, movie]) {
             const bundles = [...page.matchAll(/(?:src|href)=["']([^"']+\/assets\/[^"']+)["']/g)].map(m => m[1]);
             for (const asset of bundles) {
-              const path = 'dist/' + asset.replace(/^\.\//, '').replace(/^\//, '');
+              const path = 'dist/' + asset.split(/[?#]/, 1)[0].replace(/^\.\//, '').replace(/^\//, '');
               assert.ok(fs.existsSync(path), 'Broken script or stylesheet path: ' + path);
             }
           }
