@@ -26,11 +26,12 @@ for (const device of cases) {
     assert.ok(sourceBefore?.startsWith("https://"),device.name+" official player missing");
     assert.equal(await page.locator("#player-wide, #player-stage, #player-view-note, .cd-player-source-link").count(),0,device.name+" unwanted Wide view toolbar returned");
     assert.equal(await page.locator(".legal-player").count(),1,device.name+" duplicated player");
+    assert.ok(await page.locator("#watch .legal-player-head small").innerText().then(t=>t.includes("CINEDESI")),device.name+" CineDesi player identity missing");
     const allow=await iframe.getAttribute("allow");
     assert.ok(allow?.includes("picture-in-picture"),device.name+" native provider PiP permission missing");
     assert.ok(await iframe.evaluate(el=>el.hasAttribute("allowfullscreen")),device.name+" native fullscreen permission missing");
     const width=await iframe.evaluate(el=>el.getBoundingClientRect().width);
-    assert.ok(width>Math.min(device.width*.70,250),device.name+" player too narrow "+width);
+    assert.ok(width>=device.width*(device.mobile?0.96:0.7),device.name+" CineDesi player must fill available mobile width: "+width+" / "+device.width);
     const overflow=await page.evaluate(()=>Math.max(0,document.documentElement.scrollWidth-window.innerWidth));
     assert.ok(overflow<=2,device.name+" horizontal overflow "+overflow);
     const sourceAfter=await iframe.getAttribute("src");
