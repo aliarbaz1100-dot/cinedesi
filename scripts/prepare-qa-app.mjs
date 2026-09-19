@@ -12,7 +12,9 @@ home = home.replace('name="apple-mobile-web-app-title" content="CineDesi"',
   'name="apple-mobile-web-app-title" content="CineDesi QA"');
 home = home.replace('name="application-name" content="CineDesi"',
   'name="application-name" content="CineDesi QA"');
-home = home.replace('href="/manifest.webmanifest?v=9"','href="/manifest.webmanifest?v=qa-mobile-1"');
+home = home.replace(/href=["'](?:\.\/|\/)manifest\.webmanifest\?v=9["']/,
+  'href="/manifest.webmanifest?v=qa-mobile-1"');
+assert.ok(home.includes('href="/manifest.webmanifest?v=qa-mobile-1"'),"QA manifest link could not be updated");
 writeFileSync(dir+"index.html",home);
 manifest.id="/?cinedesi-qa-app=1";
 manifest.name="CineDesi QA — Test Mobile App";
