@@ -2,6 +2,7 @@ import "./cinematic-v2.css";
 import "./mobile-navigation.css";
 import "./top-ten.css";
 import "./launch-polish.css";
+import "./installed-app-qa.css";
 const homeReturnKey = "cinedesi-home-return-v1";
 const rememberHomeReturn = (link) => {
   const section = link.closest("section[id]");
@@ -980,6 +981,52 @@ function init() {
     newsletter.reset();
     newsletterMsg.textContent = "Subscribed. Welcome to CineDesi.";
   });
+  // QA-only installed app tabs: use real catalog sections, not mock screens.
+  // Browser visitors and the existing desktop experience keep their navigation.
+  const installedApp = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const mobileTabs = q(".mobile-bottom-nav");
+  if (installedApp && mobileTabs) {
+    document.documentElement.classList.add("cd-installed");
+    const tabs = Array.from(mobileTabs.querySelectorAll("a,button"));
+    const newTab = mobileTabs.querySelector('a[href="#top-today"]');
+    if (newTab) newTab.setAttribute("href", "#new-releases");
+    const selectTab = (tab) => {
+      tabs.forEach((item) => {
+        const active = item === tab;
+        item.classList.toggle("active", active);
+        if (item.tagName === "A") {
+          if (active) item.setAttribute("aria-current", "page");
+          else item.removeAttribute("aria-current");
+        } else {
+          item.setAttribute("aria-pressed", String(active));
+        }
+      });
+    };
+    const tabFromHash = () => mobileTabs.querySelector(
+      location.hash === "#watchlist" ? 'a[href="#watchlist"]' :
+      location.hash === "#new-releases" ? 'a[href="#new-releases"]' :
+      'a[href="#home"]'
+    );
+    const leaveSearch = () => {
+      catalogHeader.classList.remove("search-mode");
+      suggestions.classList.remove("on");
+      search.blur();
+    };
+    mobileTabs.addEventListener("click", (event) => {
+      const tab = event.target.closest("a,button");
+      if (!tab || !mobileTabs.contains(tab)) return;
+      if (tab.id !== "bottom-search") leaveSearch();
+      selectTab(tab);
+    });
+    searchClose.addEventListener("click", () => selectTab(tabFromHash()));
+    window.addEventListener("hashchange", () => {
+      if (!catalogHeader.classList.contains("search-mode")) selectTab(tabFromHash());
+    });
+    window.addEventListener("pageshow", () => {
+      if (!catalogHeader.classList.contains("search-mode")) selectTab(tabFromHash());
+    });
+    selectTab(tabFromHash());
+  }
   q("#bottom-search").onclick = () => {
     catalogHeader.classList.add("search-mode");
     setTimeout(() => search.focus(), 0);
