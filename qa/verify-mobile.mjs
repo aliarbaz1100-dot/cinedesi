@@ -150,6 +150,19 @@ try {
       await page.locator("#app-splash").waitFor({ state: "detached", timeout: 6000 });
       console.log("PASS", device.name, "old installed /app-preview shortcut opens real CineDesi animation");
     }
+    if (device.name === "iphone-modern") {
+      // The user installed an older preview shortcut in Safari bookmark mode.
+      // It may NOT report standalone=true, but the QA preview must still route
+      // to the real app where the launch animation exists.
+      const bookmarkContext = await browser.newContext({ ...browserDevice });
+      const bookmarkPage = await bookmarkContext.newPage();
+      await bookmarkPage.goto(base + "/app-preview", { waitUntil: "domcontentloaded", timeout: 30000 });
+      await bookmarkPage.waitForURL(/\\/\\?qa=1&source=pwa&install-launch=1/, { timeout: 8000 });
+      await bookmarkPage.locator("#app-splash").waitFor({ state: "visible", timeout: 2000 });
+      assert.equal(await bookmarkPage.locator("#intro").count(), 0, "Safari bookmark shortcut must display the REAL QA app, not decorative mock preview");
+      console.log("PASS", device.name, "old non-standalone iOS bookmark shortcut redirects into real app and animated logo");
+      await bookmarkContext.close();
+    }
     const preview = await page.goto(base + "/app-preview?inspect=1", { waitUntil: "domcontentloaded", timeout: 30000 });
     assert.equal(preview?.status(), 200);
     await page.locator("#replay").click();
@@ -201,7 +214,9 @@ try {
         geometry.imageWidth > 95 && geometry.copyWidth > 85,
         "Episodes should use the earlier Netflix-style full-width image + metadata rows: " + JSON.stringify(geometry)
       );
-      console.log("PASS", device.name, "real Bigg Boss 20 Episode 1 > Next > Previous, original Netflix-style full-width episode rows");
+      const movieOverflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+      assert.ok(movieOverflow <= 2, device.name + " movie detail viewport must not have horizontal overflow: " + movieOverflow);
+      console.log("PASS", device.name, "real Bigg Boss 20 Episode 1 > Next > Previous, original Netflix-style full-width episode rows, no horizontal overflow");
     }
     assert.deepEqual(errors, [], device.name + " uncaught page errors");
     await context.close();
