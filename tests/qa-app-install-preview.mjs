@@ -20,6 +20,13 @@ for(const device of [
     assert.equal(await page.locator("iframe[title='Live CineDesi QA home screen']").getAttribute("src"),"/?app-visual-preview=1");
     const frame=page.frameLocator("iframe[title='Live CineDesi QA home screen']");
     await frame.locator("#top-grid a.poster-link").first().waitFor({state:"visible",timeout:45000});
+    await page.locator("#screen-episodes").click();
+    assert.equal(await page.locator("#screen-episodes").getAttribute("aria-pressed"),"true",device.name+" movie-screen tab should be active");
+    const episodes=page.frameLocator("iframe[title='Live CineDesi QA movie and episodes']");
+    await episodes.locator(".episode-browser .episode-card").first().waitFor({state:"visible",timeout:45000});
+    assert.ok(await episodes.locator(".episode-browser .episode-card").count()>2,device.name+" real episode list not loaded");
+    await page.locator("#screen-home").click();
+    await page.frameLocator("iframe[title='Live CineDesi QA home screen']").locator("#top-grid a.poster-link").first().waitFor({state:"visible",timeout:45000});
     await page.locator("#replay").click();
     await page.locator("#demo").waitFor({state:"visible",timeout:1000});
     assert.match(await page.locator("#demo").innerText(),/CINE\s*DESI/i,device.name+" opening wordmark missing");
