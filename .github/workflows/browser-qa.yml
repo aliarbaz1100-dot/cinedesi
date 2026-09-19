@@ -28,6 +28,10 @@ jobs:
         env:
           PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
         run: node tests/qa-app-install-preview.mjs
+      - name: Full-viewport installed CineDesi app tabs and movie UI
+        env:
+          PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
+        run: node tests/qa-installed-app-tabs.mjs
       - name: Original player native fullscreen and PiP compatibility checks
         env:
           PREVIEW_URL: https://cinedesi-qa-safari-20260919.aliarbaz1100-93b.workers.dev
