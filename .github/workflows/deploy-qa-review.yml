@@ -1,10 +1,9 @@
 name: Deploy CineDesi isolated mobile QA review
 
 on:
-  push:
-    branches:
-      - qa/installed-mobile-tabs-20260919
-  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
@@ -15,6 +14,7 @@ concurrency:
 
 jobs:
   review:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'qa/installed-mobile-tabs-20260919'
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:
@@ -41,7 +41,7 @@ jobs:
           for (const path of ['dist/index.html','dist/movie.html','dist/app-preview.html','dist/qa-compat.js','dist/sw.js']) {
             assert.ok(fs.existsSync(path), 'QA asset missing: '+path);
           }
-          const config=JSON.parse(fs.readFileSync('qa/wrangler-review.jsonc','utf8'));
+          const config=JSON.parse(fs.readFileSync('wrangler.qa-review.jsonc','utf8'));
           assert.equal(config.name,'cinedesi-qa-launch-review-20260919');
           assert.equal(config.assets.directory,'./dist');
           assert.equal(config.assets.binding,'ASSETS');
@@ -84,7 +84,7 @@ jobs:
               file.write('CLOUDFLARE_ACCOUNT_ID='+account+'\n')
           PY
       - name: Deploy separate review Worker only
-        run: npx --yes wrangler@4 deploy --config qa/wrangler-review.jsonc
+        run: npx --yes wrangler@4 deploy --config wrangler.qa-review.jsonc
       - name: Test public review app without publishing production changes
         run: |
           node --input-type=module <<'JS'
