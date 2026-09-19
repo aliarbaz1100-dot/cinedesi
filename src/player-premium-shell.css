@@ -47,3 +47,25 @@
 @media(max-width:390px){
   #watch .legal-player-head .badge{font-size:.61rem!important}
 }
+
+/* CineDesi episode navigation: keeps provider playback intact. */
+#watch .cd-episode-controls{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+ margin:12px 0 16px;padding:9px 10px;
+ background:#0b0b0e;border:1px solid rgba(255,255,255,.11);border-radius:9px;
+}
+#watch .cd-episode-controls button{
+ display:inline-flex;align-items:center;justify-content:center;gap:6px;
+ min-height:44px;padding:10px 15px;border:1px solid rgba(255,255,255,.18);
+ border-radius:7px;background:#222226;color:#f7f7f8;cursor:pointer;
+ font:inherit;font-size:.85rem;font-weight:760;
+}
+#watch .cd-episode-controls button:not(:disabled):active{background:#e50914;border-color:#e50914}
+#watch .cd-episode-controls button:focus-visible{outline:2px solid #fff;outline-offset:3px}
+#watch .cd-episode-controls button:disabled{opacity:.38;cursor:default}
+#watch #cd-episode-position{color:#bdbdc4;font-size:.78rem;font-weight:750;font-variant-numeric:tabular-nums}
+@media(max-width:500px){
+ #watch .cd-episode-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px;margin-top:8px}
+ #watch #cd-episode-position{grid-column:1/-1;grid-row:1;text-align:center}
+ #watch .cd-episode-controls button{width:100%;font-size:.8rem;padding:10px 6px}
+}
