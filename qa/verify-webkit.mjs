@@ -34,6 +34,7 @@ try {
     const response = await page.goto(base + "/?qa=1&source=pwa", { waitUntil: "domcontentloaded", timeout: 30000 });
     assert.equal(response?.status(), 200);
     await page.locator("#app-splash").waitFor({ state: "visible", timeout: 1800 });
+    await page.waitForFunction(() => document.querySelector("#app-splash")?.classList.contains("qa-intro-play"), null, { timeout: 1700 });
     const splash = await page.evaluate(() => ({
       logo: document.querySelector("#app-splash .splash-logo")?.textContent,
       label: document.querySelector("#app-splash .splash-brand p")?.textContent,
