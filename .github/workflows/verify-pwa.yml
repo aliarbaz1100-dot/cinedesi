@@ -36,8 +36,9 @@ jobs:
           assert.ok(jsAssets.some(p => p.includes('/assets/')), 'Homepage bundle missing');
           assert.ok(movie.includes('/assets/'), 'Movie page bundle missing');
           assert.ok(jsAssets.every(p => !p.endsWith('.ts')), 'Unbuilt TypeScript in deployed homepage');
-          assert.ok(sw.includes('cinedesi-shell-v27'), 'Stale service worker deployed');
-          assert.ok(sw.includes('movie.html'), 'Movie route missing from PWA shell');
+          assert.ok(sw.includes('cinedesi-shell-v28'), 'Stale service worker deployed');
+          assert.ok(sw.includes('movie.html'), 'Offline movie page missing from PWA shell');
+          assert.ok(!sw.includes('event.respondWith') && !sw.includes('self.addEventListener("fetch"'), 'Service worker must not intercept iOS navigation');
           assert.ok(home.includes('setTimeout(function()'), 'Splash failsafe missing');
           assert.ok(read('src/main.ts').includes('/movie.html?slug='), 'Movie route not migrated');
           assert.ok(!read('src/main.ts').includes('setTimeout(showInstall, 4200)'), 'Auto install banner still enabled');
@@ -50,7 +51,7 @@ jobs:
               assert.ok(fs.existsSync(path), 'Broken script or stylesheet path: ' + path);
             }
           }
-          assert.ok(!sw.includes('cinedesi-shell-v26'), 'Old service worker version deployed');
+          assert.ok(!sw.includes('cinedesi-shell-v27'), 'Old service worker version deployed');
           console.log('PASS: build entrypoints, asset paths, movie routes, PWA shell, splash, and install popup');
           JS
       - name: Check service worker JavaScript syntax
@@ -71,7 +72,7 @@ jobs:
             ['/', 'text/html', 'CineDesi'],
             ['/movie.html?slug=smoke-test', 'text/html', 'movie-page'],
             ['/manifest.webmanifest', 'application/manifest+json', 'start_url'],
-            ['/sw.js', 'javascript', 'cinedesi-shell-v27']
+            ['/sw.js', 'javascript', 'cinedesi-shell-v28']
           ]) {
             const response = await fetch(base+path);
             assert.equal(response.status, 200, path+' returned '+response.status);
