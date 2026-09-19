@@ -9,7 +9,9 @@ const playable = (id, title, region, genre = "Action") => ({
   release_year: 2026, full_video_verified: true,
   full_video_embed_url: "https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ",
   watch_verified: true, watch_url: "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
-  poster_url: "https://i.ytimg.com/vi/aqz-KE-bpKQ/hqdefault.jpg"
+  poster_url: "https://i.ytimg.com/vi/aqz-KE-bpKQ/hqdefault.jpg",
+  poster_source_url: "https://i.ytimg.com/vi/aqz-KE-bpKQ/hqdefault.jpg",
+  poster_license: "rights-holder promotional art"
 });
 const discovery = (id, title, release_year, note = "") => ({
   id, slug: "qa-fixture-" + id, title, region: "Bollywood", genre: "Action",
