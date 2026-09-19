@@ -126,7 +126,7 @@ const skeletonMarkup = Array.from({ length: 6 }, () => `<article class="card ske
   const rail = document.getElementById(id);
   if (rail && !rail.children.length) rail.innerHTML = skeletonMarkup;
 });
-const URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co";
+const SUPABASE_URL = "https://ewtgkjcmnwjoqfldrtuw.supabase.co";
 const KEY = "sb_publishable_ZEAZWO-Q-_rvMsy6krr_nw_JDRmP_kI";
 const apiHeaders = {
   apikey: KEY,
@@ -135,7 +135,7 @@ const apiHeaders = {
   "Accept-Profile": "public",
   "Content-Profile": "public"
 };
-const apiFetch = (path, options = {}) => fetch(`${URL}/rest/v1/${path}`, {
+const apiFetch = (path, options = {}) => fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
   ...options,
   headers: { ...apiHeaders, ...(options.headers || {}) }
 });
