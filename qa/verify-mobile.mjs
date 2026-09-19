@@ -67,6 +67,14 @@ try {
     });
     assert.match(launchArt.red, /229,\s*9,\s*20/, device.name + " launch logo must have CineDesi red");
     assert.match(launchArt.animation, /qa-icon-brand-in/, device.name + " launch branding must animate");
+    const cinematic = await page.locator("#app-splash .splash-logo").evaluate(el => ({
+      duration: parseFloat(getComputedStyle(el).animationDuration),
+      keyframe: Array.from(document.styleSheets).filter(sheet => {
+        try { return Array.from(sheet.cssRules).some(rule => rule.name === "qa-icon-brand-in"); }
+        catch { return false; }
+      }).length > 0
+    }));
+    assert.ok(cinematic.duration >= 1.1 && cinematic.keyframe, device.name + " must run the updated conspicuous zoom-in animation, not old static logo");
     console.log("PASS", device.name, "first-frame branded launch", Date.now() - start, "ms");
     await overlay.waitFor({ state: "detached", timeout: 7200 });
     await page.locator("#home").waitFor({ state: "visible", timeout: 7000 });
