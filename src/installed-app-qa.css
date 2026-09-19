@@ -1,0 +1,82 @@
+/* QA: visual changes apply to installed CineDesi only; normal web UI is unchanged. */
+@media screen and (max-width: 620px) {
+  html.cd-installed body.home-body {
+    background: #050505 !important;
+    padding-bottom: calc(98px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  html.cd-installed .home-body .catalog-header {
+    padding-top: max(9px, env(safe-area-inset-top, 0px)) !important;
+    background: #080809 !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  html.cd-installed .home-body .mobile-bottom-nav {
+    width: calc(100% - 20px) !important;
+    max-width: 450px !important;
+    bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
+    padding: 6px !important;
+    border-radius: 18px !important;
+    border: 1px solid rgba(255,255,255,.12) !important;
+    background: rgba(15,15,17,.98) !important;
+    box-shadow: 0 10px 32px rgba(0,0,0,.55) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  html.cd-installed .home-body .mobile-bottom-nav a,
+  html.cd-installed .home-body .mobile-bottom-nav button {
+    min-height: 48px !important;
+    gap: 4px !important;
+    border-radius: 12px !important;
+    color: #a2a3a8 !important;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  html.cd-installed .home-body .mobile-bottom-nav .active,
+  html.cd-installed .home-body .mobile-bottom-nav [aria-current="page"],
+  html.cd-installed .home-body .mobile-bottom-nav [aria-pressed="true"] {
+    color: #fff !important;
+    background: rgba(229,9,20,.18) !important;
+  }
+
+  html.cd-installed .home-body .mobile-bottom-nav svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  html.cd-installed .home-body .mobile-bottom-nav b {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+  }
+
+  html.cd-installed .home-body .grid.rail {
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-inline: contain;
+  }
+
+  html.cd-installed .home-body .section-head h2 {
+    text-wrap: balance;
+  }
+
+  html.cd-installed .home-body .catalog-header.search-mode .search-shell {
+    padding-top: max(10px, env(safe-area-inset-top, 0px)) !important;
+    background: #0b0b0d !important;
+  }
+
+  html.cd-installed .home-body .search-suggestions {
+    max-height: min(68dvh, 540px);
+    overscroll-behavior: contain;
+  }
+}
+
+@media screen and (max-width: 620px) and (prefers-reduced-motion: reduce) {
+  html.cd-installed .home-body .mobile-bottom-nav *,
+  html.cd-installed .home-body .grid.rail {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
