@@ -41,6 +41,13 @@ jobs:
           assert.ok(!sw.includes('event.respondWith') && !sw.includes('self.addEventListener("fetch"'), 'Service worker must not intercept iOS navigation');
           assert.ok(home.includes('setTimeout(function()'), 'Splash failsafe missing');
           assert.ok(read('src/main.ts').includes('/movie?slug='), 'Canonical movie route missing');
+          for (const file of ['src/main.ts','src/movie.ts']) {
+            const source=read(file);
+            assert.ok(!source.includes('import "./cinedesi-cinema-refresh.css"'),file+' unwanted redesign returned');
+            assert.ok(!source.includes('import "./experience-refinement.css"'),file+' discarded style returned');
+            assert.ok(source.includes('import "./cinematic-v2.css"'),file+' original CineDesi style missing');
+          }
+          assert.ok(read('src/main.ts').includes('card(m, i < 3)'), 'First posters lost loading priority');
           assert.ok(!read('src/main.ts').includes('setTimeout(showInstall, 4200)'), 'Auto install banner still enabled');
           assert.ok(!home.includes('location.replace("/movie.html"'), 'Redundant redirect can loop in Cloudflare');
           assert.ok(read('src/movie.ts').includes('sdk.onerror'), 'Movie SDK error state is missing');
