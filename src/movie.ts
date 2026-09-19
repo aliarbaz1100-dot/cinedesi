@@ -3,6 +3,19 @@ import "./mobile-navigation.css";
 import "./launch-polish.css";
 import "./installed-app-qa.css";
 import { tamashaSeason5Episodes } from "./tamashaSeason5";
+// Movie -> home is an internal app navigation. Preserve the PWA home screen
+// without replaying the cold-launch overlay or losing the current film position.
+if (/(^|[.-])qa([.-]|$)/i.test(location.hostname)) {
+  const markInternal = () => {
+    try { sessionStorage.setItem("cinedesi-qa-internal-nav", String(Date.now())); } catch {}
+  };
+  markInternal();
+  window.addEventListener("pagehide", markInternal);
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest?.('a[href]');
+    if (link && new URL(link.href, location.href).origin === location.origin) markInternal();
+  }, { capture: true });
+}
 const movieBack = document.querySelector("#movie-back");
 if (movieBack) movieBack.onclick = null;
 movieBack?.addEventListener("click", (event) => {
