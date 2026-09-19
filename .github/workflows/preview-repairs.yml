@@ -24,6 +24,19 @@ jobs:
           test -s dist/index.html
           test -s dist/movie.html
           test -s dist/manifest.webmanifest
+      - name: Keep temporary QA pages out of search indexes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for page in Path("dist").glob("*.html"):
+              text=page.read_text(encoding="utf-8")
+              if "<head>" not in text: raise SystemExit(f"Missing head in {page}")
+              text=text.replace("<head>","<head>\n    <meta name=\"robots\" content=\"noindex,nofollow,noarchive\" />",1)
+              page.write_text(text,encoding="utf-8")
+          Path("dist/robots.txt").write_text("User-agent: *\nDisallow: /\n",encoding="utf-8")
+          Path("dist/sitemap.xml").unlink(missing_ok=True)
+          print("QA-only noindex tags and crawler rules applied; production source remains unchanged.")
+          PY
       - name: Deploy distinct QA Worker (never production cinedesi)
         env:
           CLOUDFLARE_API_TOKEN_RAW: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -60,6 +73,7 @@ jobs:
             ("/movie.html?slug=preview-smoke","text/html","movie-page"),
             ("/manifest.webmanifest","json","start_url"),
             ("/sw.js","javascript","cinedesi-shell-v28"),
+            ("/robots.txt","text/plain","Disallow: /"),
           ]
           for path,content_type,marker in checks:
               err=None
@@ -72,6 +86,7 @@ jobs:
                           assert content_type in mime, f"{path}: unexpected MIME {mime}"
                           assert "attachment" not in disposition, f"{path}: downloaded rather than rendered"
                           assert marker in body, f"{path}: expected content missing"
+                          if path.endswith("/") or path.startswith("/movie.html"):\n                              assert "noindex,nofollow,noarchive" in body, f"{path}: QA noindex missing"
                           print("PASS",path,response.status,mime)
                           err=None
                           break
