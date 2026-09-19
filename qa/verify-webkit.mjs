@@ -41,7 +41,7 @@ try {
     }));
     assert.match(String(splash.logo), /CINEDESI/);
     assert.match(String(splash.label), /Arbaz Ali/);
-    assert.ok(String(splash.animation).includes("qa-brand-in"), name + " WebKit animated logo missing");
+    assert.ok(String(splash.animation).includes("cd-cinema-reveal"), name + " WebKit animated logo missing");
     console.log("PASS", name, "branded iOS-like WebKit opening");
     await page.locator("#app-splash").waitFor({ state: "detached", timeout: 6500 });
     await page.locator("#home").waitFor({ state: "visible", timeout: 14000 });
